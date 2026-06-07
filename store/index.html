@@ -173,7 +173,7 @@
 
     <section>
       <div class="tabs">
-          <button class="tab active" onclick="switchTab('all')">All <span class="tab-count">7</span></button>
+          <button class="tab active" onclick="switchTab('all')">All <span class="tab-count">3</span></button>
           <button class="tab" onclick="switchTab('library')">Libraries <span class="tab-count">undefined</span></button>
           <button class="tab" onclick="switchTab('model')">Models <span class="tab-count">0</span></button>
           <button class="tab" onclick="switchTab('agent')">Agents <span class="tab-count">undefined</span></button>
@@ -182,17 +182,13 @@
         <div class="toolbar">
         <input type="text" class="search-input" id="searchInput" placeholder="Search agents..." autocomplete="off" />
         <button class="filter-btn active" onclick="filterCategory('all')">All</button>
-        <button class="filter-btn" onclick="filterCategory('education')">Education</button>
         <button class="filter-btn" onclick="filterCategory('visualization')">Visualization</button>
         <button class="filter-btn" onclick="filterCategory('phenomena')">Phenomena</button>
-        <button class="filter-btn" onclick="filterCategory('protocols')">Protocols</button>
         <button class="filter-btn" onclick="filterCategory('algorithms')">Algorithms</button>
-        <button class="filter-btn" onclick="filterCategory('simulator')">Simulator</button>
-        <button class="filter-btn" onclick="filterCategory('circuits')">Circuits</button>
-        <span class="agent-count" id="agentCount">7 agents</span>
+        <span class="agent-count" id="agentCount">3 agents</span>
       </div>
             <div class="agents-grid" id="agentsGrid">
-        <div class="agent-card" data-category="visualization" data-store-type="behavior" data-name="bloch sphere" data-desc="interactive 3d qubit visualization — drag to rotate, apply x/y/z/h/s/t gates, see state vector in real time.">
+        <div class="agent-card" data-category="visualization" data-store-type="behavior" data-name="bloch sphere" data-desc="interactive 3d qubit visualization — drag to rotate, apply x/y/z/h/s/t gates, see state vector update in real time.">
           <a href="/circuits/bloch-sphere/" class="agent-card-body">
             <div class="agent-icon" style="background:#7c3aed">🔮</div>
             <div class="agent-body">
@@ -210,25 +206,7 @@
           </a>
         </div>
 
-        <div class="agent-card" data-category="education" data-store-type="behavior" data-name="quantum gates" data-desc="learn all quantum gates — interactive matrix visualization, before/after state, truth tables for each gate.">
-          <a href="/circuits/quantum-gates/" class="agent-card-body">
-            <div class="agent-icon" style="background:#7c3aed">🚪</div>
-            <div class="agent-body">
-              <span class="agent-name">Quantum Gates</span>
-              <span class="agent-desc">Learn all quantum gates — interactive matrix visualization, ...</span>
-              <div class="agent-meta">
-                <span class="tag" style="background:rgba(124,58,237,0.15);color:#a78bfa">Interactive</span>
-                <span class="tag"></span>
-              </div>
-            </div>
-          </a>
-          <a href="/circuits/quantum-gates/" class="agent-cta">
-            <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
-            Open
-          </a>
-        </div>
-
-        <div class="agent-card" data-category="phenomena" data-store-type="behavior" data-name="entanglement" data-desc="create bell pairs, measure one qubit, watch the other collapse instantly. run 1000 experiments, see the statistics.">
+        <div class="agent-card" data-category="phenomena" data-store-type="behavior" data-name="entanglement" data-desc="create bell pairs, measure one qubit, watch the other collapse. run 100 experiments, see perfect correlation statistics.">
           <a href="/circuits/entanglement/" class="agent-card-body">
             <div class="agent-icon" style="background:#7c3aed">🔗</div>
             <div class="agent-body">
@@ -246,25 +224,7 @@
           </a>
         </div>
 
-        <div class="agent-card" data-category="protocols" data-store-type="behavior" data-name="quantum teleportation" data-desc="step-by-step teleportation protocol — alice prepares, entangles, measures. bob corrects. see the state transfer.">
-          <a href="/circuits/teleportation/" class="agent-card-body">
-            <div class="agent-icon" style="background:#7c3aed">✨</div>
-            <div class="agent-body">
-              <span class="agent-name">Quantum Teleportation</span>
-              <span class="agent-desc">Step-by-step teleportation protocol — Alice prepares, entang...</span>
-              <div class="agent-meta">
-                <span class="tag" style="background:rgba(124,58,237,0.15);color:#a78bfa">Interactive</span>
-                <span class="tag"></span>
-              </div>
-            </div>
-          </a>
-          <a href="/circuits/teleportation/" class="agent-cta">
-            <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
-            Open
-          </a>
-        </div>
-
-        <div class="agent-card" data-category="algorithms" data-store-type="behavior" data-name="grover's search" data-desc="quantum search algorithm — watch amplitude amplification find the needle in the haystack. compare with classical search.">
+        <div class="agent-card" data-category="algorithms" data-store-type="behavior" data-name="grover's search" data-desc="quantum search algorithm — watch amplitude amplification find the target. compare √n quantum steps vs n classical steps.">
           <a href="/circuits/grovers/" class="agent-card-body">
             <div class="agent-icon" style="background:#7c3aed">🔍</div>
             <div class="agent-body">
@@ -277,42 +237,6 @@
             </div>
           </a>
           <a href="/circuits/grovers/" class="agent-cta">
-            <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
-            Open
-          </a>
-        </div>
-
-        <div class="agent-card" data-category="simulator" data-store-type="behavior" data-name="qubit simulator" data-desc="full state-vector simulator for 1-6 qubits. build circuits, measure, see probability distributions as bar charts.">
-          <a href="/circuits/qubit-sim/" class="agent-card-body">
-            <div class="agent-icon" style="background:#3b82f6">💻</div>
-            <div class="agent-body">
-              <span class="agent-name">Qubit Simulator</span>
-              <span class="agent-desc">Full state-vector simulator for 1-6 qubits. Build circuits, ...</span>
-              <div class="agent-meta">
-                <span class="tag" style="background:rgba(124,58,237,0.15);color:#a78bfa">Interactive</span>
-                <span class="tag"></span>
-              </div>
-            </div>
-          </a>
-          <a href="/circuits/qubit-sim/" class="agent-cta">
-            <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
-            Open
-          </a>
-        </div>
-
-        <div class="agent-card" data-category="circuits" data-store-type="behavior" data-name="circuit builder" data-desc="drag-and-drop quantum circuit editor. wire qubits, add gates, simulate step by step. export to qiskit/cirq code.">
-          <a href="/circuits/quantum-circuit/" class="agent-card-body">
-            <div class="agent-icon" style="background:#3b82f6">🔧</div>
-            <div class="agent-body">
-              <span class="agent-name">Circuit Builder</span>
-              <span class="agent-desc">Drag-and-drop quantum circuit editor. Wire qubits, add gates...</span>
-              <div class="agent-meta">
-                <span class="tag" style="background:rgba(124,58,237,0.15);color:#a78bfa">Interactive</span>
-                <span class="tag"></span>
-              </div>
-            </div>
-          </a>
-          <a href="/circuits/quantum-circuit/" class="agent-cta">
             <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
             Open
           </a>

@@ -1,11 +1,5 @@
-{
-  "robots": [
-    { "id": "bloch-sphere", "name": "Bloch Sphere", "description": "Interactive 3D qubit visualization — drag to rotate, apply X/Y/Z/H/S/T gates, see state vector in real time.", "storeType": "behavior", "category": "visualization", "icon": "🔮", "iconBg": "#7c3aed" },
-    { "id": "quantum-gates", "name": "Quantum Gates", "description": "Learn all quantum gates — interactive matrix visualization, before/after state, truth tables for each gate.", "storeType": "behavior", "category": "education", "icon": "🚪", "iconBg": "#7c3aed" },
-    { "id": "entanglement", "name": "Entanglement", "description": "Create Bell pairs, measure one qubit, watch the other collapse instantly. Run 1000 experiments, see the statistics.", "storeType": "behavior", "category": "phenomena", "icon": "🔗", "iconBg": "#7c3aed" },
-    { "id": "teleportation", "name": "Quantum Teleportation", "description": "Step-by-step teleportation protocol — Alice prepares, entangles, measures. Bob corrects. See the state transfer.", "storeType": "behavior", "category": "protocols", "icon": "✨", "iconBg": "#7c3aed" },
-    { "id": "grovers", "name": "Grover's Search", "description": "Quantum search algorithm — watch amplitude amplification find the needle in the haystack. Compare with classical search.", "storeType": "behavior", "category": "algorithms", "icon": "🔍", "iconBg": "#7c3aed" },
-    { "id": "qubit-sim", "name": "Qubit Simulator", "description": "Full state-vector simulator for 1-6 qubits. Build circuits, measure, see probability distributions as bar charts.", "storeType": "behavior", "category": "simulator", "icon": "💻", "iconBg": "#3b82f6" },
-    { "id": "quantum-circuit", "name": "Circuit Builder", "description": "Drag-and-drop quantum circuit editor. Wire qubits, add gates, simulate step by step. Export to Qiskit/Cirq code.", "storeType": "behavior", "category": "circuits", "icon": "🔧", "iconBg": "#3b82f6" }
-  ]
-}
+{"robots":[
+  {"id":"bloch-sphere","name":"Bloch Sphere","description":"Interactive 3D qubit visualization — drag to rotate, apply X/Y/Z/H/S/T gates, see state vector update in real time.","storeType":"behavior","category":"visualization","icon":"🔮","iconBg":"#7c3aed"},
+  {"id":"entanglement","name":"Entanglement","description":"Create Bell pairs, measure one qubit, watch the other collapse. Run 100 experiments, see perfect correlation statistics.","storeType":"behavior","category":"phenomena","icon":"🔗","iconBg":"#7c3aed"},
+  {"id":"grovers","name":"Grover's Search","description":"Quantum search algorithm — watch amplitude amplification find the target. Compare √N quantum steps vs N classical steps.","storeType":"behavior","category":"algorithms","icon":"🔍","iconBg":"#7c3aed"}
+]}
