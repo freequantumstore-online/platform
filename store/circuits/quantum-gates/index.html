@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Gates Explorer — FreeQuantumStore</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0a0a0a;color:#fafafa;font-family:'Manrope',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+    h1{font-size:1.3rem;font-weight:700;margin:1.25rem 0 .25rem} h1 span{color:#7c3aed}
+    .sub{color:#737373;font-size:.85rem;margin-bottom:.75rem;text-align:center;max-width:540px}
+    .gate-grid{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin:.5rem;max-width:700px}
+    .gate-btn{padding:.6rem 1rem;border-radius:8px;border:1px solid #333;background:#171717;color:#fafafa;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'JetBrains Mono',monospace;min-width:3rem;text-align:center;transition:all .15s}
+    .gate-btn:hover{border-color:#7c3aed;color:#7c3aed}
+    .gate-btn.active{background:#7c3aed;border-color:#7c3aed;color:#fff}
+    .content{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin:.75rem;max-width:800px}
+    .panel{background:#141414;border:1px solid #262626;border-radius:12px;padding:1rem;min-width:240px;flex:1}
+    .panel h3{font-size:.85rem;font-weight:700;color:#7c3aed;margin-bottom:.5rem}
+    .matrix{font-family:'JetBrains Mono',monospace;font-size:.9rem;line-height:1.8;color:#a3a3a3}
+    .matrix b{color:#7c3aed}
+    .desc{color:#a3a3a3;font-size:.82rem;line-height:1.6;margin:.5rem 0}
+    canvas{border:1px solid #262626;border-radius:12px}
+    .info{font-size:.75rem;color:#525252;margin:.5rem}
+    a{color:#525252;text-decoration:none}
+  </style>
+</head>
+<body>
+  <h1>Quantum <span>Gates</span> Explorer</h1>
+  <p class="sub">Click a gate to see its matrix, effect on |0> and |1>, and Bloch sphere transformation. Every quantum circuit is built from these.</p>
+
+  <div class="gate-grid">
+    <button class="gate-btn active" data-gate="I">I</button>
+    <button class="gate-btn" data-gate="X">X</button>
+    <button class="gate-btn" data-gate="Y">Y</button>
+    <button class="gate-btn" data-gate="Z">Z</button>
+    <button class="gate-btn" data-gate="H">H</button>
+    <button class="gate-btn" data-gate="S">S</button>
+    <button class="gate-btn" data-gate="T">T</button>
+    <button class="gate-btn" data-gate="Rx">Rx</button>
+    <button class="gate-btn" data-gate="Ry">Ry</button>
+    <button class="gate-btn" data-gate="Rz">Rz</button>
+  </div>
+
+  <div class="content">
+    <div class="panel">
+      <h3 id="gate-name">Identity (I)</h3>
+      <div class="desc" id="gate-desc">Does nothing. The quantum equivalent of a wire. Leaves the qubit unchanged.</div>
+      <h3 style="margin-top:.75rem">Matrix</h3>
+      <div class="matrix" id="gate-matrix"></div>
+    </div>
+    <div class="panel">
+      <h3>Effect on States</h3>
+      <div class="matrix" id="gate-effect"></div>
+      <h3 style="margin-top:.75rem">Properties</h3>
+      <div class="desc" id="gate-props"></div>
+    </div>
+    <div class="panel" style="min-width:200px">
+      <h3>Bloch Sphere</h3>
+      <canvas id="bloch" width="200" height="200"></canvas>
+    </div>
+  </div>
+
+  <div class="info">All quantum gates are <b>unitary</b> — reversible and norm-preserving. | <a href="https://freequantumstore.pages.dev">FreeQuantumStore</a></div>
+
+  <script>
+    const gates = {
+      I: {
+        name: 'Identity (I)', desc: 'Does nothing. The quantum equivalent of a wire.',
+        matrix: [[1,0],[0,1]], effect: ['I|0> = |0>', 'I|1> = |1>'],
+        props: 'Self-inverse (I = I†). Trivially unitary. 0° rotation about any axis.',
+        blochRotation: [0, 0, 0],
+      },
+      X: {
+        name: 'Pauli-X (NOT)', desc: 'Bit flip. Swaps |0> and |1>. The quantum NOT gate. 180° rotation about X-axis on Bloch sphere.',
+        matrix: [[0,1],[1,0]], effect: ['X|0> = |1>', 'X|1> = |0>'],
+        props: 'Self-inverse (X² = I). Eigenvalues: +1, -1. Eigenstates: |+>, |->.',
+        blochRotation: [Math.PI, 0, 0],
+      },
+      Y: {
+        name: 'Pauli-Y', desc: '180° rotation about Y-axis. Combines bit flip and phase flip.',
+        matrix: [[0,'-i'],['i',0]], effect: ['Y|0> = i|1>', 'Y|1> = -i|0>'],
+        props: 'Self-inverse (Y² = I). Y = iXZ. Has complex matrix entries.',
+        blochRotation: [0, Math.PI, 0],
+      },
+      Z: {
+        name: 'Pauli-Z (Phase Flip)', desc: 'Phase flip. Leaves |0> alone, flips sign of |1>. 180° rotation about Z-axis.',
+        matrix: [[1,0],[0,-1]], effect: ['Z|0> = |0>', 'Z|1> = -|1>'],
+        props: 'Self-inverse (Z² = I). Diagonal. |0> and |1> are eigenstates.',
+        blochRotation: [0, 0, Math.PI],
+      },
+      H: {
+        name: 'Hadamard (H)', desc: 'Creates superposition. Maps |0> to |+> and |1> to |->. The most important gate in quantum computing.',
+        matrix: [['1/√2','1/√2'],['1/√2','-1/√2']], effect: ['H|0> = (|0>+|1>)/√2 = |+>', 'H|1> = (|0>-|1>)/√2 = |->'],
+        props: 'Self-inverse (H² = I). H = (X+Z)/√2. Creates equal superposition from computational basis.',
+        blochRotation: [Math.PI/2, 0, Math.PI/2],
+      },
+      S: {
+        name: 'Phase Gate (S)', desc: '90° rotation about Z-axis. Quarter turn. S² = Z.',
+        matrix: [[1,0],[0,'i']], effect: ['S|0> = |0>', 'S|1> = i|1>'],
+        props: 'S² = Z. S† = S³. Adds π/2 phase to |1>. Also called √Z.',
+        blochRotation: [0, 0, Math.PI/2],
+      },
+      T: {
+        name: 'T Gate (π/8)', desc: '45° rotation about Z-axis. Eighth turn. T² = S. Essential for universal quantum computing.',
+        matrix: [[1,0],[0,'e^(iπ/4)']], effect: ['T|0> = |0>', 'T|1> = e^(iπ/4)|1>'],
+        props: 'T² = S. T⁴ = Z. Cannot be implemented transversally in surface codes — requires magic state distillation.',
+        blochRotation: [0, 0, Math.PI/4],
+      },
+      Rx: {
+        name: 'Rotation-X (π/4)', desc: 'Rotation about X-axis by π/4 (45°). Parametric gate — angle can be any value.',
+        matrix: [['cos(π/8)','-isin(π/8)'],['-isin(π/8)','cos(π/8)']], effect: ['Rx|0> = cos(π/8)|0> - isin(π/8)|1>', 'Continuously rotates about X'],
+        props: 'Rx(θ) = exp(-iθX/2). Rx(π) = -iX. Rx(2π) = -I (not I! — spinor property).',
+        blochRotation: [Math.PI/4, 0, 0],
+      },
+      Ry: {
+        name: 'Rotation-Y (π/4)', desc: 'Rotation about Y-axis by π/4. Real-valued matrix — no imaginary entries.',
+        matrix: [['cos(π/8)','-sin(π/8)'],['sin(π/8)','cos(π/8)']], effect: ['Ry|0> = cos(π/8)|0> + sin(π/8)|1>', 'Generates real superpositions'],
+        props: 'Ry(θ) = exp(-iθY/2). Always real matrix. Used in VQE ansatz circuits.',
+        blochRotation: [0, Math.PI/4, 0],
+      },
+      Rz: {
+        name: 'Rotation-Z (π/4)', desc: 'Rotation about Z-axis by π/4. Diagonal gate — only changes phase.',
+        matrix: [['e^(-iπ/8)',0],[0,'e^(iπ/8)']], effect: ['Rz|0> = e^(-iπ/8)|0>', 'Rz|1> = e^(iπ/8)|1>'],
+        props: 'Rz(θ) = exp(-iθZ/2). Rz(π/2) = S (up to global phase). Diagonal, so fast on hardware.',
+        blochRotation: [0, 0, Math.PI/4],
+      },
+    };
+
+    const blochCanvas = document.getElementById('bloch');
+    const bCtx = blochCanvas.getContext('2d');
+    let currentGate = 'I';
+
+    function updateDisplay() {
+      const g = gates[currentGate];
+      document.getElementById('gate-name').textContent = g.name;
+      document.getElementById('gate-desc').textContent = g.desc;
+      document.getElementById('gate-props').textContent = g.props;
+
+      // Matrix
+      const m = g.matrix;
+      document.getElementById('gate-matrix').innerHTML =
+        `[ <b>${m[0][0]}</b>  ${m[0][1]} ]<br>[ ${m[1][0]}  <b>${m[1][1]}</b> ]`;
+
+      // Effect
+      document.getElementById('gate-effect').innerHTML = g.effect.map(e => `${e}`).join('<br>');
+
+      // Bloch sphere
+      drawBloch(g.blochRotation);
+    }
+
+    function drawBloch([rx, ry, rz]) {
+      const W = 200, H = 200, cx = W/2, cy = H/2, r = 70;
+      bCtx.fillStyle = '#141414';
+      bCtx.fillRect(0, 0, W, H);
+
+      // Sphere wireframe
+      bCtx.strokeStyle = '#262626'; bCtx.lineWidth = 1;
+      bCtx.beginPath(); bCtx.arc(cx, cy, r, 0, Math.PI * 2); bCtx.stroke();
+      // Equator
+      bCtx.beginPath(); bCtx.ellipse(cx, cy, r, r * 0.3, 0, 0, Math.PI * 2); bCtx.stroke();
+      // Meridian
+      bCtx.beginPath(); bCtx.ellipse(cx, cy, r * 0.3, r, 0, 0, Math.PI * 2); bCtx.stroke();
+
+      // Axes
+      bCtx.strokeStyle = '#404040'; bCtx.lineWidth = 0.5;
+      bCtx.beginPath(); bCtx.moveTo(cx - r - 10, cy); bCtx.lineTo(cx + r + 10, cy); bCtx.stroke();
+      bCtx.beginPath(); bCtx.moveTo(cx, cy - r - 10); bCtx.lineTo(cx, cy + r + 10); bCtx.stroke();
+
+      // Labels
+      bCtx.fillStyle = '#525252'; bCtx.font = '9px Manrope'; bCtx.textAlign = 'center';
+      bCtx.fillText('|0>', cx, cy - r - 14);
+      bCtx.fillText('|1>', cx, cy + r + 18);
+      bCtx.fillText('X', cx + r + 14, cy + 4);
+
+      // |0> state (north pole)
+      bCtx.fillStyle = '#525252';
+      bCtx.beginPath(); bCtx.arc(cx, cy - r, 3, 0, Math.PI * 2); bCtx.fill();
+
+      // Arrow showing rotation
+      if (rx !== 0 || ry !== 0 || rz !== 0) {
+        // Rotation arrow (simplified 2D projection)
+        const angle = Math.atan2(rx, rz);
+        const magnitude = Math.sqrt(rx*rx + ry*ry + rz*rz);
+        const arrowR = r * 0.6;
+
+        // Before state (|0> = north pole)
+        bCtx.fillStyle = '#3b82f6';
+        bCtx.beginPath(); bCtx.arc(cx, cy - r, 5, 0, Math.PI * 2); bCtx.fill();
+
+        // After state
+        const afterX = cx + Math.sin(magnitude) * r * Math.sin(angle);
+        const afterY = cy - Math.cos(magnitude) * r;
+
+        bCtx.fillStyle = '#7c3aed';
+        bCtx.shadowColor = '#7c3aed'; bCtx.shadowBlur = 8;
+        bCtx.beginPath(); bCtx.arc(afterX, afterY, 6, 0, Math.PI * 2); bCtx.fill();
+        bCtx.shadowBlur = 0;
+
+        // Rotation arc
+        bCtx.strokeStyle = '#7c3aed'; bCtx.lineWidth = 2; bCtx.setLineDash([3, 3]);
+        bCtx.beginPath();
+        const startAngle = -Math.PI / 2;
+        const endAngle = startAngle + magnitude;
+        bCtx.arc(cx, cy, r, startAngle, endAngle);
+        bCtx.stroke();
+        bCtx.setLineDash([]);
+
+        // Legend
+        bCtx.fillStyle = '#3b82f6'; bCtx.font = '8px Manrope'; bCtx.textAlign = 'left';
+        bCtx.fillText('Before', 8, H - 18);
+        bCtx.fillStyle = '#7c3aed';
+        bCtx.fillText('After', 8, H - 8);
+      }
+    }
+
+    document.querySelectorAll('.gate-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentGate = btn.dataset.gate;
+        document.querySelectorAll('.gate-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateDisplay();
+      });
+    });
+
+    updateDisplay();
+  </script>
+</body>
+</html>

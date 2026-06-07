@@ -1,5 +1,6 @@
 {"robots":[
-  {"id":"bloch-sphere","name":"Bloch Sphere","description":"Interactive 3D qubit visualization — drag to rotate, apply X/Y/Z/H/S/T gates, see state vector update in real time.","storeType":"behavior","category":"visualization","icon":"🔮","iconBg":"#7c3aed"},
-  {"id":"entanglement","name":"Entanglement","description":"Create Bell pairs, measure one qubit, watch the other collapse. Run 100 experiments, see perfect correlation statistics.","storeType":"behavior","category":"phenomena","icon":"🔗","iconBg":"#7c3aed"},
-  {"id":"grovers","name":"Grover's Search","description":"Quantum search algorithm — watch amplitude amplification find the target. Compare √N quantum steps vs N classical steps.","storeType":"behavior","category":"algorithms","icon":"🔍","iconBg":"#7c3aed"}
+  {"id":"bloch-sphere","name":"Bloch Sphere","description":"3D qubit state visualization — drag to orbit, apply X/Y/Z/H/S/T gates, see state vector + probabilities update.","storeType":"behavior","category":"visualization","icon":"🔮","iconBg":"#7c3aed"},
+  {"id":"quantum-gates","name":"Quantum Gates Explorer","description":"Interactive gate reference — click any gate to see its matrix, effect on |0⟩ and |1⟩, Bloch sphere rotation, and properties.","storeType":"behavior","category":"education","icon":"🚪","iconBg":"#7c3aed"},
+  {"id":"entanglement","name":"Entanglement","description":"Bell pair experiment — create entangled qubits, measure Alice, watch Bob collapse. Run 100x to see 100% correlation.","storeType":"behavior","category":"phenomena","icon":"🔗","iconBg":"#7c3aed"},
+  {"id":"grovers","name":"Grover's Search","description":"Quantum search — watch amplitude amplification find the target in √N steps. Auto-run mode, adjustable qubits, measurement.","storeType":"behavior","category":"algorithms","icon":"🔍","iconBg":"#7c3aed"}
 ]}
