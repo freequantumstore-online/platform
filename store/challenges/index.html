@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Challenges — FreeQuantumStore</title>
+  <meta name="description" content="Timed quantum computing challenges. Build circuits, run algorithms, and test your understanding of quantum mechanics.">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--accent:#7c3aed;--paper:#0a0a0a;--ink:#fafafa;--muted:#737373;--panel:#141414;--line:#262626}
+    body{font-family:'Manrope',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
+    .container{max-width:900px;margin:0 auto;padding:0 1.5rem}
+    a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+    header{border-bottom:1px solid var(--line);padding:.75rem 0}
+    header .container{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--ink)}
+    .brand-emoji{font-size:1.5rem}
+    .brand-text{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:700}
+    .brand-tag{font-size:.68rem;color:var(--muted)}
+    nav{display:flex;gap:1rem;font-size:.82rem;font-weight:600;margin-left:auto}
+    nav a{color:var(--muted)}nav a:hover{color:var(--ink)}nav a.active{color:var(--ink)}
+    .hero{text-align:center;padding:2.5rem 0 1.5rem;border-bottom:1px solid var(--line)}
+    .hero h1{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:700;margin-bottom:.5rem}
+    .hero h1 em{color:var(--accent);font-style:normal}
+    .hero p{color:var(--muted);max-width:600px;margin:0 auto;font-size:.95rem}
+    .section{margin-bottom:2rem;padding-top:1rem}
+    .section h2{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:700;margin-bottom:.5rem;padding-bottom:.35rem;border-bottom:1px solid var(--line)}
+    .section p{color:#a3a3a3;font-size:.88rem}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.6rem;margin:.5rem 0}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:.85rem;transition:border-color .15s}
+    .card:hover{border-color:var(--accent)}
+    .card h4{font-size:.85rem;font-weight:700;margin-bottom:.2rem;color:var(--ink)}
+    .card p{font-size:.75rem;color:var(--muted);margin:0;line-height:1.5}
+    .card .meta{font-size:.65rem;color:#525252;margin-top:.25rem}
+    .difficulty{display:inline-block;padding:.1rem .45rem;border-radius:999px;font-size:.65rem;font-weight:700;margin-bottom:.35rem}
+    .difficulty-easy{background:rgba(16,185,129,0.15);color:#10b981}
+    .difficulty-medium{background:rgba(124,58,237,0.15);color:#a78bfa}
+    .difficulty-hard{background:rgba(239,68,68,0.15);color:#ef4444}
+    .start-btn{display:inline-block;margin-top:.5rem;padding:.3rem .7rem;border-radius:6px;font-size:.72rem;font-weight:700;background:var(--accent);color:#fff;text-decoration:none;transition:opacity .15s}
+    .start-btn:hover{opacity:.85;text-decoration:none}
+    .records{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:1.25rem;margin:1.5rem 0}
+    .records h3{font-size:.85rem;font-weight:700;margin-bottom:.5rem;color:var(--accent)}
+    .records p{font-size:.82rem;color:#525252;font-style:italic}
+    footer{border-top:1px solid var(--line);padding:1.5rem 0;text-align:center;font-size:.75rem;color:#525252}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="/" class="brand">
+        <span class="brand-emoji">&#9883;&#65039;</span>
+        <span><span class="brand-text">FreeQuantumStore</span><br><span class="brand-tag">Quantum simulations</span></span>
+      </a>
+      <nav><a href="/">Simulations</a><a href="/challenges/" class="active">Challenges</a><a href="/creators/">Creators</a><a href="/institute/">Institute</a></nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="hero">
+      <h1>Quantum <em>Challenges</em></h1>
+      <p>Put your quantum computing knowledge to the test. Build circuits, run algorithms, and verify your understanding of entanglement, superposition, and quantum gates.</p>
+    </section>
+
+    <section class="section">
+      <h2>Active Challenges</h2>
+      <div class="cards">
+        <div class="card">
+          <span class="difficulty difficulty-easy">Easy</span>
+          <h4>Build a Bell Pair Circuit</h4>
+          <p>Construct a circuit that creates a maximally entangled Bell state from two qubits. Apply H and CNOT in the right order.</p>
+          <div class="meta">Entanglement | ~2 min</div>
+          <a href="/circuits/qubit-sim/" class="start-btn">Start Challenge &#8594;</a>
+        </div>
+        <div class="card">
+          <span class="difficulty difficulty-hard">Hard</span>
+          <h4>Find the Marked Item with Grover's in Optimal Iterations</h4>
+          <p>Run Grover's search algorithm and find the marked item using exactly the optimal number of iterations for the given database size.</p>
+          <div class="meta">Quantum Algorithms | ~5 min</div>
+          <a href="/circuits/grovers/" class="start-btn">Start Challenge &#8594;</a>
+        </div>
+        <div class="card">
+          <span class="difficulty difficulty-medium">Medium</span>
+          <h4>Teleport a State with &#952;=90&#176; &#966;=45&#176;</h4>
+          <p>Use quantum teleportation to transfer a specific qubit state. Set up the Bell pair, apply corrections, and verify the output matches the target.</p>
+          <div class="meta">Quantum Protocols | ~4 min</div>
+          <a href="/circuits/teleportation/" class="start-btn">Start Challenge &#8594;</a>
+        </div>
+        <div class="card">
+          <span class="difficulty difficulty-easy">Easy</span>
+          <h4>Apply H-Z-H and Predict the Output</h4>
+          <p>Chain Hadamard, Pauli-Z, and Hadamard gates. Predict the final state before measuring. Understand gate composition through practice.</p>
+          <div class="meta">Quantum Gates | ~2 min</div>
+          <a href="/circuits/quantum-gates/" class="start-btn">Start Challenge &#8594;</a>
+        </div>
+        <div class="card">
+          <span class="difficulty difficulty-medium">Medium</span>
+          <h4>Get 100% Correlation in 100 Entanglement Experiments</h4>
+          <p>Run 100 measurements on entangled qubit pairs and achieve perfect correlation. Understand why entanglement guarantees correlated outcomes.</p>
+          <div class="meta">Quantum Mechanics | ~3 min</div>
+          <a href="/circuits/entanglement/" class="start-btn">Start Challenge &#8594;</a>
+        </div>
+      </div>
+    </section>
+
+    <div class="records">
+      <h3>Personal Records</h3>
+      <p>Coming soon &mdash; your best times and scores will be tracked here using local storage. Complete challenges to start building your record.</p>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <a href="/">FreeQuantumStore</a> &middot; <a href="/challenges/">Challenges</a> &middot; <a href="/institute/">Institute</a>
+    </div>
+  </footer>
+</body>
+</html>
