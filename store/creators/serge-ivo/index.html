@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Serge — FreeQuantumStore Creator</title>
+  <meta name="description" content="Serge has built 8 simulations on FreeQuantumStore.">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0a0a0a;color:#fafafa;font-family:'Manrope',system-ui,sans-serif;min-height:100vh}
+    .container{max-width:900px;margin:0 auto;padding:2rem 1.5rem}
+    a{color:#7c3aed;text-decoration:none}a:hover{text-decoration:underline}
+    header{border-bottom:1px solid #1a1a1a;padding:.75rem 1.5rem;display:flex;align-items:center;gap:1rem}
+    .brand{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:700;color:#fafafa;text-decoration:none}
+    nav{display:flex;gap:1rem;font-size:.82rem;font-weight:600;margin-left:auto}
+    nav a{color:#737373}nav a:hover{color:#fafafa}
+    .profile{display:flex;align-items:center;gap:1.25rem;margin-bottom:2rem;flex-wrap:wrap}
+    .profile h1{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:700}
+    .profile .stats{font-size:.85rem;color:#737373;margin-top:.25rem}
+    .profile .stats b{color:#7c3aed}
+    .badge{display:inline-block;font-size:.68rem;padding:.15rem .5rem;border-radius:4px;background:rgba(124,58,237,.1);color:#7c3aed;font-weight:600;margin-right:.25rem;margin-bottom:.25rem}
+    .github{display:inline-flex;align-items:center;gap:.35rem;padding:.3rem .7rem;border-radius:6px;border:1px solid #262626;color:#a3a3a3;font-size:.78rem;font-weight:600;margin-top:.5rem}
+    .github:hover{border-color:#7c3aed;color:#7c3aed;text-decoration:none}
+    h2{font-family:'Fraunces',serif;font-size:1.2rem;font-weight:700;margin-bottom:1rem}
+    h2 span{color:#7c3aed}
+    .items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.75rem}
+    .item-card{background:#141414;border:1px solid #1a1a1a;border-radius:10px;padding:1rem;display:flex;gap:.75rem;align-items:flex-start;transition:border-color .15s}
+    .item-card:hover{border-color:#7c3aed}
+    .item-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+    .item-name{font-size:.9rem;font-weight:700;margin-bottom:.15rem}
+    .item-desc{font-size:.72rem;color:#737373;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .contribution-bar{margin:1.5rem 0}
+    .bar-label{font-size:.78rem;color:#525252;margin-bottom:.35rem}
+    .bar{height:8px;background:#1a1a1a;border-radius:4px;overflow:hidden;display:flex}
+    .bar-fill{height:100%;border-radius:4px}
+    footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid #1a1a1a;text-align:center;font-size:.72rem;color:#404040}
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/" class="brand">⚛️ FreeQuantumStore</a>
+    <nav>
+      <a href="/">Simulations</a>
+      <a href="/creators/">Creators</a>
+      <a href="/institute/">Institute</a>
+    </nav>
+  </header>
+  <div class="container">
+    <div class="profile">
+      <img style="width:80px;height:80px;border-radius:20px;border:2px solid #262626" src="https://github.com/serge-ivo.png?size=96" alt="Serge" onerror="this.style.display='none'">
+      <div>
+        <h1>Serge</h1>
+        <div class="stats"><b>8</b> simulations on FreeQuantumStore</div>
+        <div style="margin-top:.35rem"><span class="badge">simulator</span> <span class="badge">protocols</span> <span class="badge">algorithms</span> <span class="badge">visualization</span> <span class="badge">education</span> <span class="badge">phenomena</span></div>
+        <a href="https://github.com/serge-ivo" class="github" target="_blank">GitHub @serge-ivo</a>
+      </div>
+    </div>
+
+    <div class="contribution-bar">
+      <div class="bar-label">Contributions by category</div>
+      <div class="bar">
+        <div class="bar-fill" style="width:12.5%;background:#f97316" title="simulator: 1"></div>
+        <div class="bar-fill" style="width:12.5%;background:#3b82f6" title="protocols: 1"></div>
+        <div class="bar-fill" style="width:25.0%;background:#10b981" title="algorithms: 2"></div>
+        <div class="bar-fill" style="width:12.5%;background:#7c3aed" title="visualization: 1"></div>
+        <div class="bar-fill" style="width:25.0%;background:#ef4444" title="education: 2"></div>
+        <div class="bar-fill" style="width:12.5%;background:#eab308" title="phenomena: 1"></div>
+      </div>
+      <div style="display:flex;gap:1rem;margin-top:.35rem;flex-wrap:wrap">
+        <span style="font-size:.68rem;color:#f97316">simulator (1)</span>
+        <span style="font-size:.68rem;color:#3b82f6">protocols (1)</span>
+        <span style="font-size:.68rem;color:#10b981">algorithms (2)</span>
+        <span style="font-size:.68rem;color:#7c3aed">visualization (1)</span>
+        <span style="font-size:.68rem;color:#ef4444">education (2)</span>
+        <span style="font-size:.68rem;color:#eab308">phenomena (1)</span>
+      </div>
+    </div>
+
+    <h2>Simulations by <span>Serge</span></h2>
+    <div class="items-grid">
+
+      <a href="/circuits/qubit-sim/" style="text-decoration:none;color:inherit" class="item-card">
+        <div class="item-icon" style="background:#3b82f6">💻</div>
+        <div class="item-info">
+          <div class="item-name">Circuit Simulator</div>
+          <div class="item-desc">Full quantum circuit editor — place H/X/Y/Z/S/T/CNOT/M gates, see state vector + probabilities. Up t</div>
+        </div>
+      </a>
+
+      <a href="/circuits/teleportation/" style="text-decoration:none;color:inherit" class="item-card">
+        <div class="item-icon" style="background:#7c3aed">✨</div>
+        <div class="item-info">
+          <div class="item-name">Quantum Teleportation</div>
+          <div class="item-desc">Step-by-step teleportation protocol. Create Bell pair, Alice measures, Bob corrects. Full 3-qubit st</div>
+        </div>
+      </a>
+
+      <a href="/circuits/deutsch-jozsa/" style="text-decoration:none;color:inherit" class="item-card">
+        <div class="item-icon" style="background:#7c3aed">⚡</div>
+        <div class="item-info">
+          <div class="item-name">Deutsch-Jozsa Algorithm</div>
+          <div class="item-desc">First proof of quantum speedup. Determine if f(x) is constant or balanced in ONE query vs 2^(n-1)+1.</div>
+        </div>
+      </a>
+
+      <a href="/circuits/bloch-sphere/" style="text-decoration:none;color:inherit" class="item-card">
+        <div class="item-icon" style="background:#7c3aed">🔮</div>
+        <div class="item-info">
+          <div class="item-name">Bloch Sphere</div>
+          <div class="item-desc">3D qubit visualization — apply gates, see state vector + probabilities. Drag to orbit. Keyboard shor</div>
+        </div>
+      </a>
+
+      <a href="/circuits/quantum-gates/" style="text-decoration:none;color:inherit" class="item-card">
+        <div class="item-icon" style="background:#7c3aed">🚪</div>
+        <div class="item-info">
+          <div class="item-name">Quantum Gates</div>
+          <div class="item-desc">Interactive gate reference — matrix, Bloch rotation, before/after states, properties for 10 standard</div>
+        </div>
+      </a>
+
+      <a href="/circuits/entanglement/" style="text-decoration:none;color:inherit" class="item-card">
+        <div class="item-icon" style="background:#7c3aed">🔗</div>
+        <div class="item-info">
+          <div class="item-name">Entanglement</div>
+          <div class="item-desc">Bell pair experiment with 100-shot statistics. Create, measure, see perfect correlation. Particle ef</div>
+        </div>
+      </a>
+
+      <a href="/circuits/grovers/" style="text-decoration:none;color:inherit" class="item-card">
+        <div class="item-icon" style="background:#7c3aed">🔍</div>
+        <div class="item-info">
+          <div class="item-name">Grover's Search</div>
+          <div class="item-desc">Amplitude amplification visualized. 2-6 qubits, adjustable target, auto-run, measurement. Classical </div>
+        </div>
+      </a>
+
+      <a href="/circuits/ai-tutor/" style="text-decoration:none;color:inherit" class="item-card">
+        <div class="item-icon" style="background:#3b82f6">🤖</div>
+        <div class="item-info">
+          <div class="item-name">AI Quantum Tutor</div>
+          <div class="item-desc">Chat with a quantum computing AI tutor. SmolLM runs in your browser via WebGPU. 11 pre-built answers</div>
+        </div>
+      </a>
+
+    </div>
+
+    <footer>
+      <a href="/creators/">All Creators</a> · <a href="/">FreeQuantumStore</a>
+    </footer>
+  </div>
+</body>
+</html>

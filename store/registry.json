@@ -1,1 +1,100 @@
-{"robots": [{"id": "qubit-sim", "name": "Circuit Simulator", "description": "Full quantum circuit editor \u2014 place H/X/Y/Z/S/T/CNOT/M gates, see state vector + probabilities. Up to 6 qubits, 100-shot sampling.", "storeType": "behavior", "category": "simulator", "icon": "\ud83d\udcbb", "iconBg": "#3b82f6"}, {"id": "teleportation", "name": "Quantum Teleportation", "description": "Step-by-step teleportation protocol. Create Bell pair, Alice measures, Bob corrects. Full 3-qubit state vector at each step.", "storeType": "behavior", "category": "protocols", "icon": "\u2728", "iconBg": "#7c3aed"}, {"id": "deutsch-jozsa", "name": "Deutsch-Jozsa Algorithm", "description": "First proof of quantum speedup. Determine if f(x) is constant or balanced in ONE query vs 2^(n-1)+1. Up to 5 qubits (32 inputs).", "storeType": "behavior", "category": "algorithms", "icon": "\u26a1", "iconBg": "#7c3aed"}, {"id": "bloch-sphere", "name": "Bloch Sphere", "description": "3D qubit visualization \u2014 apply gates, see state vector + probabilities. Drag to orbit. Keyboard shortcuts for all gates.", "storeType": "behavior", "category": "visualization", "icon": "\ud83d\udd2e", "iconBg": "#7c3aed"}, {"id": "quantum-gates", "name": "Quantum Gates", "description": "Interactive gate reference \u2014 matrix, Bloch rotation, before/after states, properties for 10 standard gates.", "storeType": "behavior", "category": "education", "icon": "\ud83d\udeaa", "iconBg": "#7c3aed"}, {"id": "entanglement", "name": "Entanglement", "description": "Bell pair experiment with 100-shot statistics. Create, measure, see perfect correlation. Particle effects.", "storeType": "behavior", "category": "phenomena", "icon": "\ud83d\udd17", "iconBg": "#7c3aed"}, {"id": "grovers", "name": "Grover's Search", "description": "Amplitude amplification visualized. 2-6 qubits, adjustable target, auto-run, measurement. Classical vs quantum comparison.", "storeType": "behavior", "category": "algorithms", "icon": "\ud83d\udd0d", "iconBg": "#7c3aed"}, {"id": "ai-tutor", "name": "AI Quantum Tutor", "description": "Chat with a quantum computing AI tutor. SmolLM runs in your browser via WebGPU. 11 pre-built answers as fallback.", "storeType": "model", "category": "education", "icon": "\ud83e\udd16", "iconBg": "#3b82f6"}]}
+{
+  "robots": [
+    {
+      "id": "qubit-sim",
+      "name": "Circuit Simulator",
+      "description": "Full quantum circuit editor \u2014 place H/X/Y/Z/S/T/CNOT/M gates, see state vector + probabilities. Up to 6 qubits, 100-shot sampling.",
+      "storeType": "behavior",
+      "category": "simulator",
+      "icon": "\ud83d\udcbb",
+      "iconBg": "#3b82f6",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "teleportation",
+      "name": "Quantum Teleportation",
+      "description": "Step-by-step teleportation protocol. Create Bell pair, Alice measures, Bob corrects. Full 3-qubit state vector at each step.",
+      "storeType": "behavior",
+      "category": "protocols",
+      "icon": "\u2728",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "deutsch-jozsa",
+      "name": "Deutsch-Jozsa Algorithm",
+      "description": "First proof of quantum speedup. Determine if f(x) is constant or balanced in ONE query vs 2^(n-1)+1. Up to 5 qubits (32 inputs).",
+      "storeType": "behavior",
+      "category": "algorithms",
+      "icon": "\u26a1",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "bloch-sphere",
+      "name": "Bloch Sphere",
+      "description": "3D qubit visualization \u2014 apply gates, see state vector + probabilities. Drag to orbit. Keyboard shortcuts for all gates.",
+      "storeType": "behavior",
+      "category": "visualization",
+      "icon": "\ud83d\udd2e",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "quantum-gates",
+      "name": "Quantum Gates",
+      "description": "Interactive gate reference \u2014 matrix, Bloch rotation, before/after states, properties for 10 standard gates.",
+      "storeType": "behavior",
+      "category": "education",
+      "icon": "\ud83d\udeaa",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "entanglement",
+      "name": "Entanglement",
+      "description": "Bell pair experiment with 100-shot statistics. Create, measure, see perfect correlation. Particle effects.",
+      "storeType": "behavior",
+      "category": "phenomena",
+      "icon": "\ud83d\udd17",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "grovers",
+      "name": "Grover's Search",
+      "description": "Amplitude amplification visualized. 2-6 qubits, adjustable target, auto-run, measurement. Classical vs quantum comparison.",
+      "storeType": "behavior",
+      "category": "algorithms",
+      "icon": "\ud83d\udd0d",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "ai-tutor",
+      "name": "AI Quantum Tutor",
+      "description": "Chat with a quantum computing AI tutor. SmolLM runs in your browser via WebGPU. 11 pre-built answers as fallback.",
+      "storeType": "model",
+      "category": "education",
+      "icon": "\ud83e\udd16",
+      "iconBg": "#3b82f6",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    }
+  ]
+}
