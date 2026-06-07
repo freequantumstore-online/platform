@@ -1,6 +1,18 @@
 {
   "robots": [
     {
+      "id": "bb84",
+      "name": "BB84 Key Distribution",
+      "description": "Quantum cryptography protocol. Alice sends qubits, Bob measures. Add Eve eavesdropper \u2014 see 25% error rate prove interception.",
+      "storeType": "behavior",
+      "category": "cryptography",
+      "icon": "\ud83d\udd10",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
       "id": "tomography",
       "name": "Quantum Tomography",
       "description": "Reconstruct an unknown qubit state from measurements in X/Y/Z bases. See density matrix and fidelity converge.",

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BB84 Quantum Key Distribution - FreeQuantumStore</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0f; color: #e0e0e0; font-family: 'Courier New', monospace; overflow-x: hidden; }
+  #app { display: grid; grid-template-rows: 44px 1fr; height: 100vh; }
+  header { background: #0f0f18; border-bottom: 1px solid #1a1a2a; display: flex; align-items: center; padding: 0 16px; gap: 10px; }
+  header h1 { font-size: 15px; color: #7c3aed; }
+  header button { background: #1a1a1a; border: 1px solid #222; color: #ccc; padding: 4px 12px; cursor: pointer; font-family: inherit; font-size: 12px; border-radius: 3px; }
+  header button:hover { border-color: #7c3aed; }
+  header button.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+  header label { font-size: 11px; color: #888; display: flex; align-items: center; gap: 4px; }
+  header input[type=checkbox] { accent-color: #7c3aed; }
+  #main { display: grid; grid-template-rows: auto 1fr auto; overflow-y: auto; padding: 16px; gap: 16px; }
+  .protocol-diagram { display: grid; grid-template-columns: 1fr 80px 1fr; gap: 12px; }
+  .party { background: #111118; border: 1px solid #1a1a2a; border-radius: 8px; padding: 16px; }
+  .party h2 { font-size: 14px; margin-bottom: 12px; text-align: center; }
+  .party.alice h2 { color: #7c3aed; }
+  .party.bob h2 { color: #0ea5e9; }
+  .party.eve h2 { color: #ef4444; }
+  .channel { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+  .channel .arrow { font-size: 20px; color: #333; }
+  .channel .label { font-size: 9px; color: #444; text-align: center; }
+  .bit-grid { display: grid; gap: 2px; margin-top: 8px; }
+  .bit-row { display: flex; align-items: center; gap: 2px; }
+  .bit-row .row-label { width: 70px; font-size: 9px; color: #555; text-align: right; padding-right: 4px; flex-shrink: 0; }
+  .bit-cell { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-size: 11px; border-radius: 3px; background: #0e0e18; border: 1px solid #1a1a2a; }
+  .bit-cell.match { background: #10b98120; border-color: #10b981; }
+  .bit-cell.mismatch { background: #ef444410; border-color: #ef444440; }
+  .bit-cell.key { background: #7c3aed20; border-color: #7c3aed; color: #7c3aed; font-weight: bold; }
+  .bit-cell.error { background: #ef444430; border-color: #ef4444; color: #ef4444; }
+  .bit-cell .basis-plus { color: #10b981; }
+  .bit-cell .basis-x { color: #f59e0b; }
+  .bit-cell .qubit { color: #7c3aed; }
+  .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .result-card { background: #111118; border: 1px solid #1a1a2a; border-radius: 8px; padding: 12px; }
+  .result-card h3 { font-size: 11px; color: #7c3aed; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .stat { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
+  .stat .label { color: #666; }
+  .stat .value { color: #ccc; font-weight: bold; }
+  .stat .value.good { color: #10b981; }
+  .stat .value.bad { color: #ef4444; }
+  .explanation { background: #0e0e18; border: 1px solid #1a1a2a; border-radius: 8px; padding: 16px; font-size: 11px; line-height: 1.7; color: #888; }
+  .explanation h3 { color: #7c3aed; font-size: 12px; margin-bottom: 8px; }
+  .explanation b { color: #ccc; }
+  .step-indicator { display: flex; gap: 4px; justify-content: center; margin-bottom: 12px; }
+  .step-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; background: #1a1a2a; color: #555; border: 1px solid #222; }
+  .step-dot.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+  .step-dot.done { background: #10b981; color: #fff; border-color: #10b981; }
+  canvas { display: block; width: 100%; height: 120px; }
+  .key-display { font-size: 16px; letter-spacing: 3px; text-align: center; padding: 8px; color: #7c3aed; font-weight: bold; word-break: break-all; }
+  .eve-warning { background: #ef444415; border: 1px solid #ef444440; border-radius: 6px; padding: 8px 12px; font-size: 11px; color: #ef4444; text-align: center; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>BB84 Quantum Key Distribution</h1>
+    <button id="btn-step">Step</button>
+    <button id="btn-run">Run All Steps</button>
+    <button id="btn-100">Run 100 Bits</button>
+    <button id="btn-reset">Reset</button>
+    <label><input type="checkbox" id="chk-eve"> Enable Eve (Eavesdropper)</label>
+  </header>
+  <div id="main">
+    <div class="step-indicator" id="steps"></div>
+
+    <div id="protocol-area"></div>
+
+    <div class="results" id="results" style="display:none;"></div>
+
+    <div class="explanation">
+      <h3>Why BB84 is Secure</h3>
+      <p>
+        BB84 exploits two fundamental quantum properties:<br><br>
+        <b>1. No-Cloning Theorem:</b> An unknown quantum state cannot be perfectly copied. Eve cannot copy Alice's qubits to measure them later without disturbing the originals.<br><br>
+        <b>2. Measurement Disturbs State:</b> When Eve measures a qubit in the wrong basis, she irreversibly changes its state. If Alice sent |0> in the + basis and Eve measures in the x basis, the qubit collapses to either |/> or |\> — then when Bob measures it, he gets a random result even if he chose the right basis.<br><br>
+        <b>Detection:</b> Alice and Bob sacrifice a portion of their shared key to check for errors. Without Eve, error rate is ~0%. With Eve intercepting all qubits, error rate is ~25%. Any significant error rate reveals eavesdropping, and they discard the key.<br><br>
+        <b>Key rate:</b> On average, Alice and Bob's bases match 50% of the time, so the raw key is half the transmitted bits. After error checking, the usable key is slightly shorter.
+      </p>
+    </div>
+  </div>
+</div>
+<script>
+const N_BITS = 16;
+const STEP_LABELS = [
+  'Alice chooses bits',
+  'Alice chooses bases',
+  'Alice sends qubits',
+  'Eve intercepts (if enabled)',
+  'Bob chooses bases',
+  'Bob measures',
+  'Compare bases',
+  'Extract key',
+];
+
+let currentStep = 0;
+let aliceBits = [];
+let aliceBases = [];
+let aliceQubits = [];
+let eveActive = false;
+let eveBases = [];
+let eveMeasured = [];
+let bobBases = [];
+let bobMeasured = [];
+let matchingBases = [];
+let sharedKey = { alice: [], bob: [] };
+let nBits = N_BITS;
+
+function reset() {
+  currentStep = 0;
+  aliceBits = [];
+  aliceBases = [];
+  aliceQubits = [];
+  eveBases = [];
+  eveMeasured = [];
+  bobBases = [];
+  bobMeasured = [];
+  matchingBases = [];
+  sharedKey = { alice: [], bob: [] };
+  eveActive = document.getElementById('chk-eve').checked;
+  renderAll();
+}
+
+function randomBit() { return Math.random() < 0.5 ? 0 : 1; }
+function randomBasis() { return Math.random() < 0.5 ? '+' : 'x'; }
+
+// Qubit encoding
+function encodeQubit(bit, basis) {
+  if (basis === '+') return bit === 0 ? '|0>' : '|1>';
+  else return bit === 0 ? '|/>' : '|\\>';
+}
+
+// Measurement
+function measureQubit(qubit, basis) {
+  const qBasis = (qubit === '|0>' || qubit === '|1>') ? '+' : 'x';
+  if (basis === qBasis) {
+    // Correct basis: deterministic
+    if (qubit === '|0>' || qubit === '|/>') return 0;
+    return 1;
+  }
+  // Wrong basis: random
+  return randomBit();
+}
+
+// Reconstruct qubit from measurement (for Eve)
+function reconstructQubit(bit, basis) {
+  return encodeQubit(bit, basis);
+}
+
+function executeStep() {
+  if (currentStep >= STEP_LABELS.length) return;
+
+  switch (currentStep) {
+    case 0: // Alice chooses bits
+      aliceBits = Array.from({ length: nBits }, randomBit);
+      break;
+    case 1: // Alice chooses bases
+      aliceBases = Array.from({ length: nBits }, randomBasis);
+      break;
+    case 2: // Alice sends qubits
+      aliceQubits = aliceBits.map((b, i) => encodeQubit(b, aliceBases[i]));
+      break;
+    case 3: // Eve intercepts
+      if (eveActive) {
+        eveBases = Array.from({ length: nBits }, randomBasis);
+        eveMeasured = aliceQubits.map((q, i) => measureQubit(q, eveBases[i]));
+        // Eve reconstructs and sends to Bob
+        aliceQubits = eveMeasured.map((b, i) => reconstructQubit(b, eveBases[i]));
+      }
+      break;
+    case 4: // Bob chooses bases
+      bobBases = Array.from({ length: nBits }, randomBasis);
+      break;
+    case 5: // Bob measures
+      bobMeasured = aliceQubits.map((q, i) => measureQubit(q, bobBases[i]));
+      break;
+    case 6: // Compare bases
+      matchingBases = aliceBases.map((ab, i) => ab === bobBases[i]);
+      break;
+    case 7: // Extract key
+      sharedKey.alice = [];
+      sharedKey.bob = [];
+      for (let i = 0; i < nBits; i++) {
+        if (matchingBases[i]) {
+          sharedKey.alice.push(aliceBits[i]);
+          sharedKey.bob.push(bobMeasured[i]);
+        }
+      }
+      break;
+  }
+
+  currentStep++;
+  renderAll();
+}
+
+function runAllSteps() {
+  while (currentStep < STEP_LABELS.length) {
+    executeStep();
+  }
+}
+
+function run100Bits() {
+  nBits = 100;
+  reset();
+  while (currentStep < STEP_LABELS.length) {
+    executeStep();
+  }
+  nBits = N_BITS; // restore for next reset
+}
+
+// --- Rendering ---
+function renderStepIndicator() {
+  const container = document.getElementById('steps');
+  container.innerHTML = STEP_LABELS.map((label, i) => {
+    const cls = i < currentStep ? 'step-dot done' : i === currentStep ? 'step-dot active' : 'step-dot';
+    return `<div class="${cls}" title="${label}">${i + 1}</div>`;
+  }).join('');
+}
+
+function renderProtocol() {
+  const area = document.getElementById('protocol-area');
+  let html = '<div class="protocol-diagram">';
+
+  // Alice side
+  html += '<div class="party alice"><h2>Alice (Sender)</h2>';
+  if (currentStep >= 1) {
+    html += '<div class="bit-row"><span class="row-label">Bits:</span>';
+    aliceBits.forEach(b => html += `<div class="bit-cell">${b}</div>`);
+    html += '</div>';
+  }
+  if (currentStep >= 2) {
+    html += '<div class="bit-row" style="margin-top:4px"><span class="row-label">Bases:</span>';
+    aliceBases.forEach(b => html += `<div class="bit-cell"><span class="${b === '+' ? 'basis-plus' : 'basis-x'}">${b}</span></div>`);
+    html += '</div>';
+  }
+  if (currentStep >= 3) {
+    html += '<div class="bit-row" style="margin-top:4px"><span class="row-label">Qubits:</span>';
+    aliceBits.map((b, i) => encodeQubit(b, aliceBases[i])).forEach(q => html += `<div class="bit-cell"><span class="qubit">${q}</span></div>`);
+    html += '</div>';
+  }
+  if (currentStep >= 7) {
+    html += '<div class="bit-row" style="margin-top:4px"><span class="row-label">Matching:</span>';
+    matchingBases.forEach((m, i) => html += `<div class="bit-cell ${m ? 'match' : 'mismatch'}">${m ? 'Y' : '-'}</div>`);
+    html += '</div>';
+  }
+  if (currentStep >= 8) {
+    html += '<div style="margin-top:8px;font-size:10px;color:#666;">Alice\'s Key:</div>';
+    html += '<div class="key-display">' + sharedKey.alice.join('') + '</div>';
+  }
+  html += '</div>';
+
+  // Channel
+  html += '<div class="channel">';
+  html += '<div class="label">Quantum<br>Channel</div>';
+  html += '<div class="arrow" style="color:#7c3aed">--></div>';
+  if (eveActive && currentStep >= 4) {
+    html += '<div class="party eve" style="padding:8px;border-radius:6px;"><h2 style="font-size:11px;">Eve</h2>';
+    html += '<div style="font-size:9px;color:#666;margin-top:4px;">Bases: ' + eveBases.slice(0, 16).map(b => `<span class="${b === '+' ? 'basis-plus' : 'basis-x'}">${b}</span>`).join(' ') + '</div>';
+    html += '<div style="font-size:9px;color:#666;margin-top:2px;">Measured: ' + eveMeasured.slice(0, 16).join(' ') + '</div>';
+    html += '</div>';
+    html += '<div class="arrow" style="color:#ef4444">--></div>';
+  }
+  html += '<div class="label">Public<br>Channel</div>';
+  html += '<div class="arrow" style="color:#0ea5e9"><--></div>';
+  html += '</div>';
+
+  // Bob side
+  html += '<div class="party bob"><h2>Bob (Receiver)</h2>';
+  if (currentStep >= 5) {
+    html += '<div class="bit-row"><span class="row-label">Bases:</span>';
+    bobBases.forEach(b => html += `<div class="bit-cell"><span class="${b === '+' ? 'basis-plus' : 'basis-x'}">${b}</span></div>`);
+    html += '</div>';
+  }
+  if (currentStep >= 6) {
+    html += '<div class="bit-row" style="margin-top:4px"><span class="row-label">Measured:</span>';
+    bobMeasured.forEach((b, i) => {
+      const isError = currentStep >= 7 && matchingBases[i] && b !== aliceBits[i];
+      html += `<div class="bit-cell ${isError ? 'error' : ''}">${b}</div>`;
+    });
+    html += '</div>';
+  }
+  if (currentStep >= 7) {
+    html += '<div class="bit-row" style="margin-top:4px"><span class="row-label">Matching:</span>';
+    matchingBases.forEach((m, i) => html += `<div class="bit-cell ${m ? 'match' : 'mismatch'}">${m ? 'Y' : '-'}</div>`);
+    html += '</div>';
+  }
+  if (currentStep >= 8) {
+    html += '<div style="margin-top:8px;font-size:10px;color:#666;">Bob\'s Key:</div>';
+    html += '<div class="key-display">' + sharedKey.bob.join('') + '</div>';
+
+    // Error check
+    let errors = 0;
+    for (let i = 0; i < sharedKey.alice.length; i++) {
+      if (sharedKey.alice[i] !== sharedKey.bob[i]) errors++;
+    }
+    if (errors > 0) {
+      html += `<div class="eve-warning">Errors detected in shared key! ${errors}/${sharedKey.alice.length} bits differ. Eavesdropper likely present!</div>`;
+    }
+  }
+  html += '</div>';
+
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+function renderResults() {
+  if (currentStep < 8) {
+    document.getElementById('results').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('results').style.display = 'grid';
+  const container = document.getElementById('results');
+
+  const totalBits = aliceBits.length;
+  const matchCount = matchingBases.filter(Boolean).length;
+  let errors = 0;
+  for (let i = 0; i < sharedKey.alice.length; i++) {
+    if (sharedKey.alice[i] !== sharedKey.bob[i]) errors++;
+  }
+  const errorRate = sharedKey.alice.length > 0 ? (errors / sharedKey.alice.length * 100).toFixed(1) : '0.0';
+  const keyLength = sharedKey.alice.length;
+  const keysMatch = errors === 0;
+
+  let html = '';
+
+  html += `<div class="result-card"><h3>Transmission</h3>
+    <div class="stat"><span class="label">Bits Sent</span><span class="value">${totalBits}</span></div>
+    <div class="stat"><span class="label">Bases Matched</span><span class="value">${matchCount}/${totalBits} (${(matchCount/totalBits*100).toFixed(0)}%)</span></div>
+    <div class="stat"><span class="label">Key Length</span><span class="value">${keyLength} bits</span></div>
+    <div class="stat"><span class="label">Key Rate</span><span class="value">${(keyLength/totalBits*100).toFixed(0)}%</span></div>
+  </div>`;
+
+  html += `<div class="result-card"><h3>Security</h3>
+    <div class="stat"><span class="label">Eve Active</span><span class="value ${eveActive ? 'bad' : 'good'}">${eveActive ? 'YES' : 'NO'}</span></div>
+    <div class="stat"><span class="label">Error Rate</span><span class="value ${errors > 0 ? 'bad' : 'good'}">${errorRate}%</span></div>
+    <div class="stat"><span class="label">Errors</span><span class="value ${errors > 0 ? 'bad' : 'good'}">${errors}/${keyLength}</span></div>
+    <div class="stat"><span class="label">Keys Match</span><span class="value ${keysMatch ? 'good' : 'bad'}">${keysMatch ? 'YES' : 'NO'}</span></div>
+    <div class="stat"><span class="label">Expected Error (w/ Eve)</span><span class="value">~25%</span></div>
+  </div>`;
+
+  html += `<div class="result-card"><h3>Shared Key</h3>
+    <div class="stat"><span class="label">Alice's Key</span><span class="value" style="word-break:break-all;max-width:150px;">${sharedKey.alice.join('')}</span></div>
+    <div class="stat"><span class="label">Bob's Key</span><span class="value" style="word-break:break-all;max-width:150px;">${sharedKey.bob.join('')}</span></div>
+    ${errors > 0 ? '<div class="eve-warning" style="margin-top:8px;font-size:10px;">Key compromised! Discard and retry.</div>' : '<div style="margin-top:8px;font-size:10px;color:#10b981;text-align:center;">Key is secure. Ready for encryption.</div>'}
+  </div>`;
+
+  html += `<div class="result-card"><h3>Comparison: No Pipeline</h3>
+    <div class="stat"><span class="label">Without Eve</span><span class="value good">0% errors, keys match</span></div>
+    <div class="stat"><span class="label">With Eve (all bits)</span><span class="value bad">~25% errors</span></div>
+    <div class="stat"><span class="label">Detection threshold</span><span class="value">>11% error rate</span></div>
+    <div class="stat"><span class="label">Classical equivalent</span><span class="value">Impossible (no no-cloning)</span></div>
+  </div>`;
+
+  container.innerHTML = html;
+}
+
+function renderAll() {
+  renderStepIndicator();
+  renderProtocol();
+  renderResults();
+}
+
+// --- Events ---
+document.getElementById('btn-step').addEventListener('click', executeStep);
+document.getElementById('btn-run').addEventListener('click', runAllSteps);
+document.getElementById('btn-100').addEventListener('click', run100Bits);
+document.getElementById('btn-reset').addEventListener('click', () => { nBits = N_BITS; reset(); });
+document.getElementById('chk-eve').addEventListener('change', () => { nBits = N_BITS; reset(); });
+
+// --- Init ---
+reset();
+</script>
+</body>
+</html>

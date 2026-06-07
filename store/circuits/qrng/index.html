@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Random Number Generator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e8;font-family:'Segoe UI',system-ui,sans-serif;overflow-x:hidden}
+h1{text-align:center;padding:16px;font-size:1.5rem;color:#7c3aed;letter-spacing:1px}
+.container{display:flex;flex-wrap:wrap;gap:14px;padding:0 14px 14px;max-width:1400px;margin:0 auto}
+.panel{background:#14141f;border:1px solid #2a2a3a;border-radius:10px;padding:14px;flex:1;min-width:300px}
+.panel h2{color:#a78bfa;font-size:.95rem;margin-bottom:10px;border-bottom:1px solid #2a2a3a;padding-bottom:5px}
+canvas{display:block;margin:0 auto;border-radius:6px}
+button{background:#7c3aed;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:.82rem;margin:3px}
+button:hover{background:#6d28d9}
+.controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
+label{font-size:.78rem;color:#a0a0b0}
+input[type=range]{width:120px;accent-color:#7c3aed}
+select{background:#1a1a2e;color:#e0e0e8;border:1px solid #3a3a5a;padding:4px 8px;border-radius:4px;font-size:.82rem}
+.output{font-family:'Courier New',monospace;font-size:.82rem;color:#c4b5fd;background:#0d0d18;padding:10px;border-radius:6px;margin-top:6px;min-height:60px;max-height:150px;overflow-y:auto;word-break:break-all;line-height:1.5}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:8px}
+.stat{background:#0d0d18;padding:8px;border-radius:6px;text-align:center}
+.stat .val{font-size:1.15rem;font-weight:700;color:#7c3aed}
+.stat .lbl{font-size:.68rem;color:#9ca3af}
+#blochCanvas{background:#0d0d18;border:1px solid #2a2a3a}
+#histCanvas,#streamCanvas,#chiCanvas{background:#0d0d18;border:1px solid #2a2a3a}
+.bit-stream{display:flex;flex-wrap:wrap;gap:2px;margin-top:6px}
+.bit{width:18px;height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;font-family:monospace}
+.bit-0{background:#1e1b4b;color:#818cf8}
+.bit-1{background:#4c1d95;color:#c4b5fd}
+.info{font-size:.76rem;color:#9ca3af;margin-top:8px;line-height:1.5}
+.gen-result{font-size:1.8rem;font-weight:700;color:#7c3aed;text-align:center;padding:16px;letter-spacing:3px}
+.password{font-family:'Courier New',monospace;font-size:1.1rem;color:#34d399;background:#0d0d18;padding:12px;border-radius:6px;text-align:center;margin-top:6px;letter-spacing:1px;word-break:break-all}
+.color-swatch{width:80px;height:80px;border-radius:10px;margin:8px auto;border:2px solid #3a3a5a}
+</style>
+</head>
+<body>
+<h1>Quantum Random Number Generator</h1>
+<div class="container">
+  <div class="panel" style="flex:1.2">
+    <h2>Single Qubit: H|0> then Measure</h2>
+    <canvas id="blochCanvas" width="260" height="260"></canvas>
+    <div style="text-align:center;margin-top:8px">
+      <button onclick="generateOneBit()">Generate 1 Bit</button>
+      <button onclick="generateStream(64)">Generate 64 Bits</button>
+      <button onclick="generateStream(256)">Generate 256 Bits</button>
+    </div>
+    <div class="gen-result" id="singleResult">--</div>
+    <div class="bit-stream" id="bitStream"></div>
+    <div class="stats">
+      <div class="stat"><div class="val" id="zerosCount">0</div><div class="lbl">Zeros</div></div>
+      <div class="stat"><div class="val" id="onesCount">0</div><div class="lbl">Ones</div></div>
+      <div class="stat"><div class="val" id="totalBits">0</div><div class="lbl">Total Bits</div></div>
+      <div class="stat"><div class="val" id="bitsPerSec">--</div><div class="lbl">Bits/sec</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Output Formats</h2>
+    <div class="controls">
+      <select id="formatSelect">
+        <option value="binary">Binary</option>
+        <option value="decimal">Decimal (0-255)</option>
+        <option value="hex">Hexadecimal</option>
+        <option value="dice">Dice Roll (1-6)</option>
+        <option value="coin">Coin Flip</option>
+        <option value="card">Card Draw</option>
+      </select>
+      <button onclick="generateFormatted()">Generate</button>
+      <button onclick="generateMany(20)">Generate 20</button>
+    </div>
+    <div class="output" id="formattedOutput">Select format and generate.</div>
+
+    <h2 style="margin-top:14px">Random Password</h2>
+    <div class="controls">
+      <label>Length: <span id="pwLenVal">16</span></label>
+      <input type="range" id="pwLen" min="8" max="64" value="16" oninput="document.getElementById('pwLenVal').textContent=this.value">
+      <button onclick="generatePassword()">Generate Password</button>
+    </div>
+    <div class="password" id="passwordOutput">Click to generate</div>
+
+    <h2 style="margin-top:14px">Random Color</h2>
+    <button onclick="generateColor()">Generate Color</button>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+      <div class="color-swatch" id="colorSwatch"></div>
+      <div>
+        <div id="colorHex" style="font-family:monospace;font-size:1.1rem;color:#c4b5fd">#------</div>
+        <div id="colorRGB" style="font-size:.78rem;color:#9ca3af"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="panel" style="flex:1">
+    <h2>Distribution Test (Quantum vs Math.random)</h2>
+    <div class="controls">
+      <button onclick="runDistTest(1000)">1,000 samples</button>
+      <button onclick="runDistTest(10000)">10,000 samples</button>
+      <button onclick="runDistTest(100000)">100,000 samples</button>
+    </div>
+    <canvas id="histCanvas" width="440" height="200"></canvas>
+    <div class="stats" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat"><div class="val" id="qMean">--</div><div class="lbl">Quantum Mean</div></div>
+      <div class="stat"><div class="val" id="cMean">--</div><div class="lbl">Math.random Mean</div></div>
+      <div class="stat"><div class="val" id="idealMean">0.500</div><div class="lbl">Ideal Mean</div></div>
+    </div>
+  </div>
+
+  <div class="panel" style="flex:1">
+    <h2>Chi-Squared Randomness Test</h2>
+    <canvas id="chiCanvas" width="440" height="200"></canvas>
+    <div class="controls">
+      <button onclick="runChiTest()">Run Chi-Squared Test</button>
+    </div>
+    <div id="chiResult" class="output" style="min-height:40px">Click to run test on last generated bits.</div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="panel" style="width:100%">
+    <h2>Bit Stream Visualization</h2>
+    <canvas id="streamCanvas" width="900" height="120"></canvas>
+    <div class="controls">
+      <button onclick="startContinuous()">Start Continuous Generation</button>
+      <button onclick="stopContinuous()">Stop</button>
+    </div>
+    <div class="info">
+      <strong>Why quantum random is truly random:</strong> When a qubit in state |+> = (|0>+|1>)/sqrt(2) is measured,
+      the outcome is fundamentally indeterminate — not just unknown, but physically undefined until measurement.
+      This is guaranteed by the Born rule and verified by Bell inequality violations: no local hidden variable theory
+      can reproduce quantum statistics. Unlike Math.random() which uses a deterministic PRNG seeded by the clock,
+      quantum randomness has no seed, no state, and no pattern — ever.
+    </div>
+  </div>
+</div>
+
+<script>
+// Quantum simulation
+let allBits = [];
+let zeros = 0, ones = 0;
+let genStartTime = 0;
+let continuousInterval = null;
+let blochAnimFrame = null;
+
+// Simulate H|0> measurement — true quantum random (simulated via crypto.getRandomValues for real entropy)
+function quantumBit() {
+  // Use crypto API for cryptographic randomness (closest to true quantum in browser)
+  const arr = new Uint8Array(1);
+  crypto.getRandomValues(arr);
+  return arr[0] & 1;
+}
+
+function quantumByte() {
+  const arr = new Uint8Array(1);
+  crypto.getRandomValues(arr);
+  return arr[0];
+}
+
+function quantumInt(max) {
+  // Rejection sampling for uniform distribution
+  const bits = Math.ceil(Math.log2(max));
+  const mask = (1 << bits) - 1;
+  let val;
+  do {
+    const arr = new Uint8Array(1);
+    crypto.getRandomValues(arr);
+    val = arr[0] & mask;
+  } while(val >= max);
+  return val;
+}
+
+// Bloch sphere
+function drawBlochSphere(theta=0, phi=0, measuring=false, result=null) {
+  const c = document.getElementById('blochCanvas');
+  const ctx = c.getContext('2d');
+  const W=c.width, H=c.height;
+  const cx=W/2, cy=H/2, r=100;
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0d0d18';
+  ctx.fillRect(0,0,W,H);
+
+  // Sphere outline
+  ctx.strokeStyle='#2a2a3a';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.stroke();
+
+  // Equator ellipse
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, r, r*0.3, 0, 0, Math.PI*2);
+  ctx.stroke();
+
+  // Axes
+  ctx.strokeStyle='#3a3a5a';
+  ctx.setLineDash([3,3]);
+  // Z axis
+  ctx.beginPath();
+  ctx.moveTo(cx, cy-r-10);
+  ctx.lineTo(cx, cy+r+10);
+  ctx.stroke();
+  // X axis
+  ctx.beginPath();
+  ctx.moveTo(cx-r-10, cy);
+  ctx.lineTo(cx+r+10, cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Labels
+  ctx.fillStyle='#6b7280';
+  ctx.font='12px monospace';
+  ctx.textAlign='center';
+  ctx.fillText('|0>', cx+12, cy-r-12);
+  ctx.fillText('|1>', cx+12, cy+r+16);
+  ctx.fillText('|+>', cx+r+14, cy+4);
+  ctx.fillText('|->', cx-r-14, cy+4);
+
+  // State vector
+  const sx = Math.sin(theta)*Math.cos(phi);
+  const sy = Math.sin(theta)*Math.sin(phi);
+  const sz = -Math.cos(theta); // -z for |0> at top
+
+  const px = cx + sx*r;
+  const py = cy + sz*r; // project Y to 2D depth
+  const projR = r * 0.3 * sy; // depth hint
+
+  // Vector line
+  ctx.strokeStyle = measuring ? '#fbbf24' : '#7c3aed';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(px, py);
+  ctx.stroke();
+
+  // Arrow tip
+  ctx.fillStyle = measuring ? '#fbbf24' : '#7c3aed';
+  ctx.beginPath();
+  ctx.arc(px, py, 6, 0, Math.PI*2);
+  ctx.fill();
+
+  // Glow effect
+  if(measuring) {
+    ctx.beginPath();
+    ctx.arc(px, py, 15, 0, Math.PI*2);
+    ctx.fillStyle='rgba(251,191,36,0.2)';
+    ctx.fill();
+  }
+
+  // Result display
+  if(result !== null) {
+    ctx.fillStyle = result === 0 ? '#818cf8' : '#c4b5fd';
+    ctx.font='bold 24px monospace';
+    ctx.textAlign='center';
+    ctx.fillText(result.toString(), cx, cy+r+36);
+  }
+}
+
+async function generateOneBit() {
+  genStartTime = performance.now();
+
+  // Animate: start at |0>, apply H (rotate to equator), then measure
+  const frames = 30;
+
+  // Phase 1: Rotate from |0> (theta=0) to |+> (theta=pi/2)
+  for(let f=0;f<frames;f++){
+    const t = f/frames;
+    const theta = t * Math.PI/2;
+    drawBlochSphere(theta, 0, false, null);
+    await new Promise(r=>requestAnimationFrame(r));
+  }
+
+  // Phase 2: At equator, flash measurement
+  drawBlochSphere(Math.PI/2, 0, true, null);
+  await new Promise(r=>setTimeout(r, 200));
+
+  // Measure
+  const bit = quantumBit();
+  if(bit===0) zeros++; else ones++;
+  allBits.push(bit);
+
+  // Phase 3: Collapse to |0> or |1>
+  const targetTheta = bit === 0 ? 0 : Math.PI;
+  for(let f=0;f<15;f++){
+    const t = f/15;
+    const theta = Math.PI/2 + t*(targetTheta - Math.PI/2);
+    drawBlochSphere(theta, 0, false, null);
+    await new Promise(r=>requestAnimationFrame(r));
+  }
+
+  drawBlochSphere(targetTheta, 0, false, bit);
+
+  document.getElementById('singleResult').textContent = bit;
+  updateCounters();
+  updateBitStream();
+}
+
+function generateStream(n) {
+  genStartTime = performance.now();
+  for(let i=0;i<n;i++){
+    const bit = quantumBit();
+    if(bit===0) zeros++; else ones++;
+    allBits.push(bit);
+  }
+  const elapsed = (performance.now() - genStartTime)/1000;
+
+  document.getElementById('singleResult').textContent = allBits.slice(-8).join('');
+  updateCounters();
+  updateBitStream();
+  document.getElementById('bitsPerSec').textContent = Math.round(n/elapsed).toLocaleString();
+  drawStreamCanvas();
+}
+
+function updateCounters() {
+  document.getElementById('zerosCount').textContent = zeros;
+  document.getElementById('onesCount').textContent = ones;
+  document.getElementById('totalBits').textContent = allBits.length;
+}
+
+function updateBitStream() {
+  const container = document.getElementById('bitStream');
+  const recent = allBits.slice(-100);
+  container.innerHTML = recent.map(b =>
+    `<div class="bit bit-${b}">${b}</div>`
+  ).join('');
+}
+
+// Formatted output
+function generateFormatted() {
+  const fmt = document.getElementById('formatSelect').value;
+  let result = '';
+  switch(fmt) {
+    case 'binary':
+      result = Array.from({length:8}, ()=>quantumBit()).join('');
+      break;
+    case 'decimal':
+      result = quantumByte().toString();
+      break;
+    case 'hex':
+      result = '0x' + quantumByte().toString(16).padStart(2,'0').toUpperCase();
+      break;
+    case 'dice':
+      result = (quantumInt(6) + 1).toString();
+      break;
+    case 'coin':
+      result = quantumBit() ? 'HEADS' : 'TAILS';
+      break;
+    case 'card': {
+      const suits = ['Spades','Hearts','Diamonds','Clubs'];
+      const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+      result = `${ranks[quantumInt(13)]} of ${suits[quantumInt(4)]}`;
+      break;
+    }
+  }
+  document.getElementById('formattedOutput').textContent = result;
+}
+
+function generateMany(n) {
+  const fmt = document.getElementById('formatSelect').value;
+  const results = [];
+  for(let i=0;i<n;i++){
+    switch(fmt) {
+      case 'binary': results.push(Array.from({length:8}, ()=>quantumBit()).join('')); break;
+      case 'decimal': results.push(quantumByte().toString()); break;
+      case 'hex': results.push('0x'+quantumByte().toString(16).padStart(2,'0').toUpperCase()); break;
+      case 'dice': results.push((quantumInt(6)+1).toString()); break;
+      case 'coin': results.push(quantumBit()?'H':'T'); break;
+      case 'card': {
+        const s=['S','H','D','C'];
+        const r=['A','2','3','4','5','6','7','8','9','T','J','Q','K'];
+        results.push(r[quantumInt(13)]+s[quantumInt(4)]);
+        break;
+      }
+    }
+  }
+  document.getElementById('formattedOutput').textContent = results.join('  ');
+}
+
+function generatePassword() {
+  const len = parseInt(document.getElementById('pwLen').value);
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,.<>?';
+  let pw = '';
+  for(let i=0;i<len;i++){
+    pw += chars[quantumInt(chars.length)];
+  }
+  document.getElementById('passwordOutput').textContent = pw;
+}
+
+function generateColor() {
+  const r = quantumByte(), g = quantumByte(), b = quantumByte();
+  const hex = '#' + [r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+  document.getElementById('colorSwatch').style.background = hex;
+  document.getElementById('colorHex').textContent = hex.toUpperCase();
+  document.getElementById('colorRGB').textContent = `rgb(${r}, ${g}, ${b})`;
+}
+
+// Distribution test
+function runDistTest(n) {
+  const qBins = new Array(256).fill(0);
+  const cBins = new Array(256).fill(0);
+
+  for(let i=0;i<n;i++){
+    qBins[quantumByte()]++;
+    cBins[Math.floor(Math.random()*256)]++;
+  }
+
+  const qMean = qBins.reduce((s,v,i)=>s+v*i,0) / n;
+  const cMean = cBins.reduce((s,v,i)=>s+v*i,0) / n;
+
+  document.getElementById('qMean').textContent = (qMean/255).toFixed(4);
+  document.getElementById('cMean').textContent = (cMean/255).toFixed(4);
+
+  // Draw histogram
+  const c = document.getElementById('histCanvas');
+  const ctx = c.getContext('2d');
+  const W=c.width, H=c.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0d0d18';
+  ctx.fillRect(0,0,W,H);
+
+  const margin={l:40,r:10,t:20,b:30};
+  const pw=W-margin.l-margin.r, ph=H-margin.t-margin.b;
+
+  // Bin into 32 buckets for display
+  const nBuckets = 32;
+  const qHist = new Array(nBuckets).fill(0);
+  const cHist = new Array(nBuckets).fill(0);
+  for(let i=0;i<256;i++){
+    const bi = Math.floor(i/256*nBuckets);
+    qHist[bi] += qBins[i];
+    cHist[bi] += cBins[i];
+  }
+
+  const maxH = Math.max(...qHist, ...cHist);
+  const barW = pw / nBuckets / 2 - 1;
+
+  for(let i=0;i<nBuckets;i++){
+    const x = margin.l + (i/nBuckets)*pw;
+    // Quantum bar
+    const qh = (qHist[i]/maxH)*ph;
+    ctx.fillStyle='#7c3aed';
+    ctx.fillRect(x, H-margin.b-qh, barW, qh);
+    // Classical bar
+    const ch = (cHist[i]/maxH)*ph;
+    ctx.fillStyle='#6b7280';
+    ctx.fillRect(x+barW+1, H-margin.b-ch, barW, ch);
+  }
+
+  // Expected line
+  const expected = n / nBuckets;
+  const ey = H - margin.b - (expected/maxH)*ph;
+  ctx.strokeStyle='#34d399';
+  ctx.lineWidth=1;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath();
+  ctx.moveTo(margin.l, ey);
+  ctx.lineTo(W-margin.r, ey);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Labels
+  ctx.fillStyle='#9ca3af';
+  ctx.font='10px sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('Byte Value (0-255)', W/2, H-4);
+  ctx.fillText(`n=${n.toLocaleString()}`, W/2, margin.t-4);
+
+  // Legend
+  ctx.textAlign='left';
+  ctx.fillStyle='#7c3aed';
+  ctx.fillRect(margin.l, margin.t, 10, 10);
+  ctx.fillStyle='#a78bfa';
+  ctx.font='9px sans-serif';
+  ctx.fillText('Quantum', margin.l+14, margin.t+9);
+  ctx.fillStyle='#6b7280';
+  ctx.fillRect(margin.l+80, margin.t, 10, 10);
+  ctx.fillStyle='#9ca3af';
+  ctx.fillText('Math.random()', margin.l+94, margin.t+9);
+}
+
+// Chi-squared test
+function runChiTest() {
+  if(allBits.length < 100) {
+    document.getElementById('chiResult').textContent = 'Need at least 100 bits. Generate more first.';
+    return;
+  }
+
+  // Test: divide bits into bytes, check byte distribution
+  const n = Math.floor(allBits.length / 8);
+  const observed = new Array(256).fill(0);
+  for(let i=0;i<n;i++){
+    let byte = 0;
+    for(let b=0;b<8;b++) byte = (byte<<1) | allBits[i*8+b];
+    observed[byte]++;
+  }
+
+  const expected = n / 256;
+  let chiSq = 0;
+  for(let i=0;i<256;i++){
+    chiSq += (observed[i]-expected)*(observed[i]-expected)/expected;
+  }
+
+  // Degrees of freedom = 255
+  // Critical value at p=0.05: ~293
+  // Critical value at p=0.01: ~310
+  const df = 255;
+  const criticalP05 = 293.25;
+  const criticalP01 = 310.46;
+  const pass = chiSq < criticalP05;
+
+  document.getElementById('chiResult').innerHTML =
+    `<strong>Chi-squared statistic:</strong> ${chiSq.toFixed(2)}<br>` +
+    `<strong>Degrees of freedom:</strong> ${df}<br>` +
+    `<strong>Critical value (p=0.05):</strong> ${criticalP05}<br>` +
+    `<strong>Result:</strong> <span style="color:${pass?'#34d399':'#f87171'}">${pass ? 'PASS - consistent with uniform random' : 'FAIL - deviates from uniform'}</span><br>` +
+    `<strong>Bytes tested:</strong> ${n}`;
+
+  // Draw chi-squared visualization
+  const c = document.getElementById('chiCanvas');
+  const ctx = c.getContext('2d');
+  const W=c.width, H=c.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0d0d18';
+  ctx.fillRect(0,0,W,H);
+
+  const margin={l:50,r:20,t:20,b:30};
+  const pw=W-margin.l-margin.r, ph=H-margin.t-margin.b;
+
+  // Draw chi-squared distribution (approximate)
+  const maxX = 400;
+  ctx.strokeStyle='#3a3a5a';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(margin.l, H-margin.b);
+  ctx.lineTo(W-margin.r, H-margin.b);
+  ctx.stroke();
+
+  // Bell curve approximation for chi-sq(255)
+  const chiMean = df;
+  const chiStd = Math.sqrt(2*df);
+  const maxPdf = 1/(chiStd*Math.sqrt(2*Math.PI));
+
+  ctx.strokeStyle='#6b7280';
+  ctx.lineWidth=1.5;
+  ctx.beginPath();
+  for(let px=0;px<pw;px++){
+    const x = (px/pw)*maxX;
+    const z = (x-chiMean)/chiStd;
+    const pdf = Math.exp(-z*z/2) / (chiStd*Math.sqrt(2*Math.PI));
+    const y = H-margin.b-(pdf/maxPdf)*ph*0.9;
+    if(px===0) ctx.moveTo(margin.l+px, y); else ctx.lineTo(margin.l+px, y);
+  }
+  ctx.stroke();
+
+  // Critical region
+  const critX = margin.l + (criticalP05/maxX)*pw;
+  ctx.fillStyle='rgba(248,113,113,0.15)';
+  ctx.fillRect(critX, margin.t, W-margin.r-critX, ph);
+
+  // Our value
+  const ourX = margin.l + (Math.min(chiSq,maxX)/maxX)*pw;
+  ctx.strokeStyle = pass ? '#34d399' : '#f87171';
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(ourX, margin.t);
+  ctx.lineTo(ourX, H-margin.b);
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle='#9ca3af';
+  ctx.font='10px sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('Chi-squared value', W/2, H-4);
+  ctx.fillStyle = pass ? '#34d399' : '#f87171';
+  ctx.fillText(`X2=${chiSq.toFixed(1)}`, ourX, margin.t-4);
+  ctx.fillStyle='#f87171';
+  ctx.font='9px sans-serif';
+  ctx.fillText('reject', critX+20, margin.t+14);
+}
+
+// Stream visualization
+function drawStreamCanvas() {
+  const c = document.getElementById('streamCanvas');
+  const ctx = c.getContext('2d');
+  const W=c.width, H=c.height;
+  ctx.clearRect(0,0,W,H);
+
+  const recent = allBits.slice(-W*2);
+  const rows = Math.ceil(H/6);
+  const cols = Math.floor(W/4);
+
+  for(let i=0;i<Math.min(recent.length, rows*cols);i++){
+    const row = Math.floor(i/cols);
+    const col = i%cols;
+    const bit = recent[i];
+    ctx.fillStyle = bit ? '#7c3aed' : '#1e1b4b';
+    ctx.fillRect(col*4, row*6, 3, 5);
+  }
+}
+
+let streamRunning = false;
+function startContinuous() {
+  if(streamRunning) return;
+  streamRunning = true;
+  function tick() {
+    if(!streamRunning) return;
+    for(let i=0;i<32;i++){
+      const bit = quantumBit();
+      if(bit===0) zeros++; else ones++;
+      allBits.push(bit);
+    }
+    if(allBits.length > 100000) allBits = allBits.slice(-50000);
+    updateCounters();
+    drawStreamCanvas();
+    continuousInterval = requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function stopContinuous() {
+  streamRunning = false;
+  if(continuousInterval) cancelAnimationFrame(continuousInterval);
+}
+
+// Init
+drawBlochSphere(0, 0, false, null);
+</script>
+</body>
+</html>
