@@ -28,54 +28,25 @@ html = html.replace(/<script>\s*\(function\(\)\s*\{\s*\/\/ Handle login callback
 html = html.replace(/\s*<!-- API_KEYS_SECTION -->[\s\S]*?<\/section>/g, '');
 html = html.replace(/\s*<section class="container"[^>]*>[\s\S]*?Bring Your Own API Key[\s\S]*?<\/section>/g, '');
 
-const agents = registry.agents;
+const agents = registry.robots || registry.agents || [];
 
 // --- Compute tab counts ---
-const tabCounts = { all: agents.length, library: 0, model: 0, agent: 0 };
+const tabCounts = { all: agents.length, firmware: 0, model: 0, behavior: 0 };
 agents.forEach(a => {
   if (a.storeType && tabCounts[a.storeType] !== undefined) tabCounts[a.storeType]++;
 });
 
 // --- Type label + style mapping ---
 function getTypeTag(agent) {
-  if (agent.evolution) {
-    // Evolved agent — show accuracy% or example count as second tag
-    const secondTag = agent.evolution.accuracy
-      ? `${agent.evolution.accuracy}%`
-      : `${agent.evolution.examples} examples`;
-    return {
-      label: 'Evolved',
-      style: 'background:rgba(217,119,6,0.15);color:#fbbf24',
-      secondTag,
-    };
-  }
-
-  switch (agent.type) {
-    case 'heuristic':
-      return {
-        label: 'Heuristic',
-        style: 'background:rgba(217,119,6,0.15);color:#fbbf24',
-        secondTag: agent.modelSize || '0MB',
-      };
+  switch (agent.storeType) {
+    case 'firmware':
+      return { label: 'Simulator', style: 'background:rgba(59,130,246,0.15);color:#60a5fa', secondTag: '' };
     case 'model':
-      return {
-        label: 'Model',
-        style: 'background:rgba(59,130,246,0.15);color:#60a5fa',
-        secondTag: agent.modelSize || '0MB',
-      };
-    case 'built-in-ai':
-      return {
-        label: 'Built-in AI',
-        style: 'background:rgba(5,150,105,0.2);color:#34d399',
-        secondTag: agent.modelSize || '0MB',
-      };
+      return { label: 'Education', style: 'background:rgba(16,185,129,0.15);color:#34d399', secondTag: '' };
+    case 'behavior':
+      return { label: 'Interactive', style: 'background:rgba(124,58,237,0.15);color:#a78bfa', secondTag: '' };
     default:
-      // developer-tools and any other types
-      return {
-        label: agent.type.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' '),
-        style: 'background:rgba(124,58,237,0.15);color:#a78bfa',
-        secondTag: agent.modelSize || '0MB',
-      };
+      return { label: agent.storeType || 'Unknown', style: 'background:rgba(163,163,163,0.15);color:#a3a3a3', secondTag: '' };
   }
 }
 
