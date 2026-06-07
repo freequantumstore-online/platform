@@ -48,6 +48,11 @@
     td{padding:.5rem .6rem;border:1px solid var(--line);color:#a3a3a3}
     tr:hover td{background:var(--panel)}
     .note{background:#1a1625;border-left:3px solid var(--accent);padding:.6rem .85rem;margin:.5rem 0;border-radius:0 6px 6px 0;font-size:.82rem;color:#c4b5fd}
+    .kids-explain{display:none;background:#1a1a2e;border:1px solid #2d2d5e;border-radius:10px;padding:.75rem 1rem;margin:.75rem 0;font-size:.85rem;line-height:1.6}
+    .kids-explain .emoji{font-size:1.2rem;margin-right:.35rem}
+    .kids-explain b{color:#fbbf24}
+    body.kids-mode .kids-explain{display:block}
+    body.kids-mode .section h2::after{content:" \1F9D2";font-size:.8em}
     .grid-diagram{display:grid;gap:2px;margin:1rem auto;width:fit-content}
     .grid-cell{width:28px;height:28px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700}
     .grid-cell.data{background:#1a1625;color:var(--accent);border-color:var(--accent)}
@@ -70,6 +75,7 @@
         <a href="/institute/hardware">Hardware</a>
         <a href="/institute/error-correction" class="active">QEC</a>
         <a href="/">Simulations</a>
+        <button onclick="document.body.classList.toggle('kids-mode');this.textContent=document.body.classList.contains('kids-mode')?'\uD83C\uDF93 Expert':'\uD83E\uDDD2 Kids'" style="padding:.25rem .6rem;border-radius:6px;border:1px solid #333;background:#171717;color:#fafafa;font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit">\uD83E\uDDD2 Kids</button>
       </nav>
     </div>
   </header>
@@ -127,6 +133,7 @@ Required logical error rate: &lt; 10&#8315;&#185;&#8304; per gate
         <li><strong>Crosstalk:</strong> Operations on one qubit unintentionally affect neighboring qubits. Grows worse with qubit density.</li>
         <li><strong>Cosmic rays / TLS:</strong> High-energy particles and two-level system defects cause sporadic, correlated errors across multiple qubits.</li>
       </ul>
+      <div class="kids-explain"><span class="emoji">&#128221;</span> Imagine writing a message but some letters randomly change. If you write "CAT" once, an error might make it "CXT" and you can't fix it. But if you write "CAT CAT CAT" three times, and one becomes "CXT CAT CAT", you can vote — two say CAT, so the answer is CAT! That's <b>quantum error correction</b> — use extra qubits to vote on the right answer.</div>
     </section>
 
     <!-- CLASSICAL VS QUANTUM ERROR CORRECTION -->
@@ -428,6 +435,7 @@ To reach p_L = 10&#8315;&#185;&#8304; (needed for Shor's algorithm):
       </table>
 
       <div class="note">The T gate is the expensive operation. Surface codes cannot implement T transversally (Eastin-Knill theorem). Instead, "magic states" |T&#10217; are prepared, distilled (error-corrected separately), and injected. Each logical T gate costs ~15 physical magic states after one round of distillation, or ~225 after two rounds. This is the primary bottleneck for fault-tolerant quantum computing.</div>
+      <div class="kids-explain"><span class="emoji">&#127915;</span> A <b>surface code</b> is like a quilt made of qubits. You arrange qubits in a checkerboard pattern, and the "checker" qubits constantly check their neighbors for mistakes. If one qubit flips by accident, its neighbors notice and the computer can fix it — like spell-check for quantum states! Google's Willow chip proved this actually works in real hardware.</div>
     </section>
 
     <!-- LOGICAL VS PHYSICAL -->

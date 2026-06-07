@@ -41,6 +41,11 @@
     .card h4 a{color:var(--ink)}.card p{font-size:.75rem;color:var(--muted);margin:0;line-height:1.5}
     .card .meta{font-size:.65rem;color:#525252;margin-top:.25rem}
     footer{border-top:1px solid var(--line);padding:1.5rem 0;text-align:center;font-size:.75rem;color:#525252}
+    .kids-explain{display:none;background:#1a1a2e;border:1px solid #2d2d5e;border-radius:10px;padding:.75rem 1rem;margin:.75rem 0;font-size:.85rem;line-height:1.6}
+    .kids-explain .emoji{font-size:1.2rem;margin-right:.35rem}
+    .kids-explain b{color:#fbbf24}
+    body.kids-mode .kids-explain{display:block}
+    body.kids-mode .section h2::after{content:" \1F9D2";font-size:.8em}
     /* Subpage extras */
     .math{font-family:'Courier New',monospace;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:.75rem 1rem;margin:.5rem 0;font-size:.85rem;color:#e5e5e5;overflow-x:auto;white-space:pre-wrap}
     .math-inline{font-family:'Courier New',monospace;color:#e5e5e5;background:var(--panel);padding:.1rem .35rem;border-radius:3px;font-size:.84rem}
@@ -79,6 +84,7 @@
         <a href="/institute/hardware">Hardware</a>
         <a href="/institute/error-correction">QEC</a>
         <a href="/">Simulations</a>
+        <button onclick="document.body.classList.toggle('kids-mode');this.textContent=document.body.classList.contains('kids-mode')?'\uD83C\uDF93 Expert':'\uD83E\uDDD2 Kids'" style="padding:.25rem .6rem;border-radius:6px;border:1px solid #333;background:#171717;color:#fafafa;font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit">\uD83E\uDDD2 Kids</button>
       </nav>
     </div>
   </header>
@@ -146,6 +152,7 @@ where &#945;, &#946; &#8712; &#8450; and |&#945;|&#178; + |&#946;|&#178; = 1</di
       </ul>
 
       <div class="note">A qubit is not "both 0 and 1 at the same time" in the sense of storing two values. It holds a single quantum state that, upon measurement, probabilistically yields one outcome. The power of quantum computing lies in manipulating amplitudes before measurement to make the desired answer overwhelmingly likely.</div>
+      <div class="kids-explain"><span class="emoji">&#127922;</span> Imagine a coin spinning in the air. While it's spinning, it's both heads AND tails at the same time! That's what a <b>qubit</b> is — a tiny switch that can be both ON and OFF until you look at it. When you look (measure), it picks one.</div>
     </section>
 
     <!-- DIRAC NOTATION -->
@@ -317,6 +324,7 @@ All four: apply {I, X, Z, XZ} to the first qubit of |&#934;&#8314;&#10217;</div>
         <li><strong>Quantum key distribution (E91)</strong> — Bell inequality violations certify secure key generation</li>
         <li><strong>Entanglement swapping</strong> — entangle particles that have never interacted, via Bell measurement on intermediaries</li>
       </ul>
+      <div class="kids-explain"><span class="emoji">&#129510;</span> Imagine you have two magic socks. You put one in your drawer and mail the other to your friend. When you look at yours and it's red, your friend's is ALWAYS blue — instantly! That's <b>entanglement</b>. Einstein called it "spooky action at a distance."</div>
     </section>
 
     <!-- GHZ STATES -->
@@ -539,6 +547,7 @@ But: trapped ion gates are 100-1000x slower,
 so wall-clock time per circuit is comparable.</div>
 
       <div class="note">Current error rates (~0.1-1% per gate) are too high for algorithms like Shor's that require millions of gates. This is why quantum error correction is essential for fault-tolerant quantum computing. See the <a href="/institute/error-correction">QEC page</a> for details.</div>
+      <div class="kids-explain"><span class="emoji">&#129531;</span> Qubits are like soap bubbles — beautiful but fragile. If anything touches them (heat, light, vibration), they pop! <b>Decoherence</b> is when the quantum magic fades because the qubit interacted with the outside world.</div>
     </section>
   </div>
 

@@ -48,6 +48,11 @@
     td{padding:.5rem .6rem;border:1px solid var(--line);color:#a3a3a3}
     tr:hover td{background:var(--panel)}
     .note{background:#1a1625;border-left:3px solid var(--accent);padding:.6rem .85rem;margin:.5rem 0;border-radius:0 6px 6px 0;font-size:.82rem;color:#c4b5fd}
+    .kids-explain{display:none;background:#1a1a2e;border:1px solid #2d2d5e;border-radius:10px;padding:.75rem 1rem;margin:.75rem 0;font-size:.85rem;line-height:1.6}
+    .kids-explain .emoji{font-size:1.2rem;margin-right:.35rem}
+    .kids-explain b{color:#fbbf24}
+    body.kids-mode .kids-explain{display:block}
+    body.kids-mode .section h2::after{content:" \1F9D2";font-size:.8em}
     .gate-box{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid var(--accent);border-radius:4px;font-size:.75rem;font-weight:700;color:var(--accent);vertical-align:middle;margin:0 .15rem}
     .gate-wire{display:inline-block;width:30px;height:2px;background:var(--muted);vertical-align:middle}
   </style>
@@ -67,6 +72,7 @@
         <a href="/institute/hardware">Hardware</a>
         <a href="/institute/error-correction">QEC</a>
         <a href="/">Simulations</a>
+        <button onclick="document.body.classList.toggle('kids-mode');this.textContent=document.body.classList.contains('kids-mode')?'\uD83C\uDF93 Expert':'\uD83E\uDDD2 Kids'" style="padding:.25rem .6rem;border-radius:6px;border:1px solid #333;background:#171717;color:#fafafa;font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit">\uD83E\uDDD2 Kids</button>
       </nav>
     </div>
   </header>
@@ -159,6 +165,7 @@
 CNOT:         &#9473;&#9473;&#9679;&#9473;&#9473;       (control: filled dot)
               &#9473;&#9473;&#8853;&#9473;&#9473;       (target: circled plus)
 Measurement:  &#9473;&#9473;[M]&#9473;&#9473;     (meter symbol, produces classical bit)</div>
+      <div class="kids-explain"><span class="emoji">&#128682;</span> Quantum gates are like magic doors. When a qubit walks through a door, it changes. The <b>X gate</b> is like a mirror — it flips 0 to 1 and 1 to 0. The <b>H gate</b> is the coolest — it makes the qubit go into BOTH states at once!</div>
     </section>
 
     <!-- IDENTITY -->
@@ -355,6 +362,7 @@ Control in |+&#10217;: CNOT(|+0&#10217;) = |&#934;&#8314;&#10217; = (|00&#10217;
         <li><strong>Classical reversible computing:</strong> CNOT is the quantum analog of the classical XOR gate</li>
         <li><strong>Basis change symmetry:</strong> In the Hadamard basis, CNOT with control and target swapped: (H&#8855;H)CNOT(H&#8855;H) = CNOT with reversed roles</li>
       </ul>
+      <div class="kids-explain"><span class="emoji">&#129309;</span> The <b>CNOT gate</b> is like a buddy system. One qubit is the boss (control), and the other is the helper (target). If the boss says "1," the helper flips. If the boss says "0," the helper stays the same. It's how qubits learn to work together!</div>
     </section>
 
     <!-- TWO-QUBIT GATES -->

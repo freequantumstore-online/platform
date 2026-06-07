@@ -48,6 +48,11 @@
     td{padding:.5rem .6rem;border:1px solid var(--line);color:#a3a3a3}
     tr:hover td{background:var(--panel)}
     .note{background:#1a1625;border-left:3px solid var(--accent);padding:.6rem .85rem;margin:.5rem 0;border-radius:0 6px 6px 0;font-size:.82rem;color:#c4b5fd}
+    .kids-explain{display:none;background:#1a1a2e;border:1px solid #2d2d5e;border-radius:10px;padding:.75rem 1rem;margin:.75rem 0;font-size:.85rem;line-height:1.6}
+    .kids-explain .emoji{font-size:1.2rem;margin-right:.35rem}
+    .kids-explain b{color:#fbbf24}
+    body.kids-mode .kids-explain{display:block}
+    body.kids-mode .section h2::after{content:" \1F9D2";font-size:.8em}
     .step{counter-increment:step;margin:.5rem 0;padding-left:2rem;position:relative}
     .step::before{content:counter(step);position:absolute;left:0;top:0;width:1.5rem;height:1.5rem;background:var(--accent);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700}
     .steps{counter-reset:step;margin:.5rem 0}
@@ -68,6 +73,7 @@
         <a href="/institute/hardware">Hardware</a>
         <a href="/institute/error-correction">QEC</a>
         <a href="/">Simulations</a>
+        <button onclick="document.body.classList.toggle('kids-mode');this.textContent=document.body.classList.contains('kids-mode')?'\uD83C\uDF93 Expert':'\uD83E\uDDD2 Kids'" style="padding:.25rem .6rem;border-radius:6px;border:1px solid #333;background:#171717;color:#fafafa;font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit">\uD83E\uDDD2 Kids</button>
       </nav>
     </div>
   </header>
@@ -294,6 +300,7 @@ Factors: 3 &#215; 5 = 15 &#10003;</div>
       </table>
 
       <p><strong>Reference:</strong> <a href="https://arxiv.org/abs/quant-ph/9508027">Shor (1994)</a></p>
+      <div class="kids-explain"><span class="emoji">&#128272;</span> Most internet security works like this: take two huge prime numbers and multiply them. Easy! But figuring out WHICH two numbers were multiplied? That takes a normal computer millions of years. <b>Shor's algorithm</b> can do it in minutes. That's why quantum computers could break most encryption!</div>
     </section>
 
     <!-- GROVER -->
@@ -411,6 +418,7 @@ to estimate M first, then run Grover with correct iteration count.</div>
       </ul>
 
       <p><strong>Reference:</strong> <a href="https://arxiv.org/abs/quant-ph/9605043">Grover (1996)</a></p>
+      <div class="kids-explain"><span class="emoji">&#128218;</span> Imagine finding one specific book in a library with 1 million books. A normal computer checks one book at a time (1 million tries). A quantum computer using <b>Grover's algorithm</b> only needs about 1,000 tries! It's like having a magic bookmark that gets brighter and brighter until it shows you the right book.</div>
     </section>
 
     <!-- QPE -->
