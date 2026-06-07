@@ -1,6 +1,42 @@
 {
   "robots": [
     {
+      "id": "qrng",
+      "name": "Quantum Random Generator",
+      "description": "True quantum randomness from superposition. Password generator, dice, cards. Chi-squared test vs Math.random().",
+      "storeType": "behavior",
+      "category": "applications",
+      "icon": "\ud83c\udfb2",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "vqe",
+      "name": "VQE Visualizer",
+      "description": "Find H2 ground state energy. 2D energy landscape heatmap, animated gradient descent, bond length potential curve.",
+      "storeType": "behavior",
+      "category": "algorithms",
+      "icon": "\ud83e\uddea",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "error-sim",
+      "name": "Error Correction Sim",
+      "description": "3-qubit bit-flip and phase-flip codes. Inject errors, watch syndrome detect + correct. Monte Carlo 1000-trial analysis.",
+      "storeType": "behavior",
+      "category": "error-correction",
+      "icon": "\ud83d\udee1\ufe0f",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
       "id": "bb84",
       "name": "BB84 Key Distribution",
       "description": "Quantum cryptography protocol. Alice sends qubits, Bob measures. Add Eve eavesdropper \u2014 see 25% error rate prove interception.",
