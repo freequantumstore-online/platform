@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Computing Institute — Powered by Zensical</title>
+  <meta name="description" content="Free educational resources for quantum computing. Tutorials, research papers, courses, tools, and community.">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--accent:#7c3aed;--paper:#0a0a0a;--ink:#fafafa;--muted:#737373;--panel:#141414;--line:#262626}
+    body{font-family:'Manrope',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
+    .container{max-width:900px;margin:0 auto;padding:0 1.5rem}
+    a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+    header{border-bottom:1px solid var(--line);padding:.75rem 0}
+    header .container{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--ink)}
+    .brand-emoji{font-size:1.5rem}
+    .brand-text{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:700}
+    .brand-tag{font-size:.68rem;color:var(--muted)}
+    nav{display:flex;gap:1rem;font-size:.82rem;font-weight:600;margin-left:auto}
+    nav a{color:var(--muted)}nav a:hover{color:var(--ink)}
+    .hero{text-align:center;padding:2.5rem 0 1.5rem;border-bottom:1px solid var(--line)}
+    .hero h1{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:700;margin-bottom:.5rem}
+    .hero h1 em{color:var(--accent);font-style:normal}
+    .hero p{color:var(--muted);max-width:600px;margin:0 auto;font-size:.95rem}
+    .powered{font-size:.72rem;color:#525252;margin-top:.75rem}
+    .powered a{color:#525252}
+    .toc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:1rem 1.25rem;margin:1.5rem 0}
+    .toc h3{font-size:.85rem;font-weight:700;margin-bottom:.5rem;color:var(--accent)}
+    .toc ul{list-style:none;padding:0;columns:2}
+    .toc li{margin:.2rem 0}.toc a{color:#a3a3a3;font-size:.82rem}.toc a:hover{color:var(--ink)}
+    .section{margin-bottom:2rem;padding-top:1rem}
+    .section h2{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:700;margin-bottom:.5rem;padding-bottom:.35rem;border-bottom:1px solid var(--line)}
+    .section h3{font-size:.95rem;font-weight:700;margin:1rem 0 .35rem;color:#e5e5e5}
+    .section p,.section li{color:#a3a3a3;font-size:.88rem}
+    ul{padding-left:1.25rem;margin:.35rem 0}
+    li{margin-bottom:.3rem}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.6rem;margin:.5rem 0}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:.85rem;transition:border-color .15s}
+    .card:hover{border-color:var(--accent)}
+    .card h4{font-size:.85rem;font-weight:700;margin-bottom:.2rem}
+    .card h4 a{color:var(--ink)}.card p{font-size:.75rem;color:var(--muted);margin:0;line-height:1.5}
+    .card .meta{font-size:.65rem;color:#525252;margin-top:.25rem}
+    footer{border-top:1px solid var(--line);padding:1.5rem 0;text-align:center;font-size:.75rem;color:#525252}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="/institute/" class="brand">
+        <span class="brand-emoji">⚛️</span>
+        <span><span class="brand-text">Quantum Institute</span><br><span class="brand-tag">Powered by <a href="https://zensical.org" style="color:#525252">Zensical</a></span></span>
+      </a>
+      <nav>
+        <a href="/">Simulations</a>
+        <a href="/institute/">Institute</a>
+        <a href="https://zensical.org">Zensical</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="hero">
+      <h1>Quantum Computing <em>Institute</em></h1>
+      <p>Everything you need to learn quantum computing. Free courses, research papers, open-source tools, and community resources — curated for practitioners.</p>
+      <p class="powered">Knowledge base powered by <a href="https://zensical.org">Zensical</a> — open educational infrastructure</p>
+    </section>
+
+    <nav class="toc">
+      <h3>Contents</h3>
+      <ul>
+        <li><a href="#fundamentals">Fundamentals</a></li>
+        <li><a href="#courses">Free Courses</a></li>
+        <li><a href="#textbooks">Textbooks</a></li>
+        <li><a href="#research">Key Research Papers</a></li>
+        <li><a href="#tools">Open-Source Tools</a></li>
+        <li><a href="#hardware">Hardware Providers</a></li>
+        <li><a href="#algorithms">Algorithm Reference</a></li>
+        <li><a href="#community">Community</a></li>
+      </ul>
+    </nav>
+
+    <section class="section" id="fundamentals">
+      <h2>Fundamentals</h2>
+      <h3>What is a qubit?</h3>
+      <p>A classical bit is 0 or 1. A qubit is a quantum system that can be in a superposition of |0> and |1> simultaneously: |psi> = alpha|0> + beta|1>, where |alpha|^2 + |beta|^2 = 1. When measured, it collapses to |0> with probability |alpha|^2 or |1> with probability |beta|^2.</p>
+
+      <h3>Key Concepts</h3>
+      <ul>
+        <li><strong>Superposition</strong> — a qubit exists in multiple states simultaneously until measured</li>
+        <li><strong>Entanglement</strong> — two qubits become correlated; measuring one instantly determines the other</li>
+        <li><strong>Interference</strong> — quantum amplitudes can add (constructive) or cancel (destructive)</li>
+        <li><strong>Decoherence</strong> — quantum states are fragile; interaction with environment destroys superposition</li>
+        <li><strong>No-cloning theorem</strong> — you cannot copy an unknown quantum state</li>
+        <li><strong>Quantum gates</strong> — unitary operations that transform qubit states (analogous to classical logic gates)</li>
+      </ul>
+
+      <h3>Quantum vs Classical</h3>
+      <ul>
+        <li>N classical bits = one state out of 2^N. N qubits = superposition of ALL 2^N states simultaneously.</li>
+        <li>Quantum parallelism: a single operation acts on all 2^N states at once</li>
+        <li>But: you can only extract limited information through measurement</li>
+        <li>Quantum advantage requires clever algorithms that amplify correct answers</li>
+      </ul>
+    </section>
+
+    <section class="section" id="courses">
+      <h2>Free Courses</h2>
+      <div class="cards">
+        <div class="card">
+          <h4><a href="https://qiskit.org/learn">IBM Qiskit Textbook</a></h4>
+          <p>The most comprehensive free quantum computing course. Interactive Jupyter notebooks, real hardware access.</p>
+          <div class="meta">IBM Research | Free | Beginner to Advanced</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://quantum.country">Quantum Country</a></h4>
+          <p>By Andy Matuschak & Michael Nielsen. Uses spaced repetition to teach quantum computing concepts that stick.</p>
+          <div class="meta">Free | Interactive essays | Beginner</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://www.edx.org/learn/quantum-computing/university-of-chicago-introduction-to-quantum-computing">EdX: Intro to QC (UChicago)</a></h4>
+          <p>University-level course covering qubits, gates, circuits, algorithms. Free to audit.</p>
+          <div class="meta">University of Chicago | Free audit | 8 weeks</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://brilliant.org/courses/quantum-computing/">Brilliant: Quantum Computing</a></h4>
+          <p>Interactive lessons with puzzles and visualizations. Great for visual learners.</p>
+          <div class="meta">Brilliant.org | Free trial | Beginner</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://www.coursera.org/learn/quantum-computing-algorithms">Coursera: QC for Everyone</a></h4>
+          <p>No physics prerequisite. Covers core concepts, Shor's algorithm, and quantum error correction.</p>
+          <div class="meta">University of Toronto | Free audit</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://cs.uwaterloo.ca/~watrous/QC-notes/">John Watrous QC Lecture Notes</a></h4>
+          <p>Rigorous graduate-level notes. The gold standard for mathematical foundations of QC.</p>
+          <div class="meta">University of Waterloo | Free | Advanced</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="textbooks">
+      <h2>Textbooks</h2>
+      <ul>
+        <li><strong><a href="https://www.cambridge.org/us/academic/subjects/physics/quantum-physics-quantum-information-and-quantum-computation/quantum-computation-and-quantum-information-10th-anniversary-edition">Nielsen & Chuang</a></strong> — "Quantum Computation and Quantum Information." THE textbook. Covers everything from linear algebra to quantum error correction.</li>
+        <li><strong><a href="https://www.scottaaronson.com/democritus/">Scott Aaronson: Quantum Computing Since Democritus</a></strong> — Accessible, witty overview connecting QC to complexity theory and philosophy.</li>
+        <li><strong><a href="https://www.cambridge.org/core/books/quantum-computing-an-applied-approach/3A29FFD90643F2B98F0B0B6A3E9533D0">Hidary: Quantum Computing: An Applied Approach</a></strong> — Practical, code-heavy approach with Qiskit examples.</li>
+        <li><strong><a href="https://profmattstrassler.com/articles-and-posts/particle-physics-basics/quantum-field-theory/">Strassler: Quantum Field Theory</a></strong> — For those wanting deeper physics foundations.</li>
+        <li><strong><a href="https://arxiv.org/abs/1804.03719">Preskill: Quantum Computing in the NISQ era and beyond</a></strong> — Seminal paper on near-term quantum computing. Free on arXiv.</li>
+      </ul>
+    </section>
+
+    <section class="section" id="research">
+      <h2>Key Research Papers</h2>
+      <div class="cards">
+        <div class="card">
+          <h4><a href="https://arxiv.org/abs/quant-ph/9508027">Shor (1994): Polynomial-Time Factoring</a></h4>
+          <p>The paper that started it all. Quantum algorithm for factoring integers exponentially faster than classical.</p>
+          <div class="meta">Peter Shor | Bell Labs | 25,000+ citations</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://arxiv.org/abs/quant-ph/9605043">Grover (1996): Quantum Search</a></h4>
+          <p>Quadratic speedup for unstructured search. O(sqrt(N)) vs O(N). The most broadly applicable quantum algorithm.</p>
+          <div class="meta">Lov Grover | Bell Labs</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://www.nature.com/articles/s41586-019-1666-5">Google (2019): Quantum Supremacy</a></h4>
+          <p>First demonstration of quantum advantage — Sycamore processor performed a task in 200 seconds that would take a supercomputer 10,000 years.</p>
+          <div class="meta">Google AI Quantum | Nature</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://arxiv.org/abs/1411.4028">Peruzzo et al (2014): VQE</a></h4>
+          <p>Variational Quantum Eigensolver — hybrid quantum-classical algorithm for molecular simulation. Foundation for quantum chemistry.</p>
+          <div class="meta">Nature Communications</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://arxiv.org/abs/1411.4028">Farhi et al (2014): QAOA</a></h4>
+          <p>Quantum Approximate Optimization Algorithm for combinatorial problems. Key algorithm for near-term devices.</p>
+          <div class="meta">MIT</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://arxiv.org/abs/2303.15338">IBM (2023): Error Mitigation at Scale</a></h4>
+          <p>Demonstrated useful quantum computation on noisy 127-qubit Eagle processor using error mitigation techniques.</p>
+          <div class="meta">IBM Quantum | Nature</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="tools">
+      <h2>Open-Source Tools</h2>
+      <div class="cards">
+        <div class="card">
+          <h4><a href="https://github.com/Qiskit/qiskit">Qiskit (IBM)</a></h4>
+          <p>Most popular QC framework. Python. Full stack: circuit design, simulation, real hardware access, education.</p>
+          <div class="meta">Python | 15K+ stars | Apache 2.0</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://github.com/quantumlib/Cirq">Cirq (Google)</a></h4>
+          <p>Framework for NISQ circuits. Optimized for Google's processors. Great for research.</p>
+          <div class="meta">Python | 4K+ stars | Apache 2.0</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://github.com/PennyLaneAI/pennylane">PennyLane (Xanadu)</a></h4>
+          <p>Quantum machine learning library. Differentiable quantum computing. JAX/TensorFlow/PyTorch integration.</p>
+          <div class="meta">Python | 2K+ stars | Apache 2.0</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://github.com/amazon-braket/amazon-braket-sdk-python">Amazon Braket SDK</a></h4>
+          <p>Access IonQ, Rigetti, and OQC quantum hardware through AWS. Pay-per-task pricing.</p>
+          <div class="meta">Python | AWS | Apache 2.0</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://github.com/QuTech-Delft/quantumsim">QuantumSim</a></h4>
+          <p>GPU-accelerated density matrix simulator. For simulating noise and decoherence.</p>
+          <div class="meta">Python | QuTech Delft</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://github.com/qutip/qutip">QuTiP</a></h4>
+          <p>Quantum Toolbox in Python. Open quantum systems, master equations, optimal control.</p>
+          <div class="meta">Python | 1.8K+ stars | BSD</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="hardware">
+      <h2>Quantum Hardware Providers</h2>
+      <div class="cards">
+        <div class="card">
+          <h4><a href="https://quantum.ibm.com">IBM Quantum</a></h4>
+          <p>Free access to 127+ qubit processors. Eagle (127q), Heron (133q). Qiskit Runtime for optimized execution.</p>
+          <div class="meta">Superconducting | Free tier available</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://quantumai.google">Google Quantum AI</a></h4>
+          <p>Sycamore processor (72 qubits). Focus on quantum error correction and supremacy experiments.</p>
+          <div class="meta">Superconducting | Research access</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://ionq.com">IonQ</a></h4>
+          <p>Trapped-ion quantum computers. High gate fidelity, all-to-all connectivity. Available via AWS Braket and Azure.</p>
+          <div class="meta">Trapped ion | Cloud access</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://www.rigetti.com">Rigetti</a></h4>
+          <p>Superconducting processors with hybrid quantum-classical architecture. Quil language and Forest SDK.</p>
+          <div class="meta">Superconducting | AWS Braket</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://www.quantinuum.com">Quantinuum (Honeywell)</a></h4>
+          <p>H-Series trapped-ion processors. Highest quantum volume. Focus on enterprise applications.</p>
+          <div class="meta">Trapped ion | Enterprise</div>
+        </div>
+        <div class="card">
+          <h4><a href="https://www.xanadu.ai">Xanadu</a></h4>
+          <p>Photonic quantum computing. Borealis processor. Strawberry Fields and PennyLane frameworks.</p>
+          <div class="meta">Photonic | Cloud access</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="algorithms">
+      <h2>Algorithm Reference</h2>
+      <h3>Near-term (NISQ) Algorithms</h3>
+      <ul>
+        <li><strong>VQE</strong> — Variational Quantum Eigensolver. Find ground state energy of molecules. Hybrid quantum-classical.</li>
+        <li><strong>QAOA</strong> — Quantum Approximate Optimization. Solve combinatorial problems (MaxCut, TSP).</li>
+        <li><strong>Quantum ML</strong> — Quantum kernel methods, quantum neural networks, quantum feature maps.</li>
+        <li><strong>Quantum simulation</strong> — Simulate quantum systems (materials, chemistry) that are hard classically.</li>
+      </ul>
+
+      <h3>Fault-Tolerant Algorithms (future hardware)</h3>
+      <ul>
+        <li><strong>Shor's algorithm</strong> — Factor large integers in polynomial time. Breaks RSA encryption.</li>
+        <li><strong>Grover's algorithm</strong> — Search unsorted database in O(sqrt(N)). Quadratic speedup.</li>
+        <li><strong>Quantum Phase Estimation</strong> — Estimate eigenvalues. Building block for Shor and HHL.</li>
+        <li><strong>HHL algorithm</strong> — Solve linear systems exponentially faster (with caveats).</li>
+        <li><strong>Quantum walks</strong> — Graph traversal with quantum speedup. Used in element distinctness.</li>
+        <li><strong>QFT</strong> — Quantum Fourier Transform. Core of Shor's and QPE. Exponentially faster than FFT.</li>
+      </ul>
+
+      <h3>Quantum Error Correction</h3>
+      <ul>
+        <li><strong>Surface codes</strong> — Most promising error correction code. Threshold ~1% error rate.</li>
+        <li><strong>Steane code</strong> — [[7,1,3]] code. Encodes 1 logical qubit in 7 physical qubits.</li>
+        <li><strong>Bacon-Shor code</strong> — Subsystem code with simpler syndrome measurement.</li>
+        <li><strong>Color codes</strong> — Transversal gates, topological protection.</li>
+      </ul>
+    </section>
+
+    <section class="section" id="community">
+      <h2>Community & News</h2>
+      <div class="cards">
+        <div class="card">
+          <h4><a href="https://quantumcomputing.stackexchange.com">Quantum Computing Stack Exchange</a></h4>
+          <p>Q&A community for quantum computing researchers and practitioners. 20K+ questions.</p>
+        </div>
+        <div class="card">
+          <h4><a href="https://www.reddit.com/r/QuantumComputing/">r/QuantumComputing</a></h4>
+          <p>Active Reddit community. News, papers, discussions, career advice. 150K+ members.</p>
+        </div>
+        <div class="card">
+          <h4><a href="https://thequantuminsider.com">The Quantum Insider</a></h4>
+          <p>Industry news, company tracker, market analysis. The Bloomberg of quantum.</p>
+        </div>
+        <div class="card">
+          <h4><a href="https://www.scottaaronson.com/blog/">Shtetl-Optimized (Scott Aaronson)</a></h4>
+          <p>The most influential quantum computing blog. Complexity theory, quantum supremacy debates.</p>
+        </div>
+        <div class="card">
+          <h4><a href="https://arxiv.org/list/quant-ph/new">arXiv quant-ph</a></h4>
+          <p>Daily preprints in quantum physics and quantum computing. Where research drops first.</p>
+        </div>
+        <div class="card">
+          <h4><a href="https://qiskit.org/events">Qiskit Events</a></h4>
+          <p>IBM's quantum community events. Qiskit Global Summer School, hackathons, workshops.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="container">
+      <a href="/">FreeQuantumStore</a> · <a href="/institute/">Institute</a> · Powered by <a href="https://zensical.org">Zensical</a>
+    </div>
+  </footer>
+</body>
+</html>
