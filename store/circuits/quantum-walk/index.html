@@ -1,163 +1,553 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Quantum Walk - FreeQuantumStore</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Random Walk - FreeQuantumStore</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0a0a;color:#e0e0e0;font-family:system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
-h1{color:#7c3aed;margin:18px 0 6px;font-size:1.4rem}
-.desc{color:#999;font-size:.85rem;margin-bottom:12px;max-width:700px;text-align:center}
-canvas{background:#111;border:1px solid #333;border-radius:6px}
-.controls{display:flex;gap:12px;margin:12px 0;flex-wrap:wrap;justify-content:center}
-.controls label{font-size:.8rem;color:#aaa}
-.controls input[type=range]{width:80px;accent-color:#7c3aed}
-.controls button{background:#7c3aed;color:#fff;border:none;padding:5px 14px;border-radius:4px;font-size:.8rem;cursor:pointer;font-weight:600}
-.legend{display:flex;gap:16px;font-size:.75rem;margin:4px}
+:root{--bg:#0a0a0a;--text:#fafafa;--muted:#888;--accent:#7c3aed;--panel:#141414;--line:#1e1e1e;--green:#22c55e;--red:#ef4444;--blue:#3b82f6}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',system-ui,sans-serif;min-height:100vh}
+.back{position:fixed;top:12px;left:14px;color:var(--muted);font-size:.82rem;text-decoration:none;z-index:100;font-weight:600}
+.back:hover{color:var(--accent)}
+header{text-align:center;padding:2rem 1rem 1rem}
+header h1{font-size:1.6rem;font-weight:700;color:var(--accent)}
+header p{color:var(--muted);font-size:.85rem;max-width:620px;margin:.4rem auto 0}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1200px;margin:0 auto;padding:0 14px 2rem}
+.full-width{grid-column:1/-1}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.panel h2{font-size:.9rem;font-weight:700;color:var(--accent);margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+canvas{display:block;background:#0d0d0d;border:1px solid var(--line);border-radius:6px;width:100%}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+button{background:var(--accent);color:#fff;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600;font-family:inherit;transition:background .15s}
+button:hover{background:#6d28d9}
+button.secondary{background:transparent;border:1px solid var(--line);color:var(--muted)}
+button.secondary:hover{border-color:var(--accent);color:var(--text)}
+label{font-size:.78rem;color:var(--muted)}
+input[type=range]{width:100px;accent-color:var(--accent)}
+select{background:var(--panel);color:var(--text);border:1px solid var(--line);padding:4px 8px;border-radius:4px;font-size:.78rem;font-family:inherit}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.stat{background:#0d0d0d;padding:8px;border-radius:6px;text-align:center}
+.stat .val{font-size:1rem;font-weight:700;color:var(--accent)}
+.stat .lbl{font-size:.65rem;color:var(--muted)}
+.legend{display:flex;gap:14px;font-size:.72rem;color:var(--muted);margin-top:6px}
 .legend span{display:flex;align-items:center;gap:4px}
-.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
-footer{margin-top:auto;padding:12px;font-size:.7rem;color:#555}
-footer a{color:#7c3aed;text-decoration:none}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.info-box{font-size:.72rem;color:var(--muted);background:#0d0d0d;padding:10px;border-radius:6px;margin-top:8px;line-height:1.6}
+.coin-matrix{font-family:'Courier New',monospace;font-size:.75rem;color:#a78bfa;background:#0d0d0d;padding:10px;border-radius:6px;margin-top:8px;line-height:1.6;text-align:center}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
-<h1>Quantum Walk</h1>
-<p class="desc">1D discrete quantum walk vs classical random walk. Quantum spreads ballistically (linear), classical diffuses (sqrt).</p>
-<canvas id="c" width="740" height="380"></canvas>
-<div class="controls">
-<label>Steps: <input type="range" id="steps" min="5" max="100" value="40"><span id="stepsV">40</span></label>
-<label>Coin bias: <input type="range" id="bias" min="0" max="100" value="50"><span id="biasV">50</span>%</label>
-<button id="run">Walk</button>
-<button id="reset">Reset</button>
+<a href="/" class="back">FreeQuantumStore</a>
+<header>
+<h1>Quantum Random Walk</h1>
+<p>Compare classical vs quantum random walk on a line. The quantum walker spreads quadratically faster. Control the coin operator and watch the probability distribution evolve.</p>
+</header>
+
+<div class="layout">
+  <div class="panel full-width">
+    <h2>Probability Distribution</h2>
+    <canvas id="mainCanvas" width="1100" height="350"></canvas>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--accent)"></span> Quantum</span>
+      <span><span class="dot" style="background:var(--red)"></span> Classical</span>
+      <span><span class="dot" style="background:#555"></span> Position axis (origin = start)</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Walk Controls</h2>
+    <div class="controls">
+      <label>Steps: <span id="stepsVal">50</span></label>
+      <input type="range" id="stepsSlider" min="10" max="150" value="50">
+    </div>
+    <div class="controls">
+      <label>Coin operator:</label>
+      <select id="coinSelect">
+        <option value="hadamard">Hadamard</option>
+        <option value="grover">Grover (DFT)</option>
+        <option value="custom">Custom (theta)</option>
+      </select>
+    </div>
+    <div class="controls" id="customCoinControls" style="display:none">
+      <label>Theta: <span id="thetaVal">45</span>deg</label>
+      <input type="range" id="thetaSlider" min="1" max="179" value="45">
+    </div>
+    <div class="controls">
+      <label>Initial spin:</label>
+      <select id="spinSelect">
+        <option value="right">|R> (right)</option>
+        <option value="left">|L> (left)</option>
+        <option value="sym">|R>+|L> (symmetric)</option>
+      </select>
+    </div>
+    <div class="controls">
+      <label>Animation speed:</label>
+      <select id="speedSelect">
+        <option value="1">Slow</option>
+        <option value="3" selected>Medium</option>
+        <option value="8">Fast</option>
+        <option value="0">Instant</option>
+      </select>
+    </div>
+    <div class="controls">
+      <button onclick="runWalk()">Walk</button>
+      <button onclick="resetWalk()" class="secondary">Reset</button>
+      <button onclick="runComparison()" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">Compare All Coins</button>
+    </div>
+    <div class="coin-matrix" id="coinMatrix">
+      Coin: Hadamard
+      [ 1/sqrt(2)   1/sqrt(2) ]
+      [ 1/sqrt(2)  -1/sqrt(2) ]
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Statistics</h2>
+    <div class="stats">
+      <div class="stat"><div class="val" id="qStdVal">--</div><div class="lbl">Quantum Std Dev</div></div>
+      <div class="stat"><div class="val" id="cStdVal">--</div><div class="lbl">Classical Std Dev</div></div>
+      <div class="stat"><div class="val" id="ratioVal">--</div><div class="lbl">Ratio (Q/C)</div></div>
+      <div class="stat"><div class="val" id="stepVal">0</div><div class="lbl">Current Step</div></div>
+    </div>
+    <h2 style="margin-top:14px">Spreading Over Time</h2>
+    <canvas id="spreadCanvas" width="520" height="200"></canvas>
+    <div class="info-box">
+      <strong>Key insight:</strong> Classical random walk variance grows as O(T) (std dev ~ sqrt(T)).
+      Quantum walk variance grows as O(T^2) (std dev ~ T). This quadratic speedup
+      is the foundation for quantum search algorithms on graphs.
+    </div>
+  </div>
 </div>
-<div class="legend">
-<span><span class="dot" style="background:#7c3aed"></span> Quantum</span>
-<span><span class="dot" style="background:#ef4444"></span> Classical</span>
-<span><span class="dot" style="background:#666"></span> Position axis</span>
-</div>
-<footer><a href="/circuits/">FreeQuantumStore</a></footer>
+
 <script>
-const C=document.getElementById('c'),ctx=C.getContext('2d');
-const W=740,H=380;
-let nSteps=40,coinBias=0.5;
-let qProbs=[],cProbs=[],animStep=0,animating=false;
+const mainC = document.getElementById('mainCanvas');
+const mainCtx = mainC.getContext('2d');
+const spreadC = document.getElementById('spreadCanvas');
+const spreadCtx = spreadC.getContext('2d');
 
-document.getElementById('steps').addEventListener('input',e=>{nSteps=+e.value;document.getElementById('stepsV').textContent=nSteps;});
-document.getElementById('bias').addEventListener('input',e=>{coinBias=e.value/100;document.getElementById('biasV').textContent=e.value;});
+let nSteps = 50;
+let coinType = 'hadamard';
+let customTheta = Math.PI / 4;
+let spinInit = 'right';
+let qProbs = [], cProbs = [];
+let animStep = 0, animating = false, animSpeed = 3;
+let spreadData = { q: [], c: [] };
 
-function quantumWalk(T,theta){
-  const N=2*T+1,mid=T;
-  // state: [left, right] amplitudes at each position
-  let state=new Array(N).fill(null).map(()=>({l:{re:0,im:0},r:{re:0,im:0}}));
-  // initial: start at center, spin up
-  state[mid].r={re:1,im:0};
-  const cos=Math.cos(theta),sin=Math.sin(theta);
-  for(let t=0;t<T;t++){
-    const next=new Array(N).fill(null).map(()=>({l:{re:0,im:0},r:{re:0,im:0}}));
-    for(let x=0;x<N;x++){
-      // Hadamard-like coin
-      const cl={re:state[x].l.re*cos+state[x].r.re*sin,im:state[x].l.im*cos+state[x].r.im*sin};
-      const cr={re:state[x].l.re*sin-state[x].r.re*cos,im:state[x].l.im*sin-state[x].r.im*cos};
-      // shift: left component moves left, right moves right
-      if(x>0){next[x-1].l.re+=cl.re;next[x-1].l.im+=cl.im;}
-      if(x<N-1){next[x+1].r.re+=cr.re;next[x+1].r.im+=cr.im;}
-    }
-    state=next;
+// ===== UI bindings =====
+document.getElementById('stepsSlider').addEventListener('input', e => {
+  nSteps = +e.value;
+  document.getElementById('stepsVal').textContent = nSteps;
+});
+
+document.getElementById('coinSelect').addEventListener('change', e => {
+  coinType = e.value;
+  document.getElementById('customCoinControls').style.display = coinType === 'custom' ? 'flex' : 'none';
+  updateCoinDisplay();
+});
+
+document.getElementById('thetaSlider').addEventListener('input', e => {
+  customTheta = +e.value * Math.PI / 180;
+  document.getElementById('thetaVal').textContent = e.value;
+  updateCoinDisplay();
+});
+
+document.getElementById('spinSelect').addEventListener('change', e => { spinInit = e.value; });
+document.getElementById('speedSelect').addEventListener('change', e => { animSpeed = +e.value; });
+
+function updateCoinDisplay() {
+  let text = '';
+  if (coinType === 'hadamard') {
+    text = 'Coin: Hadamard\n[ 1/sqrt(2)   1/sqrt(2) ]\n[ 1/sqrt(2)  -1/sqrt(2) ]';
+  } else if (coinType === 'grover') {
+    text = 'Coin: Grover (DFT)\n[  -1/sqrt(2)   1/sqrt(2) ]\n[  1/sqrt(2)    1/sqrt(2) ]';
+  } else {
+    const deg = (customTheta * 180 / Math.PI).toFixed(0);
+    const c = Math.cos(customTheta).toFixed(4), s = Math.sin(customTheta).toFixed(4);
+    text = `Coin: Custom (theta=${deg} deg)\n[  cos(${deg})   sin(${deg}) ] = [ ${c}  ${s} ]\n[  sin(${deg})  -cos(${deg}) ]   [ ${s}  ${(-Math.cos(customTheta)).toFixed(4)} ]`;
   }
-  return state.map(s=>s.l.re*s.l.re+s.l.im*s.l.im+s.r.re*s.r.re+s.r.im*s.r.im);
+  document.getElementById('coinMatrix').textContent = text;
 }
 
-function classicalWalk(T,p){
-  const N=2*T+1,mid=T;
-  let prob=new Float64Array(N);prob[mid]=1;
-  for(let t=0;t<T;t++){
-    const next=new Float64Array(N);
-    for(let x=0;x<N;x++){
-      if(prob[x]>0){
-        if(x>0) next[x-1]+=prob[x]*p;
-        if(x<N-1) next[x+1]+=prob[x]*(1-p);
+// ===== Quantum walk engine =====
+function getCoin() {
+  if (coinType === 'hadamard') {
+    const s = 1 / Math.sqrt(2);
+    return { a: s, b: s, c: s, d: -s };
+  } else if (coinType === 'grover') {
+    const s = 1 / Math.sqrt(2);
+    return { a: -s, b: s, c: s, d: s };
+  } else {
+    const c = Math.cos(customTheta), s = Math.sin(customTheta);
+    return { a: c, b: s, c: s, d: -c };
+  }
+}
+
+function quantumWalk(T) {
+  const N = 2 * T + 1, mid = T;
+  let state = new Array(N).fill(null).map(() => ({ l: { re: 0, im: 0 }, r: { re: 0, im: 0 } }));
+
+  // Initial state
+  if (spinInit === 'right') {
+    state[mid].r = { re: 1, im: 0 };
+  } else if (spinInit === 'left') {
+    state[mid].l = { re: 1, im: 0 };
+  } else {
+    // Symmetric: (|L> + i|R>) / sqrt(2) for balanced walk
+    const s = 1 / Math.sqrt(2);
+    state[mid].l = { re: s, im: 0 };
+    state[mid].r = { re: 0, im: s };
+  }
+
+  const coin = getCoin();
+  const snapshots = [];
+
+  for (let t = 0; t < T; t++) {
+    const next = new Array(N).fill(null).map(() => ({ l: { re: 0, im: 0 }, r: { re: 0, im: 0 } }));
+    for (let x = 0; x < N; x++) {
+      // Apply coin
+      const cl = {
+        re: coin.a * state[x].l.re + coin.b * state[x].r.re,
+        im: coin.a * state[x].l.im + coin.b * state[x].r.im
+      };
+      const cr = {
+        re: coin.c * state[x].l.re + coin.d * state[x].r.re,
+        im: coin.c * state[x].l.im + coin.d * state[x].r.im
+      };
+      // Shift
+      if (x > 0) { next[x - 1].l.re += cl.re; next[x - 1].l.im += cl.im; }
+      if (x < N - 1) { next[x + 1].r.re += cr.re; next[x + 1].r.im += cr.im; }
+    }
+    state = next;
+
+    // Record std dev at each step
+    if ((t + 1) % 1 === 0) {
+      const probs = state.map(s => s.l.re * s.l.re + s.l.im * s.l.im + s.r.re * s.r.re + s.r.im * s.r.im);
+      let variance = 0;
+      for (let i = 0; i < N; i++) variance += (i - mid) * (i - mid) * probs[i];
+      snapshots.push(Math.sqrt(variance));
+    }
+  }
+
+  const probs = state.map(s => s.l.re * s.l.re + s.l.im * s.l.im + s.r.re * s.r.re + s.r.im * s.r.im);
+  return { probs, snapshots };
+}
+
+function classicalWalk(T) {
+  const N = 2 * T + 1, mid = T;
+  let prob = new Float64Array(N);
+  prob[mid] = 1;
+  const snapshots = [];
+
+  for (let t = 0; t < T; t++) {
+    const next = new Float64Array(N);
+    for (let x = 0; x < N; x++) {
+      if (prob[x] > 0) {
+        if (x > 0) next[x - 1] += prob[x] * 0.5;
+        if (x < N - 1) next[x + 1] += prob[x] * 0.5;
       }
     }
-    prob=next;
+    prob = next;
+    let variance = 0;
+    for (let i = 0; i < N; i++) variance += (i - mid) * (i - mid) * prob[i];
+    snapshots.push(Math.sqrt(variance));
   }
-  return Array.from(prob);
+
+  return { probs: Array.from(prob), snapshots };
 }
 
-document.getElementById('run').addEventListener('click',()=>{
-  const theta=Math.acos(2*coinBias-1)||Math.PI/4;
-  qProbs=quantumWalk(nSteps,Math.PI/4);
-  cProbs=classicalWalk(nSteps,coinBias);
-  animStep=0;animating=true;
-});
-document.getElementById('reset').addEventListener('click',()=>{qProbs=[];cProbs=[];animating=false;animStep=0;});
-
-function draw(){
-  ctx.fillStyle='#111';ctx.fillRect(0,0,W,H);
-  if(animating&&animStep<qProbs.length){animStep=Math.min(qProbs.length,animStep+2);}
-  else animating=false;
-  const N=qProbs.length||2*nSteps+1;
-  const mid=Math.floor(N/2);
-  // axis
-  ctx.strokeStyle='#333';ctx.lineWidth=1;
-  const baseY=H-40,topY=30;
-  ctx.beginPath();ctx.moveTo(20,baseY);ctx.lineTo(W-20,baseY);ctx.stroke();
-  // center marker
-  const cx=W/2;
-  ctx.strokeStyle='#444';ctx.setLineDash([2,4]);
-  ctx.beginPath();ctx.moveTo(cx,topY);ctx.lineTo(cx,baseY);ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle='#666';ctx.font='10px system-ui';ctx.fillText('0',cx-3,baseY+14);
-  ctx.fillText(`-${nSteps}`,22,baseY+14);ctx.fillText(`+${nSteps}`,W-40,baseY+14);
-  if(!qProbs.length){
-    ctx.fillStyle='#444';ctx.font='14px system-ui';ctx.fillText('Click "Walk" to simulate',W/2-80,H/2);
-    requestAnimationFrame(draw);return;
-  }
-  const dx=(W-40)/N;
-  let maxQ=0,maxC=0;
-  for(let i=0;i<animStep;i++){maxQ=Math.max(maxQ,qProbs[i]);maxC=Math.max(maxC,cProbs[i]);}
-  const maxP=Math.max(maxQ,maxC,0.001);
-  const plotH=baseY-topY-20;
-  // classical (filled)
-  ctx.fillStyle='rgba(239,68,68,0.2)';ctx.strokeStyle='#ef4444';ctx.lineWidth=1.5;
-  ctx.beginPath();ctx.moveTo(20,baseY);
-  for(let i=0;i<animStep;i++){
-    const x=20+i*dx;const y=baseY-cProbs[i]/maxP*plotH;
-    ctx.lineTo(x,y);
-  }
-  ctx.lineTo(20+(animStep-1)*dx,baseY);ctx.closePath();ctx.fill();
-  ctx.beginPath();
-  for(let i=0;i<animStep;i++){
-    const x=20+i*dx;const y=baseY-cProbs[i]/maxP*plotH;
-    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-  }
-  ctx.stroke();
-  // quantum (filled)
-  ctx.fillStyle='rgba(124,58,237,0.15)';ctx.strokeStyle='#7c3aed';ctx.lineWidth=2;
-  ctx.beginPath();ctx.moveTo(20,baseY);
-  for(let i=0;i<animStep;i++){
-    const x=20+i*dx;const y=baseY-qProbs[i]/maxP*plotH;
-    ctx.lineTo(x,y);
-  }
-  ctx.lineTo(20+(animStep-1)*dx,baseY);ctx.closePath();ctx.fill();
-  ctx.beginPath();
-  for(let i=0;i<animStep;i++){
-    const x=20+i*dx;const y=baseY-qProbs[i]/maxP*plotH;
-    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-  }
-  ctx.stroke();
-  // stats
-  let qVar=0,cVar=0;
-  for(let i=0;i<N;i++){
-    const pos=i-mid;
-    qVar+=pos*pos*qProbs[i];cVar+=pos*pos*cProbs[i];
-  }
-  ctx.fillStyle='#888';ctx.font='11px system-ui';
-  ctx.fillText(`Steps: ${nSteps}`,20,20);
-  ctx.fillStyle='#7c3aed';ctx.fillText(`Quantum std: ${Math.sqrt(qVar).toFixed(1)} (linear in T)`,150,20);
-  ctx.fillStyle='#ef4444';ctx.fillText(`Classical std: ${Math.sqrt(cVar).toFixed(1)} (sqrt of T = ${Math.sqrt(nSteps).toFixed(1)})`,420,20);
-  requestAnimationFrame(draw);
+function runWalk() {
+  const qResult = quantumWalk(nSteps);
+  const cResult = classicalWalk(nSteps);
+  qProbs = qResult.probs;
+  cProbs = cResult.probs;
+  spreadData = { q: qResult.snapshots, c: cResult.snapshots };
+  animStep = 0;
+  animating = true;
 }
-draw();
+
+function resetWalk() {
+  qProbs = []; cProbs = [];
+  spreadData = { q: [], c: [] };
+  animStep = 0; animating = false;
+  document.getElementById('qStdVal').textContent = '--';
+  document.getElementById('cStdVal').textContent = '--';
+  document.getElementById('ratioVal').textContent = '--';
+  document.getElementById('stepVal').textContent = '0';
+}
+
+function runComparison() {
+  // Run all three coin types in sequence and overlay
+  nSteps = +document.getElementById('stepsSlider').value;
+  const results = {};
+  for (const ct of ['hadamard', 'grover', 'custom']) {
+    coinType = ct;
+    results[ct] = quantumWalk(nSteps);
+  }
+  // Reset to current selection
+  coinType = document.getElementById('coinSelect').value;
+
+  // Draw comparison
+  const W = mainC.width, H = mainC.height;
+  mainCtx.fillStyle = '#0d0d0d';
+  mainCtx.fillRect(0, 0, W, H);
+
+  const N = 2 * nSteps + 1;
+  const dx = (W - 60) / N;
+  const baseY = H - 40, topY = 30;
+  const plotH = baseY - topY - 20;
+
+  // Axis
+  mainCtx.strokeStyle = '#333'; mainCtx.lineWidth = 1;
+  mainCtx.beginPath(); mainCtx.moveTo(30, baseY); mainCtx.lineTo(W - 30, baseY); mainCtx.stroke();
+  mainCtx.strokeStyle = '#222'; mainCtx.setLineDash([2, 4]);
+  mainCtx.beginPath(); mainCtx.moveTo(W / 2, topY); mainCtx.lineTo(W / 2, baseY); mainCtx.stroke();
+  mainCtx.setLineDash([]);
+
+  let maxP = 0;
+  for (const ct in results) {
+    for (const p of results[ct].probs) maxP = Math.max(maxP, p);
+  }
+  maxP = Math.max(maxP, 0.001);
+
+  const colors = { hadamard: '#7c3aed', grover: '#3b82f6', custom: '#22c55e' };
+  const labels = { hadamard: 'Hadamard', grover: 'Grover', custom: 'Custom' };
+
+  for (const ct of ['hadamard', 'grover', 'custom']) {
+    const probs = results[ct].probs;
+    mainCtx.strokeStyle = colors[ct]; mainCtx.lineWidth = 2;
+    mainCtx.fillStyle = colors[ct] + '15';
+    mainCtx.beginPath(); mainCtx.moveTo(30, baseY);
+    for (let i = 0; i < N; i++) {
+      mainCtx.lineTo(30 + i * dx, baseY - probs[i] / maxP * plotH);
+    }
+    mainCtx.lineTo(30 + (N - 1) * dx, baseY); mainCtx.closePath(); mainCtx.fill();
+    mainCtx.beginPath();
+    for (let i = 0; i < N; i++) {
+      const x = 30 + i * dx, y = baseY - probs[i] / maxP * plotH;
+      i === 0 ? mainCtx.moveTo(x, y) : mainCtx.lineTo(x, y);
+    }
+    mainCtx.stroke();
+  }
+
+  // Legend
+  let ly = 18;
+  for (const ct in colors) {
+    mainCtx.fillStyle = colors[ct]; mainCtx.font = 'bold 11px Manrope';
+    mainCtx.fillText(labels[ct], 40, ly);
+    ly += 16;
+  }
+
+  mainCtx.fillStyle = '#888'; mainCtx.font = '11px Manrope';
+  mainCtx.fillText('Coin Comparison - ' + nSteps + ' steps', W / 2 - 70, 18);
+
+  animating = false;
+}
+
+// ===== Drawing =====
+function drawMain() {
+  const W = mainC.width, H = mainC.height;
+  mainCtx.fillStyle = '#0d0d0d';
+  mainCtx.fillRect(0, 0, W, H);
+
+  if (animating && animStep < qProbs.length) {
+    animStep = animSpeed === 0 ? qProbs.length : Math.min(qProbs.length, animStep + animSpeed);
+  } else if (animating) {
+    animating = false;
+  }
+
+  const N = qProbs.length || 2 * nSteps + 1;
+  const mid = Math.floor(N / 2);
+  const dx = (W - 60) / N;
+  const baseY = H - 40, topY = 30;
+  const plotH = baseY - topY - 20;
+
+  // Axis
+  mainCtx.strokeStyle = '#333'; mainCtx.lineWidth = 1;
+  mainCtx.beginPath(); mainCtx.moveTo(30, baseY); mainCtx.lineTo(W - 30, baseY); mainCtx.stroke();
+
+  // Center line
+  mainCtx.strokeStyle = '#222'; mainCtx.setLineDash([2, 4]);
+  mainCtx.beginPath(); mainCtx.moveTo(W / 2, topY); mainCtx.lineTo(W / 2, baseY); mainCtx.stroke();
+  mainCtx.setLineDash([]);
+
+  // Labels
+  mainCtx.fillStyle = '#555'; mainCtx.font = '10px Manrope';
+  mainCtx.fillText('0', W / 2 - 3, baseY + 14);
+  mainCtx.fillText(`-${nSteps}`, 22, baseY + 14);
+  mainCtx.fillText(`+${nSteps}`, W - 50, baseY + 14);
+  mainCtx.fillText('P(x)', 4, topY + 10);
+
+  if (!qProbs.length) {
+    mainCtx.fillStyle = '#444'; mainCtx.font = '14px Manrope';
+    mainCtx.textAlign = 'center';
+    mainCtx.fillText('Click "Walk" to simulate', W / 2, H / 2);
+    mainCtx.textAlign = 'left';
+    requestAnimationFrame(drawMain);
+    return;
+  }
+
+  let maxQ = 0, maxC = 0;
+  for (let i = 0; i < animStep; i++) {
+    maxQ = Math.max(maxQ, qProbs[i]);
+    maxC = Math.max(maxC, cProbs[i]);
+  }
+  const maxP = Math.max(maxQ, maxC, 0.001);
+
+  // Classical (bars + line)
+  mainCtx.fillStyle = 'rgba(239,68,68,0.12)';
+  mainCtx.strokeStyle = '#ef4444';
+  mainCtx.lineWidth = 1.5;
+  mainCtx.beginPath(); mainCtx.moveTo(30, baseY);
+  for (let i = 0; i < animStep; i++) {
+    mainCtx.lineTo(30 + i * dx, baseY - cProbs[i] / maxP * plotH);
+  }
+  mainCtx.lineTo(30 + (animStep - 1) * dx, baseY);
+  mainCtx.closePath(); mainCtx.fill();
+  mainCtx.beginPath();
+  for (let i = 0; i < animStep; i++) {
+    const x = 30 + i * dx, y = baseY - cProbs[i] / maxP * plotH;
+    i === 0 ? mainCtx.moveTo(x, y) : mainCtx.lineTo(x, y);
+  }
+  mainCtx.stroke();
+
+  // Quantum (bars + line)
+  mainCtx.fillStyle = 'rgba(124,58,237,0.12)';
+  mainCtx.strokeStyle = '#7c3aed';
+  mainCtx.lineWidth = 2;
+  mainCtx.beginPath(); mainCtx.moveTo(30, baseY);
+  for (let i = 0; i < animStep; i++) {
+    mainCtx.lineTo(30 + i * dx, baseY - qProbs[i] / maxP * plotH);
+  }
+  mainCtx.lineTo(30 + (animStep - 1) * dx, baseY);
+  mainCtx.closePath(); mainCtx.fill();
+  mainCtx.beginPath();
+  for (let i = 0; i < animStep; i++) {
+    const x = 30 + i * dx, y = baseY - qProbs[i] / maxP * plotH;
+    i === 0 ? mainCtx.moveTo(x, y) : mainCtx.lineTo(x, y);
+  }
+  mainCtx.stroke();
+
+  // Compute stats
+  let qVar = 0, cVar = 0;
+  for (let i = 0; i < N; i++) {
+    const pos = i - mid;
+    qVar += pos * pos * qProbs[i];
+    cVar += pos * pos * cProbs[i];
+  }
+  const qStd = Math.sqrt(qVar), cStd = Math.sqrt(cVar);
+
+  // Stats text on canvas
+  mainCtx.fillStyle = '#7c3aed'; mainCtx.font = 'bold 11px Manrope';
+  mainCtx.fillText(`Quantum std: ${qStd.toFixed(1)} (~ T = ${nSteps})`, 40, 20);
+  mainCtx.fillStyle = '#ef4444';
+  mainCtx.fillText(`Classical std: ${cStd.toFixed(1)} (~ sqrt(T) = ${Math.sqrt(nSteps).toFixed(1)})`, 40, 36);
+
+  // Update stats panel
+  const currentStep = Math.min(animStep, N);
+  document.getElementById('qStdVal').textContent = qStd.toFixed(2);
+  document.getElementById('cStdVal').textContent = cStd.toFixed(2);
+  document.getElementById('ratioVal').textContent = cStd > 0 ? (qStd / cStd).toFixed(2) + 'x' : '--';
+  document.getElementById('stepVal').textContent = animating ? Math.floor(animStep / N * nSteps) : nSteps;
+
+  // Draw spread chart
+  drawSpread();
+
+  requestAnimationFrame(drawMain);
+}
+
+function drawSpread() {
+  const W = spreadC.width, H = spreadC.height;
+  spreadCtx.fillStyle = '#0d0d0d';
+  spreadCtx.fillRect(0, 0, W, H);
+
+  if (!spreadData.q.length) return;
+
+  const pad = { l: 40, r: 10, t: 15, b: 25 };
+  const plotW = W - pad.l - pad.r;
+  const plotH = H - pad.t - pad.b;
+
+  // Axes
+  spreadCtx.strokeStyle = '#333'; spreadCtx.lineWidth = 1;
+  spreadCtx.beginPath();
+  spreadCtx.moveTo(pad.l, pad.t);
+  spreadCtx.lineTo(pad.l, H - pad.b);
+  spreadCtx.lineTo(W - pad.r, H - pad.b);
+  spreadCtx.stroke();
+
+  const maxStd = Math.max(...spreadData.q, ...spreadData.c) * 1.1;
+  const n = spreadData.q.length;
+
+  // Grid lines
+  spreadCtx.strokeStyle = '#1a1a1a';
+  for (let i = 1; i <= 4; i++) {
+    const y = pad.t + plotH * (1 - i / 4);
+    spreadCtx.beginPath(); spreadCtx.moveTo(pad.l, y); spreadCtx.lineTo(W - pad.r, y); spreadCtx.stroke();
+    spreadCtx.fillStyle = '#444'; spreadCtx.font = '8px Manrope';
+    spreadCtx.fillText((maxStd * i / 4).toFixed(0), 4, y + 3);
+  }
+
+  // Labels
+  spreadCtx.fillStyle = '#555'; spreadCtx.font = '9px Manrope';
+  spreadCtx.fillText('Step', W / 2 - 10, H - 4);
+  spreadCtx.fillText('Std Dev', 2, pad.t + 5);
+
+  // Quantum curve
+  spreadCtx.strokeStyle = '#7c3aed'; spreadCtx.lineWidth = 2;
+  spreadCtx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const x = pad.l + (i / (n - 1)) * plotW;
+    const y = pad.t + plotH * (1 - spreadData.q[i] / maxStd);
+    i === 0 ? spreadCtx.moveTo(x, y) : spreadCtx.lineTo(x, y);
+  }
+  spreadCtx.stroke();
+
+  // Classical curve
+  spreadCtx.strokeStyle = '#ef4444'; spreadCtx.lineWidth = 2;
+  spreadCtx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const x = pad.l + (i / (n - 1)) * plotW;
+    const y = pad.t + plotH * (1 - spreadData.c[i] / maxStd);
+    i === 0 ? spreadCtx.moveTo(x, y) : spreadCtx.lineTo(x, y);
+  }
+  spreadCtx.stroke();
+
+  // Theoretical lines
+  spreadCtx.setLineDash([4, 4]);
+  // sqrt(T) reference
+  spreadCtx.strokeStyle = '#ef444444'; spreadCtx.lineWidth = 1;
+  spreadCtx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const x = pad.l + (i / (n - 1)) * plotW;
+    const y = pad.t + plotH * (1 - Math.sqrt(i + 1) / maxStd);
+    i === 0 ? spreadCtx.moveTo(x, y) : spreadCtx.lineTo(x, y);
+  }
+  spreadCtx.stroke();
+
+  // Linear reference
+  spreadCtx.strokeStyle = '#7c3aed44';
+  spreadCtx.beginPath();
+  const scale = spreadData.q[n - 1] / n;
+  for (let i = 0; i < n; i++) {
+    const x = pad.l + (i / (n - 1)) * plotW;
+    const y = pad.t + plotH * (1 - (i + 1) * scale / maxStd);
+    i === 0 ? spreadCtx.moveTo(x, y) : spreadCtx.lineTo(x, y);
+  }
+  spreadCtx.stroke();
+  spreadCtx.setLineDash([]);
+
+  // Labels
+  spreadCtx.fillStyle = '#7c3aed'; spreadCtx.font = '9px Manrope';
+  spreadCtx.fillText('Quantum (linear)', W - pad.r - 90, pad.t + 12);
+  spreadCtx.fillStyle = '#ef4444';
+  spreadCtx.fillText('Classical (sqrt)', W - pad.r - 90, pad.t + 24);
+}
+
+drawMain();
+updateCoinDisplay();
 </script>
+<script src="/related.js"></script>
 </body>
 </html>

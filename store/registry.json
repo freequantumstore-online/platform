@@ -1,6 +1,18 @@
 {
   "robots": [
     {
+      "id": "quantum-crypto-pipeline",
+      "name": "Quantum Crypto Pipeline",
+      "description": "Chain",
+      "storeType": " random qubits \u2192 BB84 key exchange \u2192 XOR encryption. Three steps, one secure message.",
+      "category": "behavior",
+      "icon": "pipelines",
+      "iconBg": "\ud83d\udd10:#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
       "id": "qrng",
       "name": "Quantum Random Generator",
       "description": "True quantum randomness from superposition. Password generator, dice, cards. Chi-squared test vs Math.random().",
@@ -218,11 +230,47 @@
     },
     {
       "id": "quantum-walk",
-      "name": "Quantum Walk",
-      "description": "Quantum vs classical random walk. Ballistic vs diffusive spreading.",
+      "name": "Quantum Random Walk",
+      "description": "Classical vs quantum walk with custom coin operators (Hadamard, Grover, custom unitary). Animated probability histograms, spreading-over-time plot, coin comparison mode.",
       "storeType": "behavior",
       "category": "phenomena",
       "icon": "\ud83d\udeb6",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "quantum-ml",
+      "name": "Quantum Machine Learning",
+      "description": "Parameterized quantum circuit learns to classify 2D data. Variational ansatz with gradient descent, real-time decision boundary, multiple data presets.",
+      "storeType": "behavior",
+      "category": "algorithms",
+      "icon": "\ud83e\udde0",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "error-correction",
+      "name": "Quantum Error Correction",
+      "description": "3-qubit bit-flip, phase-flip, and Shor 9-qubit codes. Introduce errors, visualize syndrome measurement and correction step by step with ancilla qubits.",
+      "storeType": "behavior",
+      "category": "error-correction",
+      "icon": "\ud83d\udee1\ufe0f",
+      "iconBg": "#3b82f6",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "variational-eigensolver",
+      "name": "Advanced VQE",
+      "description": "VQE for H2, LiH, HeH+ or custom Hamiltonians. Hardware-efficient, UCCSD, and HVA ansatze. Adam/GD/SPSA optimizers, convergence plot, energy landscape, parameter trajectory.",
+      "storeType": "behavior",
+      "category": "algorithms",
+      "icon": "\u2697\ufe0f",
       "iconBg": "#7c3aed",
       "creator": "serge-ivo",
       "creatorName": "Serge",

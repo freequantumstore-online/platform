@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Error Correction - FreeQuantumStore</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--text:#fafafa;--muted:#888;--accent:#7c3aed;--panel:#141414;--line:#1e1e1e;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--yellow:#f59e0b}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',system-ui,sans-serif;min-height:100vh}
+.back{position:fixed;top:12px;left:14px;color:var(--muted);font-size:.82rem;text-decoration:none;z-index:100;font-weight:600}
+.back:hover{color:var(--accent)}
+header{text-align:center;padding:2rem 1rem 1rem}
+header h1{font-size:1.6rem;font-weight:700;color:var(--accent)}
+header p{color:var(--muted);font-size:.85rem;max-width:640px;margin:.4rem auto 0}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1200px;margin:0 auto;padding:0 14px 2rem}
+.full-width{grid-column:1/-1}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.panel h2{font-size:.9rem;font-weight:700;color:var(--accent);margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+canvas{display:block;background:#0d0d0d;border:1px solid var(--line);border-radius:6px}
+.controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0}
+button{background:var(--accent);color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:600;font-family:inherit;transition:all .15s}
+button:hover{background:#6d28d9}
+button.secondary{background:transparent;border:1px solid var(--line);color:var(--muted)}
+button.secondary:hover{border-color:var(--accent);color:var(--text)}
+button.danger{background:var(--red)}
+button.danger:hover{background:#dc2626}
+button.warn{background:var(--yellow);color:#000}
+button.warn:hover{background:#d97706}
+.tabs{display:flex;gap:0;margin-bottom:12px}
+.tabs button{border-radius:0;background:var(--panel);border:1px solid var(--line);color:var(--muted);font-weight:600}
+.tabs button:first-child{border-radius:6px 0 0 6px}
+.tabs button:last-child{border-radius:0 6px 6px 0}
+.tabs button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.state-vec{font-family:'Courier New',monospace;font-size:.72rem;line-height:1.6;color:#c4b5fd;background:#0d0d0d;padding:10px;border-radius:6px;margin-top:8px;max-height:180px;overflow-y:auto}
+.syndrome-table{width:100%;border-collapse:collapse;font-size:.75rem;margin-top:8px}
+.syndrome-table th,.syndrome-table td{border:1px solid var(--line);padding:4px 8px;text-align:center}
+.syndrome-table th{background:#0d0d0d;color:var(--accent)}
+.syndrome-table tr.highlight{background:rgba(124,58,237,0.15)}
+.log{font-size:.72rem;color:var(--muted);background:#0d0d0d;padding:8px;border-radius:6px;max-height:180px;overflow-y:auto;line-height:1.5}
+.log .ok{color:var(--green)}.log .err{color:var(--red)}.log .info{color:#a78bfa}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.stat{background:#0d0d0d;padding:8px;border-radius:6px;text-align:center}
+.stat .val{font-size:1.1rem;font-weight:700;color:var(--accent)}
+.stat .lbl{font-size:.65rem;color:var(--muted)}
+.step-indicator{display:flex;gap:4px;margin:10px 0}
+.step-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--muted);font-weight:700}
+.step-dot.active{border-color:var(--accent);color:var(--accent);background:rgba(124,58,237,0.1)}
+.step-dot.done{border-color:var(--green);color:var(--green);background:rgba(34,197,94,0.1)}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<a href="/" class="back">FreeQuantumStore</a>
+<header>
+<h1>Quantum Error Correction</h1>
+<p>3-qubit bit-flip code and Shor's 9-qubit code. Introduce errors on individual qubits, then watch syndrome measurement detect and correct them step by step.</p>
+</header>
+
+<div class="layout">
+  <div class="panel full-width">
+    <div class="tabs">
+      <button class="active" onclick="setCode('bitflip')">3-Qubit Bit-Flip</button>
+      <button onclick="setCode('phaseflip')">3-Qubit Phase-Flip</button>
+      <button onclick="setCode('shor')">Shor 9-Qubit</button>
+    </div>
+    <h2 id="codeTitle">3-Qubit Bit-Flip Code</h2>
+    <canvas id="circuitCanvas" width="1000" height="200"></canvas>
+    <div class="step-indicator" id="stepIndicator"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Controls</h2>
+    <div class="controls">
+      <button onclick="resetCode()">Reset</button>
+      <button onclick="encode()">1. Encode</button>
+    </div>
+    <div class="controls" id="errorBtns"></div>
+    <div class="controls">
+      <button onclick="measureSyndrome()" class="secondary">2. Measure Syndrome</button>
+      <button onclick="correct()">3. Correct</button>
+      <button onclick="decode()" class="secondary">4. Decode + Verify</button>
+    </div>
+    <div class="controls">
+      <button onclick="runStepByStep()" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">Auto Step-Through</button>
+      <label style="font-size:.72rem;color:var(--muted)">Delay:</label>
+      <select id="delaySelect" style="background:var(--panel);color:var(--text);border:1px solid var(--line);padding:3px 6px;border-radius:4px;font-size:.72rem;font-family:inherit">
+        <option value="500">0.5s</option>
+        <option value="1000" selected>1s</option>
+        <option value="2000">2s</option>
+      </select>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="val" id="stateLabel">|0></div><div class="lbl">Logical State</div></div>
+      <div class="stat"><div class="val" id="syndromeVal">--</div><div class="lbl">Syndrome</div></div>
+      <div class="stat"><div class="val" id="errorLoc">--</div><div class="lbl">Error Location</div></div>
+      <div class="stat"><div class="val" id="fidelity">--</div><div class="lbl">Fidelity</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>State Vector</h2>
+    <div class="state-vec" id="stateVec">Click Reset to initialize.</div>
+    <h2 style="margin-top:12px">Syndrome Table</h2>
+    <div id="syndromeTableWrap"></div>
+  </div>
+
+  <div class="panel full-width">
+    <h2>Activity Log</h2>
+    <div class="log" id="logDiv">Select a code and click Reset to begin.</div>
+  </div>
+</div>
+
+<script>
+// ===== Quantum State Vector Engine =====
+class QState {
+  constructor(n) {
+    this.n = n;
+    this.dim = 1 << n;
+    this.re = new Float64Array(this.dim);
+    this.im = new Float64Array(this.dim);
+    this.re[0] = 1;
+  }
+  clone() {
+    const s = new QState(this.n);
+    s.re.set(this.re); s.im.set(this.im);
+    return s;
+  }
+  set(idx, re, im) { this.re[idx] = re; this.im[idx] = im || 0; }
+  zero() { this.re.fill(0); this.im.fill(0); }
+  norm() {
+    let s = 0;
+    for (let i = 0; i < this.dim; i++) s += this.re[i]*this.re[i] + this.im[i]*this.im[i];
+    return Math.sqrt(s);
+  }
+  normalize() {
+    const n = this.norm();
+    if (n > 0) { for (let i = 0; i < this.dim; i++) { this.re[i] /= n; this.im[i] /= n; } }
+  }
+  applyGate1(q, m) {
+    const step = 1 << q;
+    for (let i = 0; i < this.dim; i++) {
+      if (i & step) continue;
+      const j = i | step;
+      const ar = this.re[i], ai = this.im[i], br = this.re[j], bi = this.im[j];
+      this.re[i] = m[0][0].re*ar - m[0][0].im*ai + m[0][1].re*br - m[0][1].im*bi;
+      this.im[i] = m[0][0].re*ai + m[0][0].im*ar + m[0][1].re*bi + m[0][1].im*br;
+      this.re[j] = m[1][0].re*ar - m[1][0].im*ai + m[1][1].re*br - m[1][1].im*bi;
+      this.im[j] = m[1][0].re*ai + m[1][0].im*ar + m[1][1].re*bi + m[1][1].im*br;
+    }
+  }
+  x(q) { this.applyGate1(q, [[{re:0,im:0},{re:1,im:0}],[{re:1,im:0},{re:0,im:0}]]); }
+  z(q) { this.applyGate1(q, [[{re:1,im:0},{re:0,im:0}],[{re:0,im:0},{re:-1,im:0}]]); }
+  h(q) {
+    const s = 1/Math.sqrt(2);
+    this.applyGate1(q, [[{re:s,im:0},{re:s,im:0}],[{re:s,im:0},{re:-s,im:0}]]);
+  }
+  cnot(c, t) {
+    const cs = 1 << c, ts = 1 << t;
+    for (let i = 0; i < this.dim; i++) {
+      if ((i & cs) && !(i & ts)) {
+        const j = i | ts;
+        let tr = this.re[i], ti = this.im[i];
+        this.re[i] = this.re[j]; this.im[i] = this.im[j];
+        this.re[j] = tr; this.im[j] = ti;
+      }
+    }
+  }
+  probQubit(q) {
+    const step = 1 << q;
+    let p = 0;
+    for (let i = 0; i < this.dim; i++) {
+      if (i & step) p += this.re[i]*this.re[i] + this.im[i]*this.im[i];
+    }
+    return p;
+  }
+  measureQubit(q) {
+    const p1 = this.probQubit(q);
+    const result = Math.random() < p1 ? 1 : 0;
+    const step = 1 << q;
+    const keepBit = result ? step : 0;
+    for (let i = 0; i < this.dim; i++) {
+      if ((i & step) !== keepBit) { this.re[i] = 0; this.im[i] = 0; }
+    }
+    this.normalize();
+    return result;
+  }
+}
+
+// ===== Error Correction Codes =====
+let codeType = 'bitflip';
+let state = null;
+let nQubits = 3;
+let step = 0; // 0=init, 1=encoded, 2=error, 3=syndrome, 4=corrected
+let syndrome = null;
+let errorApplied = -1;
+let initialLogical = 0; // 0 or 1
+
+const codeConfigs = {
+  bitflip: {
+    n: 5, data: [0,1,2], ancilla: [3,4],
+    title: '3-Qubit Bit-Flip Code',
+    syndromeTable: [
+      { syndrome: '00', error: 'None', correction: 'I' },
+      { syndrome: '01', error: 'Qubit 2', correction: 'X2' },
+      { syndrome: '10', error: 'Qubit 0', correction: 'X0' },
+      { syndrome: '11', error: 'Qubit 1', correction: 'X1' }
+    ]
+  },
+  phaseflip: {
+    n: 5, data: [0,1,2], ancilla: [3,4],
+    title: '3-Qubit Phase-Flip Code',
+    syndromeTable: [
+      { syndrome: '00', error: 'None', correction: 'I' },
+      { syndrome: '01', error: 'Qubit 2', correction: 'Z2' },
+      { syndrome: '10', error: 'Qubit 0', correction: 'Z0' },
+      { syndrome: '11', error: 'Qubit 1', correction: 'Z1' }
+    ]
+  },
+  shor: {
+    n: 11, data: [0,1,2,3,4,5,6,7,8], ancilla: [9,10],
+    title: "Shor's 9-Qubit Code",
+    syndromeTable: [
+      { syndrome: '00', error: 'None', correction: 'I' },
+      { syndrome: '01', error: 'Block error', correction: 'X/Z on block' },
+      { syndrome: '10', error: 'Block error', correction: 'X/Z on block' },
+      { syndrome: '11', error: 'Block error', correction: 'X/Z on block' }
+    ]
+  }
+};
+
+function setCode(type) {
+  codeType = type;
+  document.querySelectorAll('.tabs button').forEach((b, i) => {
+    b.classList.toggle('active', ['bitflip','phaseflip','shor'][i] === type);
+  });
+  resetCode();
+}
+
+function resetCode() {
+  const cfg = codeConfigs[codeType];
+  nQubits = cfg.n;
+  state = new QState(nQubits);
+  step = 0;
+  syndrome = null;
+  errorApplied = -1;
+  initialLogical = 0;
+  document.getElementById('codeTitle').textContent = cfg.title;
+  updateUI();
+  log('<span class="info">Code reset: ' + cfg.title + '. Logical |0> ready for encoding.</span>');
+  buildErrorButtons();
+  buildSyndromeTable();
+}
+
+function buildErrorButtons() {
+  const div = document.getElementById('errorBtns');
+  const cfg = codeConfigs[codeType];
+  let html = '';
+  for (let i = 0; i < cfg.data.length; i++) {
+    html += `<button class="danger" onclick="applyError(${i},'x')">X err Q${i}</button>`;
+  }
+  if (codeType === 'phaseflip' || codeType === 'shor') {
+    for (let i = 0; i < cfg.data.length; i++) {
+      html += `<button class="warn" onclick="applyError(${i},'z')">Z err Q${i}</button>`;
+    }
+  }
+  div.innerHTML = html;
+}
+
+function buildSyndromeTable() {
+  const cfg = codeConfigs[codeType];
+  let html = '<table class="syndrome-table"><tr><th>Syndrome</th><th>Error</th><th>Correction</th></tr>';
+  for (const row of cfg.syndromeTable) {
+    html += `<tr><td>${row.syndrome}</td><td>${row.error}</td><td>${row.correction}</td></tr>`;
+  }
+  html += '</table>';
+  document.getElementById('syndromeTableWrap').innerHTML = html;
+}
+
+function encode() {
+  if (step !== 0) { log('<span class="err">Reset first.</span>'); return; }
+  state = new QState(nQubits);
+
+  if (codeType === 'bitflip') {
+    // |0> -> |000>, |1> -> |111>
+    state.cnot(0, 1);
+    state.cnot(0, 2);
+    log('<span class="ok">Encoded |0> as |000> using bit-flip code. CNOT(0,1), CNOT(0,2).</span>');
+  } else if (codeType === 'phaseflip') {
+    // |0> -> |+++>, |1> -> |---> (in H basis)
+    state.cnot(0, 1);
+    state.cnot(0, 2);
+    state.h(0); state.h(1); state.h(2);
+    log('<span class="ok">Encoded |0> as |+++> using phase-flip code. CNOT + Hadamard on each qubit.</span>');
+  } else if (codeType === 'shor') {
+    // Shor code: phase-flip on blocks of 3, then bit-flip within each block
+    state.cnot(0, 3);
+    state.cnot(0, 6);
+    state.h(0); state.h(3); state.h(6);
+    state.cnot(0, 1); state.cnot(0, 2);
+    state.cnot(3, 4); state.cnot(3, 5);
+    state.cnot(6, 7); state.cnot(6, 8);
+    log('<span class="ok">Encoded |0> using Shor 9-qubit code. 3 blocks of 3, protecting against bit-flip AND phase-flip.</span>');
+  }
+  step = 1;
+  updateUI();
+}
+
+function applyError(qubit, type) {
+  if (step < 1) { log('<span class="err">Encode first.</span>'); return; }
+  if (type === 'x') {
+    state.x(qubit);
+    log(`<span class="err">Applied X (bit-flip) error on qubit ${qubit}.</span>`);
+  } else {
+    state.z(qubit);
+    log(`<span class="err">Applied Z (phase-flip) error on qubit ${qubit}.</span>`);
+  }
+  errorApplied = qubit;
+  step = 2;
+  updateUI();
+}
+
+function measureSyndrome() {
+  if (step < 1) { log('<span class="err">Encode first.</span>'); return; }
+
+  if (codeType === 'bitflip') {
+    // Ancilla qubits measure parity
+    // ancilla[3] = q0 XOR q1, ancilla[4] = q1 XOR q2
+    // Reset ancillae
+    state.cnot(0, 3); state.cnot(1, 3); // parity of q0,q1
+    state.cnot(1, 4); state.cnot(2, 4); // parity of q1,q2
+    const s0 = state.measureQubit(3);
+    const s1 = state.measureQubit(4);
+    syndrome = '' + s0 + s1;
+    let errStr = 'None';
+    if (syndrome === '10') errStr = 'Qubit 0';
+    else if (syndrome === '11') errStr = 'Qubit 1';
+    else if (syndrome === '01') errStr = 'Qubit 2';
+    log(`<span class="info">Syndrome measurement: ${syndrome}. Indicates: ${errStr}.</span>`);
+    highlightSyndromeRow(syndrome);
+  } else if (codeType === 'phaseflip') {
+    // Convert to computational basis, measure parity, convert back
+    state.h(0); state.h(1); state.h(2);
+    state.cnot(0, 3); state.cnot(1, 3);
+    state.cnot(1, 4); state.cnot(2, 4);
+    const s0 = state.measureQubit(3);
+    const s1 = state.measureQubit(4);
+    state.h(0); state.h(1); state.h(2);
+    syndrome = '' + s0 + s1;
+    let errStr = 'None';
+    if (syndrome === '10') errStr = 'Qubit 0';
+    else if (syndrome === '11') errStr = 'Qubit 1';
+    else if (syndrome === '01') errStr = 'Qubit 2';
+    log(`<span class="info">Syndrome measurement: ${syndrome}. Indicates: ${errStr}.</span>`);
+    highlightSyndromeRow(syndrome);
+  } else if (codeType === 'shor') {
+    // Simplified: measure bit-flip parity within the first block
+    state.cnot(0, 9); state.cnot(1, 9);
+    state.cnot(1, 10); state.cnot(2, 10);
+    const s0 = state.measureQubit(9);
+    const s1 = state.measureQubit(10);
+    syndrome = '' + s0 + s1;
+    let errStr = 'None';
+    if (syndrome === '10') errStr = 'Block 1, qubit 0';
+    else if (syndrome === '11') errStr = 'Block 1, qubit 1';
+    else if (syndrome === '01') errStr = 'Block 1, qubit 2';
+    log(`<span class="info">Shor syndrome (block 1): ${syndrome}. Indicates: ${errStr}.</span>`);
+    highlightSyndromeRow(syndrome);
+  }
+
+  step = 3;
+  updateUI();
+}
+
+function correct() {
+  if (step < 3 || !syndrome) { log('<span class="err">Measure syndrome first.</span>'); return; }
+
+  if (codeType === 'bitflip') {
+    if (syndrome === '10') { state.x(0); log('<span class="ok">Applied X correction on qubit 0.</span>'); }
+    else if (syndrome === '11') { state.x(1); log('<span class="ok">Applied X correction on qubit 1.</span>'); }
+    else if (syndrome === '01') { state.x(2); log('<span class="ok">Applied X correction on qubit 2.</span>'); }
+    else log('<span class="ok">No correction needed (syndrome 00).</span>');
+  } else if (codeType === 'phaseflip') {
+    if (syndrome === '10') { state.z(0); log('<span class="ok">Applied Z correction on qubit 0.</span>'); }
+    else if (syndrome === '11') { state.z(1); log('<span class="ok">Applied Z correction on qubit 1.</span>'); }
+    else if (syndrome === '01') { state.z(2); log('<span class="ok">Applied Z correction on qubit 2.</span>'); }
+    else log('<span class="ok">No correction needed.</span>');
+  } else if (codeType === 'shor') {
+    if (syndrome === '10') { state.x(0); log('<span class="ok">Applied X correction on qubit 0 (block 1).</span>'); }
+    else if (syndrome === '11') { state.x(1); log('<span class="ok">Applied X correction on qubit 1 (block 1).</span>'); }
+    else if (syndrome === '01') { state.x(2); log('<span class="ok">Applied X correction on qubit 2 (block 1).</span>'); }
+    else log('<span class="ok">No correction needed in block 1.</span>');
+  }
+
+  step = 4;
+  updateUI();
+}
+
+function decode() {
+  if (step < 4) { log('<span class="err">Correct errors first.</span>'); return; }
+  // Check fidelity by comparing with expected encoded state
+  const ref = new QState(nQubits);
+  if (codeType === 'bitflip') {
+    ref.cnot(0, 1); ref.cnot(0, 2);
+  } else if (codeType === 'phaseflip') {
+    ref.cnot(0, 1); ref.cnot(0, 2);
+    ref.h(0); ref.h(1); ref.h(2);
+  } else {
+    ref.cnot(0, 3); ref.cnot(0, 6);
+    ref.h(0); ref.h(3); ref.h(6);
+    ref.cnot(0, 1); ref.cnot(0, 2);
+    ref.cnot(3, 4); ref.cnot(3, 5);
+    ref.cnot(6, 7); ref.cnot(6, 8);
+  }
+
+  // Compute fidelity (overlap squared)
+  let overlapRe = 0, overlapIm = 0;
+  for (let i = 0; i < state.dim; i++) {
+    overlapRe += ref.re[i] * state.re[i] + ref.im[i] * state.im[i];
+    overlapIm += ref.re[i] * state.im[i] - ref.im[i] * state.re[i];
+  }
+  const fid = overlapRe * overlapRe + overlapIm * overlapIm;
+
+  document.getElementById('fidelity').textContent = fid.toFixed(4);
+  if (fid > 0.99) {
+    log('<span class="ok">Decode verified. Fidelity = ' + fid.toFixed(4) + '. Error successfully corrected!</span>');
+  } else {
+    log('<span class="err">Decode: Fidelity = ' + fid.toFixed(4) + '. Correction may have been incomplete.</span>');
+  }
+  step = 5;
+  updateUI();
+}
+
+async function runStepByStep() {
+  const delay = +document.getElementById('delaySelect').value;
+  resetCode();
+  await sleep(delay);
+  encode();
+  await sleep(delay);
+  // Pick a random error
+  const cfg = codeConfigs[codeType];
+  const q = Math.floor(Math.random() * cfg.data.length);
+  const errType = (codeType === 'phaseflip' || codeType === 'shor') && Math.random() > 0.5 ? 'z' : 'x';
+  applyError(q, errType);
+  await sleep(delay);
+  measureSyndrome();
+  await sleep(delay);
+  correct();
+  await sleep(delay);
+  decode();
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function highlightSyndromeRow(s) {
+  const rows = document.querySelectorAll('.syndrome-table tr');
+  rows.forEach(r => r.classList.remove('highlight'));
+  rows.forEach(r => {
+    const firstCell = r.querySelector('td');
+    if (firstCell && firstCell.textContent === s) r.classList.add('highlight');
+  });
+}
+
+// ===== Drawing =====
+const circuitC = document.getElementById('circuitCanvas');
+const ctx = circuitC.getContext('2d');
+
+function drawCircuit() {
+  const W = circuitC.width, H = circuitC.height;
+  ctx.fillStyle = '#0d0d0d';
+  ctx.fillRect(0, 0, W, H);
+
+  const cfg = codeConfigs[codeType];
+  const totalQ = cfg.n;
+  const spacing = Math.min(28, (H - 40) / totalQ);
+  const startY = 20 + (H - 40 - spacing * (totalQ - 1)) / 2;
+
+  // Draw wires
+  for (let i = 0; i < totalQ; i++) {
+    const y = startY + i * spacing;
+    ctx.strokeStyle = i >= cfg.data.length ? '#553' : '#333';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(50, y); ctx.lineTo(W - 20, y); ctx.stroke();
+
+    // Labels
+    ctx.fillStyle = i >= cfg.data.length ? '#996' : '#666';
+    ctx.font = '10px Courier New';
+    ctx.fillText(i >= cfg.data.length ? `a${i - cfg.data.length}` : `q${i}`, 8, y + 4);
+  }
+
+  // Gate positions based on step
+  let gx = 80;
+  const gateW = 32, gateH = 22, gap = 14;
+
+  function drawGate(qIdx, label, color, filled) {
+    const y = startY + qIdx * spacing;
+    ctx.fillStyle = filled ? color + '44' : 'transparent';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(gx - gateW/2, y - gateH/2, gateW, gateH, 3);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.font = '9px Manrope';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, gx, y + 3);
+    ctx.textAlign = 'left';
+  }
+
+  function drawCNOTVert(cIdx, tIdx, color) {
+    const cy = startY + cIdx * spacing;
+    const ty = startY + tIdx * spacing;
+    ctx.strokeStyle = color || '#60a5fa';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(gx, cy); ctx.lineTo(gx, ty); ctx.stroke();
+    ctx.fillStyle = color || '#60a5fa';
+    ctx.beginPath(); ctx.arc(gx, cy, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(gx, ty, 7, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(gx - 7, ty); ctx.lineTo(gx + 7, ty); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(gx, ty - 7); ctx.lineTo(gx, ty + 7); ctx.stroke();
+  }
+
+  const activeColor = step >= 1 ? '#7c3aed' : '#444';
+  const errorColor = '#ef4444';
+  const syndromeColor = step >= 3 ? '#f59e0b' : '#444';
+  const correctColor = step >= 4 ? '#22c55e' : '#444';
+
+  if (codeType === 'bitflip' || codeType === 'phaseflip') {
+    // Encoding
+    ctx.fillStyle = '#555'; ctx.font = '8px Manrope'; ctx.fillText('Encode', gx - 15, startY - 10);
+    drawCNOTVert(0, 1, activeColor);
+    gx += gateW + gap;
+    drawCNOTVert(0, 2, activeColor);
+    gx += gateW + gap;
+
+    if (codeType === 'phaseflip') {
+      for (let i = 0; i < 3; i++) drawGate(i, 'H', activeColor, true);
+      gx += gateW + gap;
+    }
+
+    // Error zone
+    ctx.fillStyle = '#555'; ctx.font = '8px Manrope'; ctx.fillText('Error', gx - 10, startY - 10);
+    ctx.strokeStyle = step >= 2 ? '#ef444433' : '#1a1a1a';
+    ctx.setLineDash([3, 3]);
+    ctx.strokeRect(gx - gateW/2 - 4, startY - gateH/2 - 4, gateW + 8, spacing * 2 + gateH + 8);
+    ctx.setLineDash([]);
+    if (step >= 2 && errorApplied >= 0) {
+      drawGate(errorApplied, 'E', errorColor, true);
+    }
+    gx += gateW + gap;
+
+    // Syndrome measurement
+    ctx.fillStyle = '#555'; ctx.font = '8px Manrope'; ctx.fillText('Syndrome', gx - 18, startY - 10);
+    if (codeType === 'phaseflip') {
+      for (let i = 0; i < 3; i++) drawGate(i, 'H', syndromeColor, step >= 3);
+      gx += gateW + gap;
+    }
+    drawCNOTVert(0, 3, syndromeColor); gx += gap + 10;
+    drawCNOTVert(1, 3, syndromeColor); gx += gateW + gap;
+    drawCNOTVert(1, 4, syndromeColor); gx += gap + 10;
+    drawCNOTVert(2, 4, syndromeColor); gx += gateW + gap;
+
+    if (codeType === 'phaseflip') {
+      for (let i = 0; i < 3; i++) drawGate(i, 'H', syndromeColor, step >= 3);
+      gx += gateW + gap;
+    }
+
+    // Measurement symbols for ancillae
+    for (let a = 3; a <= 4; a++) {
+      const y = startY + a * spacing;
+      ctx.strokeStyle = syndromeColor;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(gx - 12, y - 10, 24, 20, 3);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(gx, y + 2, 6, Math.PI, 0);
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(gx, y + 2); ctx.lineTo(gx + 4, y - 6); ctx.stroke();
+    }
+    gx += gateW + gap;
+
+    // Correction
+    ctx.fillStyle = '#555'; ctx.font = '8px Manrope'; ctx.fillText('Correct', gx - 14, startY - 10);
+    if (step >= 4 && syndrome) {
+      let corrQ = -1;
+      if (syndrome === '10') corrQ = 0;
+      else if (syndrome === '11') corrQ = 1;
+      else if (syndrome === '01') corrQ = 2;
+      if (corrQ >= 0) {
+        const corrGate = codeType === 'phaseflip' ? 'Z' : 'X';
+        drawGate(corrQ, corrGate, correctColor, true);
+      }
+    }
+  } else {
+    // Shor code: simplified circuit
+    ctx.fillStyle = '#555'; ctx.font = '8px Manrope'; ctx.fillText('Shor 9-qubit encoding', gx - 10, startY - 10);
+
+    // Phase-flip encoding
+    drawCNOTVert(0, 3, activeColor); gx += gap + 12;
+    drawCNOTVert(0, 6, activeColor); gx += gateW + gap;
+    for (const q of [0, 3, 6]) drawGate(q, 'H', activeColor, true);
+    gx += gateW + gap;
+
+    // Bit-flip encoding within blocks
+    for (const base of [0, 3, 6]) {
+      drawCNOTVert(base, base + 1, activeColor); gx += gap + 8;
+      drawCNOTVert(base, base + 2, activeColor); gx += gap + 12;
+    }
+    gx += gap;
+
+    // Error zone
+    ctx.strokeStyle = step >= 2 ? '#ef444433' : '#1a1a1a';
+    ctx.setLineDash([3, 3]);
+    ctx.strokeRect(gx - gateW/2 - 4, startY - gateH/2 - 4, gateW + 8, spacing * 8 + gateH + 8);
+    ctx.setLineDash([]);
+    if (step >= 2 && errorApplied >= 0) drawGate(errorApplied, 'E', errorColor, true);
+    gx += gateW + gap;
+
+    // Syndrome
+    ctx.fillStyle = '#555'; ctx.font = '8px Manrope'; ctx.fillText('Syndrome', gx - 12, startY - 10);
+    drawCNOTVert(0, 9, syndromeColor); gx += gap + 8;
+    drawCNOTVert(1, 9, syndromeColor); gx += gap + 12;
+    drawCNOTVert(1, 10, syndromeColor); gx += gap + 8;
+    drawCNOTVert(2, 10, syndromeColor); gx += gateW + gap;
+
+    // Correction
+    if (step >= 4 && syndrome) {
+      let corrQ = -1;
+      if (syndrome === '10') corrQ = 0;
+      else if (syndrome === '11') corrQ = 1;
+      else if (syndrome === '01') corrQ = 2;
+      if (corrQ >= 0) drawGate(corrQ, 'X', correctColor, true);
+    }
+  }
+
+  // Syndrome result display
+  if (syndrome) {
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = 'bold 12px Manrope';
+    ctx.fillText('Syndrome: ' + syndrome, W - 130, 18);
+  }
+}
+
+function stateVecHTML() {
+  if (!state) return 'No state.';
+  let html = '';
+  const cfg = codeConfigs[codeType];
+  for (let i = 0; i < state.dim; i++) {
+    const amp = Math.sqrt(state.re[i]*state.re[i] + state.im[i]*state.im[i]);
+    if (amp < 1e-6) continue;
+    const phase = Math.atan2(state.im[i], state.re[i]);
+    const bits = i.toString(2).padStart(state.n, '0');
+    const sign = state.re[i] >= 0 ? '+' : '-';
+    html += `|${bits}> : ${sign}${amp.toFixed(4)} (phase ${(phase * 180 / Math.PI).toFixed(1)}deg)\n`;
+  }
+  return html || '(zero state)';
+}
+
+function updateUI() {
+  drawCircuit();
+  document.getElementById('stateVec').textContent = stateVecHTML();
+
+  const steps = ['Init', 'Encode', 'Error', 'Syndrome', 'Correct', 'Verify'];
+  let html = '';
+  for (let i = 0; i < steps.length; i++) {
+    const cls = i < step ? 'done' : i === step ? 'active' : '';
+    html += `<div class="step-dot ${cls}">${i + 1}</div>`;
+  }
+  document.getElementById('stepIndicator').innerHTML = html;
+
+  document.getElementById('stateLabel').textContent = step === 0 ? '|0>' : 'encoded';
+  document.getElementById('syndromeVal').textContent = syndrome || '--';
+  document.getElementById('errorLoc').textContent = errorApplied >= 0 ? 'Q' + errorApplied : '--';
+}
+
+function log(msg) {
+  const div = document.getElementById('logDiv');
+  div.innerHTML += '<div>' + msg + '</div>';
+  div.scrollTop = div.scrollHeight;
+}
+
+// Init
+resetCode();
+</script>
+<script src="/related.js"></script>
+</body>
+</html>

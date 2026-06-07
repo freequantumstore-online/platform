@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced VQE - FreeQuantumStore</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--text:#fafafa;--muted:#888;--accent:#7c3aed;--panel:#141414;--line:#1e1e1e;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--yellow:#f59e0b}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',system-ui,sans-serif;min-height:100vh}
+.back{position:fixed;top:12px;left:14px;color:var(--muted);font-size:.82rem;text-decoration:none;z-index:100;font-weight:600}
+.back:hover{color:var(--accent)}
+header{text-align:center;padding:2rem 1rem 1rem}
+header h1{font-size:1.6rem;font-weight:700;color:var(--accent)}
+header p{color:var(--muted);font-size:.85rem;max-width:640px;margin:.4rem auto 0}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1200px;margin:0 auto;padding:0 14px 2rem}
+.full-width{grid-column:1/-1}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.panel h2{font-size:.9rem;font-weight:700;color:var(--accent);margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+canvas{display:block;background:#0d0d0d;border:1px solid var(--line);border-radius:6px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+button{background:var(--accent);color:#fff;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600;font-family:inherit;transition:background .15s}
+button:hover{background:#6d28d9}
+button.secondary{background:transparent;border:1px solid var(--line);color:var(--muted)}
+button.secondary:hover{border-color:var(--accent);color:var(--text)}
+label{font-size:.78rem;color:var(--muted)}
+input[type=range]{width:120px;accent-color:var(--accent)}
+select{background:var(--panel);color:var(--text);border:1px solid var(--line);padding:5px 10px;border-radius:4px;font-size:.78rem;font-family:inherit}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.stat{background:#0d0d0d;padding:8px;border-radius:6px;text-align:center}
+.stat .val{font-size:1rem;font-weight:700;color:var(--accent)}
+.stat .lbl{font-size:.65rem;color:var(--muted)}
+.hamiltonian-display{font-family:'Courier New',monospace;font-size:.72rem;color:#a78bfa;background:#0d0d0d;padding:10px;border-radius:6px;margin-top:8px;line-height:1.6;white-space:pre}
+.log{font-size:.72rem;color:var(--muted);background:#0d0d0d;padding:8px;border-radius:6px;max-height:160px;overflow-y:auto;line-height:1.5;margin-top:8px}
+.log .ok{color:var(--green)}.log .err{color:var(--red)}.log .info{color:#a78bfa}
+textarea{background:#0d0d0d;color:var(--text);border:1px solid var(--line);border-radius:6px;font-family:'Courier New',monospace;font-size:.78rem;width:100%;padding:8px;resize:vertical}
+.legend{font-size:.72rem;color:var(--muted);margin-top:4px}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<a href="/" class="back">FreeQuantumStore</a>
+<header>
+<h1>Advanced VQE</h1>
+<p>Variational Quantum Eigensolver for user-defined Hamiltonians. Pick a molecule or enter a custom Hamiltonian. Multiple ansatz options with real-time convergence tracking.</p>
+</header>
+
+<div class="layout">
+  <div class="panel">
+    <h2>Hamiltonian</h2>
+    <div class="controls">
+      <label>Molecule:</label>
+      <select id="moleculeSelect" onchange="selectMolecule(this.value)">
+        <option value="h2">H2 (Hydrogen)</option>
+        <option value="lih">LiH (Lithium Hydride)</option>
+        <option value="heh">HeH+ (Helium Hydride)</option>
+        <option value="custom">Custom Hamiltonian</option>
+      </select>
+    </div>
+    <div id="customInput" style="display:none">
+      <label>Enter Hamiltonian as Pauli terms (one per line):</label>
+      <textarea id="hamiltonianText" rows="5" placeholder="0.5 II
+-0.3 ZI
+0.2 IZ
+0.1 ZZ
+-0.1 XX">0.5 II
+-0.3 ZI
+0.2 IZ
+0.1 ZZ
+-0.1 XX</textarea>
+      <button onclick="parseCustomHamiltonian()" style="margin-top:6px">Apply</button>
+    </div>
+    <div class="hamiltonian-display" id="hamiltonianDisplay"></div>
+    <div class="stats">
+      <div class="stat"><div class="val" id="nQubitVal">2</div><div class="lbl">Qubits</div></div>
+      <div class="stat"><div class="val" id="nTermVal">5</div><div class="lbl">Pauli Terms</div></div>
+      <div class="stat"><div class="val" id="exactVal">--</div><div class="lbl">Exact Ground State</div></div>
+      <div class="stat"><div class="val" id="gapVal">--</div><div class="lbl">Energy Gap</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Ansatz + Optimizer</h2>
+    <div class="controls">
+      <label>Ansatz:</label>
+      <select id="ansatzSelect" onchange="updateAnsatz()">
+        <option value="hardware">Hardware-Efficient</option>
+        <option value="uccsd">UCCSD-like</option>
+        <option value="hva">Hamiltonian Variational</option>
+      </select>
+    </div>
+    <div class="controls">
+      <label>Layers: <span id="layerVal">2</span></label>
+      <input type="range" id="layerSlider" min="1" max="6" value="2" oninput="ansatzLayers=+this.value;document.getElementById('layerVal').textContent=this.value;updateAnsatz()">
+    </div>
+    <div class="controls">
+      <label>Optimizer:</label>
+      <select id="optimizerSelect">
+        <option value="adam">Adam</option>
+        <option value="gd">Gradient Descent</option>
+        <option value="spsa">SPSA</option>
+      </select>
+    </div>
+    <div class="controls">
+      <label>Learning rate: <span id="lrVal">0.05</span></label>
+      <input type="range" id="lrSlider" min="1" max="50" value="5" oninput="lr=this.value/100;document.getElementById('lrVal').textContent=lr.toFixed(2)">
+    </div>
+    <div class="controls">
+      <label>Max iterations:</label>
+      <select id="maxIterSelect">
+        <option value="100">100</option>
+        <option value="200" selected>200</option>
+        <option value="500">500</option>
+      </select>
+    </div>
+    <div class="controls">
+      <button onclick="startVQE()">Run VQE</button>
+      <button onclick="stopVQE()" class="secondary">Stop</button>
+      <button onclick="resetVQE()" class="secondary">Reset</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="val" id="iterVal">0</div><div class="lbl">Iteration</div></div>
+      <div class="stat"><div class="val" id="energyVal">--</div><div class="lbl">Current Energy</div></div>
+      <div class="stat"><div class="val" id="errorVal">--</div><div class="lbl">Error (mHa)</div></div>
+      <div class="stat"><div class="val" id="paramCountVal">--</div><div class="lbl">Parameters</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Convergence Plot</h2>
+    <canvas id="convCanvas" width="520" height="260"></canvas>
+    <div class="legend">Purple: VQE energy. Green dashed: exact ground state. Orange: chemical accuracy (1.6 mHa).</div>
+  </div>
+
+  <div class="panel">
+    <h2>Energy Landscape (2D slice)</h2>
+    <canvas id="landscapeCanvas" width="520" height="260"></canvas>
+    <div class="legend">Heatmap of energy over first two parameters. White dot: current position. Green path: optimizer trajectory.</div>
+  </div>
+
+  <div class="panel">
+    <h2>Parameter Trajectory</h2>
+    <canvas id="paramCanvas" width="520" height="220"></canvas>
+    <div class="legend">Each line tracks one parameter over iterations.</div>
+  </div>
+
+  <div class="panel">
+    <h2>Optimization Log</h2>
+    <div class="log" id="logDiv">Select a molecule and ansatz, then click Run VQE.</div>
+  </div>
+</div>
+
+<script>
+// ===== Quantum State Vector Engine =====
+class QState {
+  constructor(n) {
+    this.n = n;
+    this.dim = 1 << n;
+    this.re = new Float64Array(this.dim);
+    this.im = new Float64Array(this.dim);
+    this.re[0] = 1;
+  }
+  clone() {
+    const s = new QState(this.n);
+    s.re.set(this.re); s.im.set(this.im);
+    return s;
+  }
+  applyGate1(q, m) {
+    const step = 1 << q;
+    for (let i = 0; i < this.dim; i++) {
+      if (i & step) continue;
+      const j = i | step;
+      const ar = this.re[i], ai = this.im[i], br = this.re[j], bi = this.im[j];
+      this.re[i] = m[0][0].re*ar - m[0][0].im*ai + m[0][1].re*br - m[0][1].im*bi;
+      this.im[i] = m[0][0].re*ai + m[0][0].im*ar + m[0][1].re*bi + m[0][1].im*br;
+      this.re[j] = m[1][0].re*ar - m[1][0].im*ai + m[1][1].re*br - m[1][1].im*bi;
+      this.im[j] = m[1][0].re*ai + m[1][0].im*ar + m[1][1].re*bi + m[1][1].im*br;
+    }
+  }
+  ry(q, t) {
+    const c = Math.cos(t/2), s = Math.sin(t/2);
+    this.applyGate1(q, [[{re:c,im:0},{re:-s,im:0}],[{re:s,im:0},{re:c,im:0}]]);
+  }
+  rz(q, t) {
+    const c = Math.cos(t/2), s = Math.sin(t/2);
+    this.applyGate1(q, [[{re:c,im:-s},{re:0,im:0}],[{re:0,im:0},{re:c,im:s}]]);
+  }
+  rx(q, t) {
+    const c = Math.cos(t/2), s = Math.sin(t/2);
+    this.applyGate1(q, [[{re:c,im:0},{re:0,im:-s}],[{re:0,im:-s},{re:c,im:0}]]);
+  }
+  h(q) {
+    const s = 1/Math.sqrt(2);
+    this.applyGate1(q, [[{re:s,im:0},{re:s,im:0}],[{re:s,im:0},{re:-s,im:0}]]);
+  }
+  x(q) { this.applyGate1(q, [[{re:0,im:0},{re:1,im:0}],[{re:1,im:0},{re:0,im:0}]]); }
+  cnot(c, t) {
+    const cs = 1 << c, ts = 1 << t;
+    for (let i = 0; i < this.dim; i++) {
+      if ((i & cs) && !(i & ts)) {
+        const j = i | ts;
+        const tr = this.re[i], ti = this.im[i];
+        this.re[i] = this.re[j]; this.im[i] = this.im[j];
+        this.re[j] = tr; this.im[j] = ti;
+      }
+    }
+  }
+  expectZ(q) {
+    const step = 1 << q;
+    let val = 0;
+    for (let i = 0; i < this.dim; i++) {
+      const prob = this.re[i]*this.re[i] + this.im[i]*this.im[i];
+      val += (i & step) ? -prob : prob;
+    }
+    return val;
+  }
+}
+
+// ===== Hamiltonian =====
+let hamiltonian = [];
+let nQubits = 2;
+let exactGS = null;
+let energyGap = null;
+
+const molecules = {
+  h2: {
+    name: 'H2 (d=0.74 A)',
+    nq: 2,
+    terms: [
+      { coeff: -0.4804, pauli: 'II' },
+      { coeff:  0.3435, pauli: 'IZ' },
+      { coeff: -0.4347, pauli: 'ZI' },
+      { coeff:  0.5716, pauli: 'ZZ' },
+      { coeff:  0.0910, pauli: 'XX' },
+      { coeff:  0.0910, pauli: 'YY' }
+    ]
+  },
+  lih: {
+    name: 'LiH (simplified 2-qubit)',
+    nq: 2,
+    terms: [
+      { coeff: -0.7966, pauli: 'II' },
+      { coeff:  0.1809, pauli: 'IZ' },
+      { coeff:  0.1809, pauli: 'ZI' },
+      { coeff:  0.1686, pauli: 'ZZ' },
+      { coeff:  0.0453, pauli: 'XX' },
+      { coeff:  0.0453, pauli: 'YY' }
+    ]
+  },
+  heh: {
+    name: 'HeH+ (simplified 2-qubit)',
+    nq: 2,
+    terms: [
+      { coeff: -1.2488, pauli: 'II' },
+      { coeff:  0.1823, pauli: 'IZ' },
+      { coeff: -0.1149, pauli: 'ZI' },
+      { coeff:  0.1243, pauli: 'ZZ' },
+      { coeff:  0.1679, pauli: 'XX' },
+      { coeff:  0.1679, pauli: 'YY' }
+    ]
+  }
+};
+
+function selectMolecule(key) {
+  document.getElementById('customInput').style.display = key === 'custom' ? 'block' : 'none';
+  if (key === 'custom') return;
+  const mol = molecules[key];
+  hamiltonian = mol.terms;
+  nQubits = mol.nq;
+  computeExact();
+  updateHamiltonianDisplay();
+  resetVQE();
+}
+
+function parseCustomHamiltonian() {
+  const text = document.getElementById('hamiltonianText').value.trim();
+  const lines = text.split('\n').filter(l => l.trim());
+  hamiltonian = [];
+  let maxQ = 0;
+  for (const line of lines) {
+    const parts = line.trim().split(/\s+/);
+    if (parts.length < 2) continue;
+    const coeff = parseFloat(parts[0]);
+    const pauli = parts[1].toUpperCase();
+    if (isNaN(coeff)) continue;
+    hamiltonian.push({ coeff, pauli });
+    maxQ = Math.max(maxQ, pauli.length);
+  }
+  nQubits = maxQ;
+  computeExact();
+  updateHamiltonianDisplay();
+  resetVQE();
+  log('<span class="info">Parsed custom Hamiltonian: ' + hamiltonian.length + ' terms, ' + nQubits + ' qubits.</span>');
+}
+
+function updateHamiltonianDisplay() {
+  let text = `H = `;
+  for (let i = 0; i < hamiltonian.length; i++) {
+    const t = hamiltonian[i];
+    const sign = t.coeff >= 0 ? (i > 0 ? '+ ' : '') : '- ';
+    text += sign + Math.abs(t.coeff).toFixed(4) + ' ' + t.pauli;
+    if (i < hamiltonian.length - 1) text += '\n    ';
+  }
+  document.getElementById('hamiltonianDisplay').textContent = text;
+  document.getElementById('nQubitVal').textContent = nQubits;
+  document.getElementById('nTermVal').textContent = hamiltonian.length;
+  document.getElementById('exactVal').textContent = exactGS !== null ? exactGS.toFixed(4) : '--';
+  document.getElementById('gapVal').textContent = energyGap !== null ? energyGap.toFixed(4) : '--';
+}
+
+// ===== Exact diagonalization (brute force for small systems) =====
+function computeExact() {
+  const dim = 1 << nQubits;
+  // Build full Hamiltonian matrix (real for our cases)
+  const Hmat = [];
+  for (let i = 0; i < dim; i++) {
+    Hmat[i] = new Float64Array(dim);
+  }
+
+  for (const term of hamiltonian) {
+    const pauli = term.pauli;
+    for (let i = 0; i < dim; i++) {
+      // Apply Pauli string to basis state |i>
+      let j = i;
+      let phaseRe = term.coeff, phaseIm = 0;
+      for (let q = 0; q < nQubits; q++) {
+        const p = pauli[q];
+        const bit = (i >> (nQubits - 1 - q)) & 1;
+        if (p === 'I') {
+          // Identity, no change
+        } else if (p === 'Z') {
+          phaseRe *= bit ? -1 : 1;
+        } else if (p === 'X') {
+          j ^= (1 << (nQubits - 1 - q));
+        } else if (p === 'Y') {
+          j ^= (1 << (nQubits - 1 - q));
+          // Y|0> = i|1>, Y|1> = -i|0>
+          const newPhaseRe = bit ? phaseIm : -phaseIm;
+          const newPhaseIm = bit ? -phaseRe : phaseRe;
+          phaseRe = newPhaseRe;
+          phaseIm = newPhaseIm;
+        }
+      }
+      // For simplicity, only keep real part (valid for our molecular Hamiltonians)
+      Hmat[j][i] += phaseRe;
+    }
+  }
+
+  // Find eigenvalues via power iteration on shifted matrix (find minimum)
+  // Simple approach: compute all diagonal elements and use variational bound
+  let eigenvalues = [];
+  // For small dim, we can do direct search
+  // Actually let's just do a sweep: evaluate <psi|H|psi> for computational basis
+  for (let i = 0; i < dim; i++) {
+    eigenvalues.push(Hmat[i][i]);
+  }
+
+  // Better: 2x2 diagonalization for 2-qubit systems
+  if (dim <= 16) {
+    // Jacobi eigenvalue approximation
+    eigenvalues = jacobiEigenvalues(Hmat, dim);
+  }
+
+  eigenvalues.sort((a, b) => a - b);
+  exactGS = eigenvalues[0];
+  energyGap = eigenvalues.length > 1 ? eigenvalues[1] - eigenvalues[0] : 0;
+}
+
+function jacobiEigenvalues(A, n) {
+  // Copy matrix
+  const M = [];
+  for (let i = 0; i < n; i++) {
+    M[i] = new Float64Array(n);
+    for (let j = 0; j < n; j++) M[i][j] = A[i][j];
+  }
+
+  // Jacobi rotation iterations
+  for (let iter = 0; iter < 100; iter++) {
+    // Find largest off-diagonal
+    let maxVal = 0, p = 0, q = 1;
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        if (Math.abs(M[i][j]) > maxVal) {
+          maxVal = Math.abs(M[i][j]);
+          p = i; q = j;
+        }
+      }
+    }
+    if (maxVal < 1e-12) break;
+
+    // Compute rotation angle
+    const theta = 0.5 * Math.atan2(2 * M[p][q], M[p][p] - M[q][q]);
+    const c = Math.cos(theta), s = Math.sin(theta);
+
+    // Apply rotation
+    for (let i = 0; i < n; i++) {
+      const mip = M[i][p], miq = M[i][q];
+      M[i][p] = c * mip + s * miq;
+      M[i][q] = -s * mip + c * miq;
+    }
+    for (let j = 0; j < n; j++) {
+      const mpj = M[p][j], mqj = M[q][j];
+      M[p][j] = c * mpj + s * mqj;
+      M[q][j] = -s * mpj + c * mqj;
+    }
+  }
+
+  const eigs = [];
+  for (let i = 0; i < n; i++) eigs.push(M[i][i]);
+  return eigs;
+}
+
+// ===== VQE Ansatz =====
+let ansatzType = 'hardware';
+let ansatzLayers = 2;
+let params = [];
+let lr = 0.05;
+let running = false;
+let iteration = 0;
+let energyHistory = [];
+let paramHistory = [];
+let trajectoryP0 = [], trajectoryP1 = [];
+
+// Adam state
+let m = [], v = [];
+let adamBeta1 = 0.9, adamBeta2 = 0.999, adamEps = 1e-8;
+
+function getNumParams() {
+  if (ansatzType === 'hardware') return ansatzLayers * nQubits * 2 + nQubits;
+  if (ansatzType === 'uccsd') return ansatzLayers * (nQubits + nQubits * (nQubits - 1) / 2);
+  if (ansatzType === 'hva') return ansatzLayers * hamiltonian.length;
+  return 4;
+}
+
+function initParams() {
+  const np = getNumParams();
+  params = [];
+  for (let i = 0; i < np; i++) params.push((Math.random() - 0.5) * 0.5);
+  m = new Array(np).fill(0);
+  v = new Array(np).fill(0);
+  document.getElementById('paramCountVal').textContent = np;
+}
+
+function applyAnsatz(st, p) {
+  if (ansatzType === 'hardware') {
+    // Initial Ry layer
+    let idx = 0;
+    for (let q = 0; q < nQubits; q++) st.ry(q, p[idx++]);
+    // Entangling + rotation layers
+    for (let l = 0; l < ansatzLayers; l++) {
+      for (let q = 0; q < nQubits - 1; q++) st.cnot(q, q + 1);
+      for (let q = 0; q < nQubits; q++) { st.ry(q, p[idx++]); st.rz(q, p[idx++]); }
+    }
+  } else if (ansatzType === 'uccsd') {
+    let idx = 0;
+    for (let l = 0; l < ansatzLayers; l++) {
+      // Single excitations
+      for (let q = 0; q < nQubits; q++) { st.ry(q, p[idx++]); }
+      // Double excitations (CNOT ladder + Ry)
+      for (let q = 0; q < nQubits - 1; q++) {
+        for (let r = q + 1; r < nQubits; r++) {
+          st.cnot(q, r);
+          st.ry(r, p[idx++]);
+          st.cnot(q, r);
+        }
+      }
+    }
+  } else if (ansatzType === 'hva') {
+    let idx = 0;
+    for (let l = 0; l < ansatzLayers; l++) {
+      for (let t = 0; t < hamiltonian.length; t++) {
+        const term = hamiltonian[t];
+        const theta = p[idx++];
+        // Apply exp(-i*theta*P) for each Pauli term
+        // Simplified: use Ry/Rz rotations based on Pauli type
+        for (let q = 0; q < nQubits; q++) {
+          const gate = term.pauli[q];
+          if (gate === 'X') st.rx(q, theta * term.coeff);
+          else if (gate === 'Y') st.ry(q, theta * term.coeff);
+          else if (gate === 'Z') st.rz(q, theta * term.coeff);
+        }
+        // Entangling for multi-qubit terms
+        if (term.pauli.replace(/I/g, '').length > 1) {
+          for (let q = 0; q < nQubits - 1; q++) st.cnot(q, q + 1);
+        }
+      }
+    }
+  }
+}
+
+function evaluateEnergy(p) {
+  let energy = 0;
+  for (const term of hamiltonian) {
+    const st = new QState(nQubits);
+    applyAnsatz(st, p);
+    let expectation = 0;
+    const pauli = term.pauli;
+
+    // Compute <psi|P|psi>
+    // For Pauli strings made of I and Z, this is straightforward
+    // For X and Y, need basis change
+    const needsBasisChange = [];
+    for (let q = 0; q < nQubits; q++) {
+      if (pauli[q] === 'X') {
+        st.h(q);
+        needsBasisChange.push({ q, type: 'X' });
+      } else if (pauli[q] === 'Y') {
+        // Rotate Y basis: S^dag H
+        st.rz(q, -Math.PI / 2);
+        st.h(q);
+        needsBasisChange.push({ q, type: 'Y' });
+      }
+    }
+
+    // Now measure in Z basis
+    for (let i = 0; i < st.dim; i++) {
+      const prob = st.re[i] * st.re[i] + st.im[i] * st.im[i];
+      let parity = 1;
+      for (let q = 0; q < nQubits; q++) {
+        if (pauli[q] !== 'I') {
+          const bit = (i >> (nQubits - 1 - q)) & 1;
+          if (bit) parity *= -1;
+        }
+      }
+      expectation += prob * parity;
+    }
+
+    energy += term.coeff * expectation;
+  }
+  return energy;
+}
+
+function computeGradients(p) {
+  const eps = 0.05;
+  const grad = new Array(p.length);
+  for (let i = 0; i < p.length; i++) {
+    const pp = [...p]; pp[i] += eps;
+    const pm = [...p]; pm[i] -= eps;
+    grad[i] = (evaluateEnergy(pp) - evaluateEnergy(pm)) / (2 * eps);
+  }
+  return grad;
+}
+
+function computeGradientsSPSA(p) {
+  const c = 0.1;
+  const delta = p.map(() => Math.random() < 0.5 ? 1 : -1);
+  const pp = p.map((v, i) => v + c * delta[i]);
+  const pm = p.map((v, i) => v - c * delta[i]);
+  const diff = evaluateEnergy(pp) - evaluateEnergy(pm);
+  return p.map((_, i) => diff / (2 * c * delta[i]));
+}
+
+function updateAnsatz() {
+  ansatzType = document.getElementById('ansatzSelect').value;
+  resetVQE();
+}
+
+function resetVQE() {
+  running = false;
+  iteration = 0;
+  energyHistory = [];
+  paramHistory = [];
+  trajectoryP0 = [];
+  trajectoryP1 = [];
+  initParams();
+  updateStats(null);
+  drawConvergence();
+  drawLandscape();
+  drawParamTrajectory();
+}
+
+async function startVQE() {
+  if (running) return;
+  if (hamiltonian.length === 0) { log('<span class="err">No Hamiltonian defined.</span>'); return; }
+  running = true;
+  const maxIter = +document.getElementById('maxIterSelect').value;
+  const optimizer = document.getElementById('optimizerSelect').value;
+  log(`<span class="info">VQE started: ${ansatzType} ansatz, ${ansatzLayers} layers, ${params.length} params, ${optimizer} optimizer, lr=${lr}</span>`);
+
+  // Pre-compute landscape
+  computeLandscapeData();
+
+  for (let i = 0; i < maxIter && running; i++) {
+    const grad = optimizer === 'spsa' ? computeGradientsSPSA(params) : computeGradients(params);
+
+    if (optimizer === 'adam') {
+      iteration++;
+      for (let j = 0; j < params.length; j++) {
+        m[j] = adamBeta1 * m[j] + (1 - adamBeta1) * grad[j];
+        v[j] = adamBeta2 * v[j] + (1 - adamBeta2) * grad[j] * grad[j];
+        const mHat = m[j] / (1 - Math.pow(adamBeta1, iteration));
+        const vHat = v[j] / (1 - Math.pow(adamBeta2, iteration));
+        params[j] -= lr * mHat / (Math.sqrt(vHat) + adamEps);
+      }
+    } else {
+      iteration++;
+      for (let j = 0; j < params.length; j++) {
+        params[j] -= lr * grad[j];
+      }
+    }
+
+    const energy = evaluateEnergy(params);
+    energyHistory.push(energy);
+    paramHistory.push([...params]);
+    if (params.length >= 2) {
+      trajectoryP0.push(params[0]);
+      trajectoryP1.push(params[1]);
+    }
+
+    if (i % 5 === 0 || i === maxIter - 1) {
+      const error = exactGS !== null ? Math.abs(energy - exactGS) * 1000 : null;
+      updateStats(energy);
+      drawConvergence();
+      drawLandscape();
+      drawParamTrajectory();
+      if (i % 20 === 0) {
+        log(`Iter ${iteration}: E = ${energy.toFixed(6)} Ha` + (error !== null ? `, error = ${error.toFixed(2)} mHa` : ''));
+      }
+      await new Promise(r => setTimeout(r, 5));
+    }
+  }
+
+  running = false;
+  const finalE = evaluateEnergy(params);
+  const finalErr = exactGS !== null ? Math.abs(finalE - exactGS) * 1000 : null;
+  log(`<span class="ok">VQE complete. Final energy: ${finalE.toFixed(6)} Ha` + (finalErr !== null ? `, error: ${finalErr.toFixed(2)} mHa` : '') + '</span>');
+  if (finalErr !== null && finalErr < 1.6) {
+    log('<span class="ok">Within chemical accuracy (1.6 mHa)!</span>');
+  }
+}
+
+function stopVQE() { running = false; log('VQE stopped.'); }
+
+function updateStats(energy) {
+  document.getElementById('iterVal').textContent = iteration;
+  document.getElementById('energyVal').textContent = energy !== null ? energy.toFixed(4) : '--';
+  const error = energy !== null && exactGS !== null ? Math.abs(energy - exactGS) * 1000 : null;
+  document.getElementById('errorVal').textContent = error !== null ? error.toFixed(2) : '--';
+}
+
+function log(msg) {
+  const div = document.getElementById('logDiv');
+  div.innerHTML += '<div>' + msg + '</div>';
+  div.scrollTop = div.scrollHeight;
+}
+
+// ===== Drawing =====
+const convC = document.getElementById('convCanvas');
+const convCtx = convC.getContext('2d');
+const landC = document.getElementById('landscapeCanvas');
+const landCtx = landC.getContext('2d');
+const paramC = document.getElementById('paramCanvas');
+const paramCtx = paramC.getContext('2d');
+
+let landscapeData = null;
+
+function computeLandscapeData() {
+  if (params.length < 2) { landscapeData = null; return; }
+  const res = 30;
+  const range = Math.PI;
+  landscapeData = { data: [], min: Infinity, max: -Infinity, res };
+  for (let i = 0; i < res; i++) {
+    landscapeData.data[i] = [];
+    for (let j = 0; j < res; j++) {
+      const p = [...params];
+      p[0] = -range + (2 * range * i / (res - 1));
+      p[1] = -range + (2 * range * j / (res - 1));
+      const e = evaluateEnergy(p);
+      landscapeData.data[i][j] = e;
+      landscapeData.min = Math.min(landscapeData.min, e);
+      landscapeData.max = Math.max(landscapeData.max, e);
+    }
+  }
+}
+
+function drawConvergence() {
+  const W = convC.width, H = convC.height;
+  convCtx.fillStyle = '#0d0d0d';
+  convCtx.fillRect(0, 0, W, H);
+
+  const pad = { l: 55, r: 15, t: 20, b: 30 };
+  const plotW = W - pad.l - pad.r;
+  const plotH = H - pad.t - pad.b;
+
+  // Axes
+  convCtx.strokeStyle = '#333'; convCtx.lineWidth = 1;
+  convCtx.beginPath();
+  convCtx.moveTo(pad.l, pad.t); convCtx.lineTo(pad.l, H - pad.b);
+  convCtx.lineTo(W - pad.r, H - pad.b); convCtx.stroke();
+
+  if (energyHistory.length < 2) {
+    convCtx.fillStyle = '#444'; convCtx.font = '12px Manrope';
+    convCtx.fillText('Convergence plot will appear here', W/2 - 120, H/2);
+    return;
+  }
+
+  const allE = [...energyHistory];
+  if (exactGS !== null) allE.push(exactGS);
+  const minE = Math.min(...allE) - 0.05;
+  const maxE = Math.max(...allE) + 0.05;
+
+  // Y-axis labels
+  convCtx.fillStyle = '#555'; convCtx.font = '9px Manrope';
+  for (let i = 0; i <= 4; i++) {
+    const val = minE + (maxE - minE) * (1 - i / 4);
+    const y = pad.t + plotH * i / 4;
+    convCtx.fillText(val.toFixed(3), 2, y + 3);
+    convCtx.strokeStyle = '#1a1a1a';
+    convCtx.beginPath(); convCtx.moveTo(pad.l, y); convCtx.lineTo(W - pad.r, y); convCtx.stroke();
+  }
+
+  // X-axis
+  convCtx.fillStyle = '#555'; convCtx.font = '9px Manrope';
+  convCtx.fillText('Iteration', W/2 - 20, H - 4);
+
+  // Exact ground state line
+  if (exactGS !== null) {
+    const ey = pad.t + plotH * (1 - (exactGS - minE) / (maxE - minE));
+    convCtx.strokeStyle = '#22c55e';
+    convCtx.setLineDash([6, 4]);
+    convCtx.lineWidth = 1.5;
+    convCtx.beginPath(); convCtx.moveTo(pad.l, ey); convCtx.lineTo(W - pad.r, ey); convCtx.stroke();
+    convCtx.setLineDash([]);
+    convCtx.fillStyle = '#22c55e'; convCtx.font = '9px Manrope';
+    convCtx.fillText('Exact: ' + exactGS.toFixed(4), W - pad.r - 90, ey - 5);
+
+    // Chemical accuracy band
+    const chemUp = pad.t + plotH * (1 - (exactGS + 0.0016 - minE) / (maxE - minE));
+    const chemDown = pad.t + plotH * (1 - (exactGS - 0.0016 - minE) / (maxE - minE));
+    convCtx.fillStyle = 'rgba(249,115,22,0.08)';
+    convCtx.fillRect(pad.l, chemUp, plotW, chemDown - chemUp);
+    convCtx.strokeStyle = '#f59e0b44';
+    convCtx.setLineDash([3, 3]);
+    convCtx.beginPath(); convCtx.moveTo(pad.l, chemUp); convCtx.lineTo(W - pad.r, chemUp); convCtx.stroke();
+    convCtx.beginPath(); convCtx.moveTo(pad.l, chemDown); convCtx.lineTo(W - pad.r, chemDown); convCtx.stroke();
+    convCtx.setLineDash([]);
+  }
+
+  // Energy curve
+  convCtx.strokeStyle = '#7c3aed'; convCtx.lineWidth = 2;
+  convCtx.beginPath();
+  for (let i = 0; i < energyHistory.length; i++) {
+    const x = pad.l + (i / (energyHistory.length - 1)) * plotW;
+    const y = pad.t + plotH * (1 - (energyHistory[i] - minE) / (maxE - minE));
+    i === 0 ? convCtx.moveTo(x, y) : convCtx.lineTo(x, y);
+  }
+  convCtx.stroke();
+
+  // Current energy dot
+  const lastX = pad.l + plotW;
+  const lastY = pad.t + plotH * (1 - (energyHistory[energyHistory.length-1] - minE) / (maxE - minE));
+  convCtx.fillStyle = '#a78bfa';
+  convCtx.beginPath(); convCtx.arc(lastX, lastY, 4, 0, Math.PI*2); convCtx.fill();
+}
+
+function drawLandscape() {
+  const W = landC.width, H = landC.height;
+  landCtx.fillStyle = '#0d0d0d';
+  landCtx.fillRect(0, 0, W, H);
+
+  if (!landscapeData) {
+    landCtx.fillStyle = '#444'; landCtx.font = '12px Manrope';
+    landCtx.fillText('Energy landscape will appear here', W/2 - 120, H/2);
+    return;
+  }
+
+  const res = landscapeData.res;
+  const pad = { l: 40, r: 10, t: 10, b: 25 };
+  const plotW = W - pad.l - pad.r;
+  const plotH = H - pad.t - pad.b;
+  const cellW = plotW / res, cellH = plotH / res;
+
+  // Heatmap
+  for (let i = 0; i < res; i++) {
+    for (let j = 0; j < res; j++) {
+      const val = (landscapeData.data[i][j] - landscapeData.min) / (landscapeData.max - landscapeData.min);
+      // Blue (low) to red (high)
+      const r = Math.floor(val * 255);
+      const b = Math.floor((1 - val) * 255);
+      const g = Math.floor(Math.min(val, 1 - val) * 2 * 100);
+      landCtx.fillStyle = `rgb(${r},${g},${b})`;
+      landCtx.fillRect(pad.l + i * cellW, pad.t + j * cellH, cellW + 1, cellH + 1);
+    }
+  }
+
+  // Trajectory
+  if (trajectoryP0.length > 1) {
+    const range = Math.PI;
+    landCtx.strokeStyle = '#22c55e'; landCtx.lineWidth = 1.5;
+    landCtx.beginPath();
+    for (let i = 0; i < trajectoryP0.length; i++) {
+      const px = pad.l + ((trajectoryP0[i] + range) / (2 * range)) * plotW;
+      const py = pad.t + ((trajectoryP1[i] + range) / (2 * range)) * plotH;
+      const cx = Math.max(pad.l, Math.min(W - pad.r, px));
+      const cy = Math.max(pad.t, Math.min(H - pad.b, py));
+      i === 0 ? landCtx.moveTo(cx, cy) : landCtx.lineTo(cx, cy);
+    }
+    landCtx.stroke();
+
+    // Current position
+    const lastPx = pad.l + ((trajectoryP0[trajectoryP0.length-1] + range) / (2 * range)) * plotW;
+    const lastPy = pad.t + ((trajectoryP1[trajectoryP1.length-1] + range) / (2 * range)) * plotH;
+    landCtx.fillStyle = '#fff';
+    landCtx.beginPath();
+    landCtx.arc(
+      Math.max(pad.l, Math.min(W - pad.r, lastPx)),
+      Math.max(pad.t, Math.min(H - pad.b, lastPy)),
+      5, 0, Math.PI * 2
+    );
+    landCtx.fill();
+  }
+
+  // Labels
+  landCtx.fillStyle = '#555'; landCtx.font = '9px Manrope';
+  landCtx.fillText('param[0]', W/2 - 15, H - 4);
+  landCtx.save();
+  landCtx.translate(10, H/2 + 15);
+  landCtx.rotate(-Math.PI/2);
+  landCtx.fillText('param[1]', 0, 0);
+  landCtx.restore();
+}
+
+function drawParamTrajectory() {
+  const W = paramC.width, H = paramC.height;
+  paramCtx.fillStyle = '#0d0d0d';
+  paramCtx.fillRect(0, 0, W, H);
+
+  if (paramHistory.length < 2) {
+    paramCtx.fillStyle = '#444'; paramCtx.font = '12px Manrope';
+    paramCtx.fillText('Parameter trajectories will appear here', W/2 - 130, H/2);
+    return;
+  }
+
+  const pad = { l: 45, r: 10, t: 15, b: 25 };
+  const plotW = W - pad.l - pad.r;
+  const plotH = H - pad.t - pad.b;
+
+  // Axes
+  paramCtx.strokeStyle = '#333'; paramCtx.lineWidth = 1;
+  paramCtx.beginPath();
+  paramCtx.moveTo(pad.l, pad.t); paramCtx.lineTo(pad.l, H - pad.b);
+  paramCtx.lineTo(W - pad.r, H - pad.b); paramCtx.stroke();
+
+  const np = params.length;
+  const n = paramHistory.length;
+  let minP = Infinity, maxP = -Infinity;
+  for (const ph of paramHistory) {
+    for (const v of ph) { minP = Math.min(minP, v); maxP = Math.max(maxP, v); }
+  }
+  const range = maxP - minP || 1;
+
+  // Colors for parameters
+  const colors = ['#7c3aed', '#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16'];
+
+  for (let p = 0; p < Math.min(np, 8); p++) {
+    paramCtx.strokeStyle = colors[p % colors.length];
+    paramCtx.lineWidth = 1.5;
+    paramCtx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const x = pad.l + (i / (n - 1)) * plotW;
+      const y = pad.t + plotH * (1 - (paramHistory[i][p] - minP) / range);
+      i === 0 ? paramCtx.moveTo(x, y) : paramCtx.lineTo(x, y);
+    }
+    paramCtx.stroke();
+  }
+
+  // Labels
+  paramCtx.fillStyle = '#555'; paramCtx.font = '9px Manrope';
+  paramCtx.fillText('Iteration', W/2 - 20, H - 4);
+  paramCtx.fillText('Value', 4, pad.t + 8);
+
+  // Y labels
+  for (let i = 0; i <= 4; i++) {
+    const val = minP + range * (1 - i / 4);
+    const y = pad.t + plotH * i / 4;
+    paramCtx.fillStyle = '#444'; paramCtx.font = '8px Manrope';
+    paramCtx.fillText(val.toFixed(2), 4, y + 3);
+  }
+}
+
+// Init
+selectMolecule('h2');
+</script>
+<script src="/related.js"></script>
+</body>
+</html>

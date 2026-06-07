@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Machine Learning - FreeQuantumStore</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--text:#fafafa;--muted:#888;--accent:#7c3aed;--panel:#141414;--line:#1e1e1e;--green:#22c55e;--red:#ef4444;--blue:#3b82f6}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',system-ui,sans-serif;min-height:100vh}
+.back{position:fixed;top:12px;left:14px;color:var(--muted);font-size:.82rem;text-decoration:none;z-index:100;font-weight:600}
+.back:hover{color:var(--accent)}
+header{text-align:center;padding:2rem 1rem 1rem}
+header h1{font-size:1.6rem;font-weight:700;color:var(--accent)}
+header p{color:var(--muted);font-size:.85rem;max-width:600px;margin:.4rem auto 0}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1200px;margin:0 auto;padding:0 14px 2rem}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.panel h2{font-size:.9rem;font-weight:700;color:var(--accent);margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+canvas{display:block;background:#0d0d0d;border:1px solid var(--line);border-radius:6px;cursor:crosshair}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+button{background:var(--accent);color:#fff;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600;font-family:inherit;transition:background .15s}
+button:hover{background:#6d28d9}
+button.secondary{background:transparent;border:1px solid var(--line);color:var(--muted)}
+button.secondary:hover{border-color:var(--accent);color:var(--text)}
+label{font-size:.78rem;color:var(--muted)}
+input[type=range]{width:110px;accent-color:var(--accent)}
+select{background:var(--panel);color:var(--text);border:1px solid var(--line);padding:4px 8px;border-radius:4px;font-size:.78rem;font-family:inherit}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.stat{background:#0d0d0d;padding:8px;border-radius:6px;text-align:center}
+.stat .val{font-size:1.1rem;font-weight:700;color:var(--accent)}
+.stat .lbl{font-size:.65rem;color:var(--muted)}
+.circuit-display{font-family:'Courier New',monospace;font-size:.72rem;color:#a78bfa;background:#0d0d0d;padding:10px;border-radius:6px;margin-top:8px;line-height:1.6;overflow-x:auto;white-space:pre}
+.log{font-size:.72rem;color:var(--muted);background:#0d0d0d;padding:8px;border-radius:6px;max-height:140px;overflow-y:auto;margin-top:8px;line-height:1.5}
+.legend{display:flex;gap:14px;font-size:.72rem;color:var(--muted);margin-top:6px}
+.legend span{display:flex;align-items:center;gap:4px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.full-width{grid-column:1/-1}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<a href="/" class="back">FreeQuantumStore</a>
+<header>
+<h1>Quantum Machine Learning</h1>
+<p>Parameterized quantum circuit learns to classify 2D data. Click the scatter plot to add points, then train the variational classifier via gradient descent.</p>
+</header>
+
+<div class="layout">
+  <div class="panel">
+    <h2>Training Data (click to add points)</h2>
+    <canvas id="scatterCanvas" width="520" height="400"></canvas>
+    <div class="controls">
+      <label>Class:</label>
+      <button id="classBtn" onclick="toggleClass()" style="min-width:70px">Class A</button>
+      <button class="secondary" onclick="addRandom()">+ Random 20</button>
+      <button class="secondary" onclick="clearData()">Clear</button>
+      <label style="margin-left:auto">Preset:</label>
+      <select id="presetSelect" onchange="loadPreset(this.value)">
+        <option value="">--</option>
+        <option value="moons">Moons</option>
+        <option value="circles">Circles</option>
+        <option value="xor">XOR</option>
+        <option value="linear">Linear</option>
+      </select>
+    </div>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--accent)"></span> Class A</span>
+      <span><span class="dot" style="background:var(--green)"></span> Class B</span>
+      <span><span class="dot" style="background:rgba(124,58,237,0.15)"></span> Decision boundary</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Variational Quantum Circuit</h2>
+    <canvas id="circuitCanvas" width="520" height="180"></canvas>
+    <div class="circuit-display" id="circuitText">Ry(x0) -- Rz(w0) -- CNOT -- Ry(w2) -- Measure
+Ry(x1) -- Rz(w1) ---@--- Rz(w3) -- Measure</div>
+    <div class="controls">
+      <label>Layers:</label>
+      <select id="layerSelect" onchange="setLayers(+this.value)">
+        <option value="1">1</option>
+        <option value="2" selected>2</option>
+        <option value="3">3</option>
+      </select>
+      <label>Learning rate: <span id="lrVal">0.15</span></label>
+      <input type="range" id="lrSlider" min="1" max="50" value="15" oninput="lr=this.value/100;document.getElementById('lrVal').textContent=lr.toFixed(2)">
+      <label>Epochs:</label>
+      <select id="epochSelect">
+        <option value="50">50</option>
+        <option value="100" selected>100</option>
+        <option value="200">200</option>
+        <option value="500">500</option>
+      </select>
+    </div>
+    <div class="controls">
+      <button onclick="startTraining()">Train</button>
+      <button onclick="stopTraining()" class="secondary">Stop</button>
+      <button onclick="resetWeights()" class="secondary">Reset Weights</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="val" id="epochVal">0</div><div class="lbl">Epoch</div></div>
+      <div class="stat"><div class="val" id="lossVal">--</div><div class="lbl">Loss</div></div>
+      <div class="stat"><div class="val" id="accVal">--</div><div class="lbl">Accuracy</div></div>
+      <div class="stat"><div class="val" id="paramVal">6</div><div class="lbl">Parameters</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Training Loss</h2>
+    <canvas id="lossCanvas" width="520" height="200"></canvas>
+  </div>
+
+  <div class="panel">
+    <h2>Training Log</h2>
+    <div class="log" id="logDiv">Add data points and click Train to begin.</div>
+  </div>
+</div>
+
+<script>
+// ===== Quantum State Vector Engine =====
+class QState {
+  constructor(n) {
+    this.n = n;
+    this.dim = 1 << n;
+    this.re = new Float64Array(this.dim);
+    this.im = new Float64Array(this.dim);
+    this.re[0] = 1;
+  }
+  clone() {
+    const s = new QState(this.n);
+    s.re.set(this.re); s.im.set(this.im);
+    return s;
+  }
+  applyGate1(q, m) {
+    // m = [[a,b],[c,d]] each {re,im}
+    const step = 1 << q;
+    for (let i = 0; i < this.dim; i++) {
+      if (i & step) continue;
+      const j = i | step;
+      const ar = this.re[i], ai = this.im[i];
+      const br = this.re[j], bi = this.im[j];
+      this.re[i] = m[0][0].re*ar - m[0][0].im*ai + m[0][1].re*br - m[0][1].im*bi;
+      this.im[i] = m[0][0].re*ai + m[0][0].im*ar + m[0][1].re*bi + m[0][1].im*br;
+      this.re[j] = m[1][0].re*ar - m[1][0].im*ai + m[1][1].re*br - m[1][1].im*bi;
+      this.im[j] = m[1][0].re*ai + m[1][0].im*ar + m[1][1].re*bi + m[1][1].im*br;
+    }
+  }
+  ry(q, theta) {
+    const c = Math.cos(theta/2), s = Math.sin(theta/2);
+    this.applyGate1(q, [
+      [{re:c,im:0},{re:-s,im:0}],
+      [{re:s,im:0},{re:c,im:0}]
+    ]);
+  }
+  rz(q, theta) {
+    const c = Math.cos(theta/2), s = Math.sin(theta/2);
+    this.applyGate1(q, [
+      [{re:c,im:-s},{re:0,im:0}],
+      [{re:0,im:0},{re:c,im:s}]
+    ]);
+  }
+  rx(q, theta) {
+    const c = Math.cos(theta/2), s = Math.sin(theta/2);
+    this.applyGate1(q, [
+      [{re:c,im:0},{re:0,im:-s}],
+      [{re:0,im:-s},{re:c,im:0}]
+    ]);
+  }
+  cnot(control, target) {
+    const cs = 1 << control, ts = 1 << target;
+    for (let i = 0; i < this.dim; i++) {
+      if ((i & cs) && !(i & ts)) {
+        const j = i | ts;
+        const tr = this.re[i], ti = this.im[i];
+        this.re[i] = this.re[j]; this.im[i] = this.im[j];
+        this.re[j] = tr; this.im[j] = ti;
+      }
+    }
+  }
+  probQubit(q) {
+    // probability of qubit q being |1>
+    const step = 1 << q;
+    let p = 0;
+    for (let i = 0; i < this.dim; i++) {
+      if (i & step) p += this.re[i]*this.re[i] + this.im[i]*this.im[i];
+    }
+    return p;
+  }
+}
+
+// ===== QML Circuit =====
+let numLayers = 2;
+let weights = [];
+let bias = 0;
+let lr = 0.15;
+let training = false;
+let epoch = 0;
+let lossHistory = [];
+
+function numParams() { return numLayers * 4 + 1; }
+
+function initWeights() {
+  weights = [];
+  for (let i = 0; i < numLayers * 4; i++) weights.push((Math.random() - 0.5) * 0.5);
+  bias = 0;
+}
+initWeights();
+
+function runCircuit(x0, x1, w) {
+  const st = new QState(2);
+  // encode features
+  st.ry(0, x0 * Math.PI);
+  st.ry(1, x1 * Math.PI);
+  // variational layers
+  for (let l = 0; l < numLayers; l++) {
+    const base = l * 4;
+    st.rz(0, w[base]);
+    st.rz(1, w[base+1]);
+    st.cnot(0, 1);
+    st.ry(0, w[base+2]);
+    st.ry(1, w[base+3]);
+    if (l < numLayers - 1) st.cnot(1, 0);
+  }
+  return st.probQubit(0);
+}
+
+function predict(x0, x1, w, b) {
+  const p = runCircuit(x0, x1, w);
+  return p + b;
+}
+
+function loss(data, w, b) {
+  let total = 0;
+  for (const pt of data) {
+    const pred = predict(pt.x, pt.y, w, b);
+    const target = pt.cls;
+    total += (pred - target) * (pred - target);
+  }
+  return total / data.length;
+}
+
+function accuracy(data, w, b) {
+  let correct = 0;
+  for (const pt of data) {
+    const pred = predict(pt.x, pt.y, w, b);
+    const cls = pred > 0.5 ? 1 : 0;
+    if (cls === pt.cls) correct++;
+  }
+  return data.length > 0 ? correct / data.length : 0;
+}
+
+function gradients(data, w, b) {
+  const eps = 0.05;
+  const gw = new Array(w.length);
+  const l0 = loss(data, w, b);
+  for (let i = 0; i < w.length; i++) {
+    const wp = [...w]; wp[i] += eps;
+    const wm = [...w]; wm[i] -= eps;
+    gw[i] = (loss(data, wp, b) - loss(data, wm, b)) / (2 * eps);
+  }
+  const gb = (loss(data, w, b + eps) - loss(data, w, b - eps)) / (2 * eps);
+  return { gw, gb };
+}
+
+// ===== Data =====
+let dataPoints = [];
+let currentClass = 0;
+
+function toggleClass() {
+  currentClass = 1 - currentClass;
+  document.getElementById('classBtn').textContent = currentClass === 0 ? 'Class A' : 'Class B';
+  document.getElementById('classBtn').style.background = currentClass === 0 ? 'var(--accent)' : 'var(--green)';
+}
+
+function clearData() {
+  dataPoints = [];
+  lossHistory = [];
+  epoch = 0;
+  updateStats();
+  drawScatter();
+  drawLoss();
+}
+
+function addRandom() {
+  for (let i = 0; i < 20; i++) {
+    dataPoints.push({
+      x: Math.random() * 2 - 1,
+      y: Math.random() * 2 - 1,
+      cls: Math.random() < 0.5 ? 0 : 1
+    });
+  }
+  drawScatter();
+}
+
+function loadPreset(name) {
+  dataPoints = [];
+  if (name === 'moons') {
+    for (let i = 0; i < 50; i++) {
+      const a = Math.PI * i / 50;
+      dataPoints.push({ x: Math.cos(a)*0.6 + (Math.random()-0.5)*0.15, y: Math.sin(a)*0.6 + (Math.random()-0.5)*0.15, cls: 0 });
+      dataPoints.push({ x: Math.cos(a)*0.6 + 0.5 + (Math.random()-0.5)*0.15, y: -Math.sin(a)*0.6 + 0.4 + (Math.random()-0.5)*0.15, cls: 1 });
+    }
+  } else if (name === 'circles') {
+    for (let i = 0; i < 60; i++) {
+      const a = 2*Math.PI*i/60;
+      dataPoints.push({ x: Math.cos(a)*0.3 + (Math.random()-0.5)*0.1, y: Math.sin(a)*0.3 + (Math.random()-0.5)*0.1, cls: 0 });
+      dataPoints.push({ x: Math.cos(a)*0.7 + (Math.random()-0.5)*0.1, y: Math.sin(a)*0.7 + (Math.random()-0.5)*0.1, cls: 1 });
+    }
+  } else if (name === 'xor') {
+    for (let i = 0; i < 30; i++) {
+      dataPoints.push({ x: -0.5 + (Math.random()-0.5)*0.4, y: -0.5 + (Math.random()-0.5)*0.4, cls: 0 });
+      dataPoints.push({ x: 0.5 + (Math.random()-0.5)*0.4, y: 0.5 + (Math.random()-0.5)*0.4, cls: 0 });
+      dataPoints.push({ x: -0.5 + (Math.random()-0.5)*0.4, y: 0.5 + (Math.random()-0.5)*0.4, cls: 1 });
+      dataPoints.push({ x: 0.5 + (Math.random()-0.5)*0.4, y: -0.5 + (Math.random()-0.5)*0.4, cls: 1 });
+    }
+  } else if (name === 'linear') {
+    for (let i = 0; i < 50; i++) {
+      const x = Math.random()*2-1, y = Math.random()*2-1;
+      dataPoints.push({ x, y, cls: x + y > 0 ? 1 : 0 });
+    }
+  }
+  drawScatter();
+}
+
+// ===== Canvas setup =====
+const scatterC = document.getElementById('scatterCanvas');
+const scatterCtx = scatterC.getContext('2d');
+const circuitC = document.getElementById('circuitCanvas');
+const circuitCtx = circuitC.getContext('2d');
+const lossC = document.getElementById('lossCanvas');
+const lossCtx = lossC.getContext('2d');
+
+scatterC.addEventListener('click', e => {
+  const rect = scatterC.getBoundingClientRect();
+  const px = (e.clientX - rect.left) / rect.width;
+  const py = (e.clientY - rect.top) / rect.height;
+  const x = px * 2 - 1;
+  const y = -(py * 2 - 1);
+  dataPoints.push({ x, y, cls: currentClass });
+  drawScatter();
+});
+
+function toCanvasX(x) { return (x + 1) / 2 * scatterC.width; }
+function toCanvasY(y) { return (1 - (y + 1) / 2) * scatterC.height; }
+
+function drawScatter() {
+  const W = scatterC.width, H = scatterC.height;
+  scatterCtx.fillStyle = '#0d0d0d';
+  scatterCtx.fillRect(0, 0, W, H);
+
+  // Decision boundary heatmap
+  if (weights.length > 0 && dataPoints.length > 0) {
+    const res = 40;
+    const cellW = W / res, cellH = H / res;
+    for (let i = 0; i < res; i++) {
+      for (let j = 0; j < res; j++) {
+        const x = (i + 0.5) / res * 2 - 1;
+        const y = -((j + 0.5) / res * 2 - 1);
+        const p = predict(x, y, weights, bias);
+        const clamped = Math.max(0, Math.min(1, p));
+        if (clamped > 0.5) {
+          const alpha = (clamped - 0.5) * 2 * 0.25;
+          scatterCtx.fillStyle = `rgba(34,197,94,${alpha})`;
+        } else {
+          const alpha = (0.5 - clamped) * 2 * 0.25;
+          scatterCtx.fillStyle = `rgba(124,58,237,${alpha})`;
+        }
+        scatterCtx.fillRect(i * cellW, j * cellH, cellW + 1, cellH + 1);
+      }
+    }
+    // Decision boundary contour at p=0.5
+    scatterCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+    scatterCtx.lineWidth = 1.5;
+    scatterCtx.setLineDash([4, 3]);
+    const contourRes = 80;
+    for (let i = 0; i < contourRes; i++) {
+      for (let j = 0; j < contourRes; j++) {
+        const x = i / contourRes * 2 - 1, y = -(j / contourRes * 2 - 1);
+        const p00 = predict(x, y, weights, bias);
+        const p10 = predict(x + 2/contourRes, y, weights, bias);
+        const p01 = predict(x, y - 2/contourRes, weights, bias);
+        if ((p00 - 0.5) * (p10 - 0.5) < 0 || (p00 - 0.5) * (p01 - 0.5) < 0) {
+          scatterCtx.beginPath();
+          scatterCtx.arc(toCanvasX(x), toCanvasY(y), 1.5, 0, Math.PI*2);
+          scatterCtx.stroke();
+        }
+      }
+    }
+    scatterCtx.setLineDash([]);
+  }
+
+  // Grid
+  scatterCtx.strokeStyle = '#1e1e1e';
+  scatterCtx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const x = i / 4 * W;
+    scatterCtx.beginPath(); scatterCtx.moveTo(x, 0); scatterCtx.lineTo(x, H); scatterCtx.stroke();
+    const y = i / 4 * H;
+    scatterCtx.beginPath(); scatterCtx.moveTo(0, y); scatterCtx.lineTo(W, y); scatterCtx.stroke();
+  }
+
+  // Axes
+  scatterCtx.strokeStyle = '#333';
+  scatterCtx.lineWidth = 1;
+  scatterCtx.beginPath(); scatterCtx.moveTo(W/2, 0); scatterCtx.lineTo(W/2, H); scatterCtx.stroke();
+  scatterCtx.beginPath(); scatterCtx.moveTo(0, H/2); scatterCtx.lineTo(W, H/2); scatterCtx.stroke();
+
+  // Labels
+  scatterCtx.fillStyle = '#555';
+  scatterCtx.font = '10px Manrope, system-ui';
+  scatterCtx.fillText('-1', 4, H/2 - 4);
+  scatterCtx.fillText('1', W - 12, H/2 - 4);
+  scatterCtx.fillText('1', W/2 + 4, 12);
+  scatterCtx.fillText('-1', W/2 + 4, H - 4);
+
+  // Data points
+  for (const pt of dataPoints) {
+    const cx = toCanvasX(pt.x), cy = toCanvasY(pt.y);
+    scatterCtx.beginPath();
+    scatterCtx.arc(cx, cy, 4, 0, Math.PI * 2);
+    scatterCtx.fillStyle = pt.cls === 0 ? 'var(--accent)' : 'var(--green)';
+    scatterCtx.fillStyle = pt.cls === 0 ? '#7c3aed' : '#22c55e';
+    scatterCtx.fill();
+    scatterCtx.strokeStyle = pt.cls === 0 ? '#a78bfa' : '#4ade80';
+    scatterCtx.lineWidth = 1;
+    scatterCtx.stroke();
+  }
+
+  // Count display
+  const a = dataPoints.filter(p => p.cls === 0).length;
+  const b = dataPoints.filter(p => p.cls === 1).length;
+  scatterCtx.fillStyle = '#666';
+  scatterCtx.font = '11px Manrope, system-ui';
+  scatterCtx.fillText(`A: ${a}  B: ${b}  Total: ${dataPoints.length}`, 8, H - 8);
+}
+
+function drawCircuit() {
+  const W = circuitC.width, H = circuitC.height;
+  circuitCtx.fillStyle = '#0d0d0d';
+  circuitCtx.fillRect(0, 0, W, H);
+
+  const y0 = 60, y1 = 130;
+  const startX = 60;
+
+  // Wires
+  circuitCtx.strokeStyle = '#333';
+  circuitCtx.lineWidth = 1.5;
+  circuitCtx.beginPath(); circuitCtx.moveTo(30, y0); circuitCtx.lineTo(W - 20, y0); circuitCtx.stroke();
+  circuitCtx.beginPath(); circuitCtx.moveTo(30, y1); circuitCtx.lineTo(W - 20, y1); circuitCtx.stroke();
+
+  // Qubit labels
+  circuitCtx.fillStyle = '#7c3aed';
+  circuitCtx.font = '12px Courier New';
+  circuitCtx.fillText('q0', 8, y0 + 4);
+  circuitCtx.fillText('q1', 8, y1 + 4);
+
+  let x = startX;
+  const gateW = 36, gateH = 26, gap = 12;
+
+  function drawGate(qy, label, color) {
+    circuitCtx.fillStyle = color + '33';
+    circuitCtx.strokeStyle = color;
+    circuitCtx.lineWidth = 1;
+    circuitCtx.beginPath();
+    circuitCtx.roundRect(x - gateW/2, qy - gateH/2, gateW, gateH, 4);
+    circuitCtx.fill(); circuitCtx.stroke();
+    circuitCtx.fillStyle = color;
+    circuitCtx.font = '10px Manrope, system-ui';
+    circuitCtx.textAlign = 'center';
+    circuitCtx.fillText(label, x, qy + 3);
+    circuitCtx.textAlign = 'left';
+  }
+
+  function drawCNOT(cy, ty) {
+    circuitCtx.strokeStyle = '#60a5fa';
+    circuitCtx.lineWidth = 1.5;
+    circuitCtx.beginPath(); circuitCtx.moveTo(x, cy); circuitCtx.lineTo(x, ty); circuitCtx.stroke();
+    circuitCtx.fillStyle = '#60a5fa';
+    circuitCtx.beginPath(); circuitCtx.arc(x, cy, 4, 0, Math.PI*2); circuitCtx.fill();
+    circuitCtx.strokeStyle = '#60a5fa';
+    circuitCtx.lineWidth = 1.5;
+    circuitCtx.beginPath(); circuitCtx.arc(x, ty, 10, 0, Math.PI*2); circuitCtx.stroke();
+    circuitCtx.beginPath(); circuitCtx.moveTo(x, ty-10); circuitCtx.lineTo(x, ty+10); circuitCtx.stroke();
+    circuitCtx.beginPath(); circuitCtx.moveTo(x-10, ty); circuitCtx.lineTo(x+10, ty); circuitCtx.stroke();
+  }
+
+  // Feature encoding
+  circuitCtx.fillStyle = '#555';
+  circuitCtx.font = '9px Manrope';
+  circuitCtx.fillText('encode', x - 10, 22);
+  drawGate(y0, 'Ry(x0)', '#f59e0b');
+  x += gateW + gap;
+  drawGate(y1, 'Ry(x1)', '#f59e0b');
+  x += gateW + gap + 8;
+
+  // Variational layers
+  for (let l = 0; l < numLayers; l++) {
+    circuitCtx.fillStyle = '#444';
+    circuitCtx.font = '8px Manrope';
+    circuitCtx.fillText(`L${l+1}`, x - 5, 22);
+    drawGate(y0, 'Rz', '#7c3aed');
+    drawGate(y1, 'Rz', '#7c3aed');
+    x += gateW + gap;
+    drawCNOT(y0, y1);
+    x += gap + 16;
+    drawGate(y0, 'Ry', '#7c3aed');
+    drawGate(y1, 'Ry', '#7c3aed');
+    x += gateW + gap;
+    if (l < numLayers - 1) {
+      drawCNOT(y1, y0);
+      x += gap + 16;
+    }
+  }
+
+  // Measurement
+  x += 8;
+  circuitCtx.fillStyle = '#333';
+  circuitCtx.strokeStyle = '#888';
+  circuitCtx.lineWidth = 1;
+  for (const qy of [y0, y1]) {
+    circuitCtx.beginPath();
+    circuitCtx.roundRect(x - 14, qy - 12, 28, 24, 3);
+    circuitCtx.fill(); circuitCtx.stroke();
+    circuitCtx.strokeStyle = '#aaa';
+    circuitCtx.beginPath();
+    circuitCtx.arc(x, qy + 4, 7, Math.PI, 0);
+    circuitCtx.stroke();
+    circuitCtx.beginPath();
+    circuitCtx.moveTo(x, qy + 4);
+    circuitCtx.lineTo(x + 5, qy - 6);
+    circuitCtx.stroke();
+    circuitCtx.strokeStyle = '#888';
+  }
+}
+
+function drawLoss() {
+  const W = lossC.width, H = lossC.height;
+  lossCtx.fillStyle = '#0d0d0d';
+  lossCtx.fillRect(0, 0, W, H);
+
+  if (lossHistory.length < 2) {
+    lossCtx.fillStyle = '#444';
+    lossCtx.font = '13px Manrope, system-ui';
+    lossCtx.fillText('Training loss will appear here', W/2 - 110, H/2);
+    return;
+  }
+
+  const pad = { l: 45, r: 15, t: 20, b: 30 };
+  const plotW = W - pad.l - pad.r;
+  const plotH = H - pad.t - pad.b;
+
+  // Axes
+  lossCtx.strokeStyle = '#333';
+  lossCtx.lineWidth = 1;
+  lossCtx.beginPath();
+  lossCtx.moveTo(pad.l, pad.t);
+  lossCtx.lineTo(pad.l, H - pad.b);
+  lossCtx.lineTo(W - pad.r, H - pad.b);
+  lossCtx.stroke();
+
+  const maxLoss = Math.max(...lossHistory) * 1.1;
+  const minLoss = 0;
+
+  // Y-axis labels
+  lossCtx.fillStyle = '#555';
+  lossCtx.font = '9px Manrope';
+  for (let i = 0; i <= 4; i++) {
+    const val = minLoss + (maxLoss - minLoss) * (1 - i / 4);
+    const y = pad.t + plotH * i / 4;
+    lossCtx.fillText(val.toFixed(3), 2, y + 3);
+    lossCtx.strokeStyle = '#1a1a1a';
+    lossCtx.beginPath(); lossCtx.moveTo(pad.l, y); lossCtx.lineTo(W - pad.r, y); lossCtx.stroke();
+  }
+
+  // X-axis label
+  lossCtx.fillText('Epoch', W/2 - 15, H - 4);
+
+  // Loss curve
+  lossCtx.strokeStyle = '#7c3aed';
+  lossCtx.lineWidth = 2;
+  lossCtx.beginPath();
+  for (let i = 0; i < lossHistory.length; i++) {
+    const x = pad.l + (i / (lossHistory.length - 1)) * plotW;
+    const y = pad.t + plotH * (1 - (lossHistory[i] - minLoss) / (maxLoss - minLoss));
+    i === 0 ? lossCtx.moveTo(x, y) : lossCtx.lineTo(x, y);
+  }
+  lossCtx.stroke();
+
+  // Fill under curve
+  const lastX = pad.l + plotW;
+  const lastY = pad.t + plotH * (1 - (lossHistory[lossHistory.length-1] - minLoss) / (maxLoss - minLoss));
+  lossCtx.lineTo(lastX, H - pad.b);
+  lossCtx.lineTo(pad.l, H - pad.b);
+  lossCtx.closePath();
+  lossCtx.fillStyle = 'rgba(124,58,237,0.08)';
+  lossCtx.fill();
+
+  // Current loss marker
+  lossCtx.fillStyle = '#a78bfa';
+  lossCtx.beginPath();
+  lossCtx.arc(lastX, lastY, 4, 0, Math.PI * 2);
+  lossCtx.fill();
+}
+
+function updateStats() {
+  document.getElementById('epochVal').textContent = epoch;
+  const l = lossHistory.length > 0 ? lossHistory[lossHistory.length - 1] : '--';
+  document.getElementById('lossVal').textContent = typeof l === 'number' ? l.toFixed(4) : l;
+  const acc = dataPoints.length > 0 ? accuracy(dataPoints, weights, bias) : '--';
+  document.getElementById('accVal').textContent = typeof acc === 'number' ? (acc * 100).toFixed(1) + '%' : acc;
+  document.getElementById('paramVal').textContent = numParams();
+}
+
+function setLayers(n) {
+  numLayers = n;
+  initWeights();
+  epoch = 0;
+  lossHistory = [];
+  updateStats();
+  drawCircuit();
+  drawScatter();
+  drawLoss();
+  updateCircuitText();
+}
+
+function resetWeights() {
+  initWeights();
+  epoch = 0;
+  lossHistory = [];
+  updateStats();
+  drawScatter();
+  drawLoss();
+  log('Weights reset.');
+}
+
+function updateCircuitText() {
+  let line0 = 'Ry(x0)';
+  let line1 = 'Ry(x1)';
+  for (let l = 0; l < numLayers; l++) {
+    const b = l * 4;
+    line0 += ` -- Rz(w${b}) -- CNOT -- Ry(w${b+2})`;
+    line1 += ` -- Rz(w${b+1}) ---@--- Ry(w${b+3})`;
+    if (l < numLayers - 1) {
+      line0 += ' ---@---';
+      line1 += ' -- CNOT --';
+    }
+  }
+  line0 += ' -- M';
+  line1 += ' -- M';
+  document.getElementById('circuitText').textContent = line0 + '\n' + line1;
+}
+
+function log(msg) {
+  const div = document.getElementById('logDiv');
+  div.innerHTML += '<div>' + msg + '</div>';
+  div.scrollTop = div.scrollHeight;
+}
+
+async function startTraining() {
+  if (dataPoints.length < 4) { log('Need at least 4 data points.'); return; }
+  if (training) return;
+  training = true;
+  const maxEpochs = +document.getElementById('epochSelect').value;
+  log(`Training started: ${maxEpochs} epochs, lr=${lr.toFixed(2)}, ${numLayers} layers, ${dataPoints.length} points`);
+
+  for (let e = 0; e < maxEpochs && training; e++) {
+    const { gw, gb } = gradients(dataPoints, weights, bias);
+    for (let i = 0; i < weights.length; i++) weights[i] -= lr * gw[i];
+    bias -= lr * gb;
+    const l = loss(dataPoints, weights, bias);
+    lossHistory.push(l);
+    epoch++;
+
+    if (e % 5 === 0 || e === maxEpochs - 1) {
+      const acc = accuracy(dataPoints, weights, bias);
+      log(`Epoch ${epoch}: loss=${l.toFixed(4)}, acc=${(acc*100).toFixed(1)}%`);
+      updateStats();
+      drawScatter();
+      drawLoss();
+      drawCircuit();
+      await new Promise(r => setTimeout(r, 10));
+    }
+  }
+  training = false;
+  updateStats();
+  drawScatter();
+  drawLoss();
+  log('Training complete.');
+}
+
+function stopTraining() { training = false; log('Training stopped.'); }
+
+// Initial draws
+drawScatter();
+drawCircuit();
+drawLoss();
+updateCircuitText();
+updateStats();
+</script>
+<script src="/related.js"></script>
+</body>
+</html>
