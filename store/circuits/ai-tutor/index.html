@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Teaching Assistant - Quantum Computing | FreeQuantumStore</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0f0a1a;
+    color: #e2e0e8;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: linear-gradient(135deg, #1a1025 0%, #2d1b4e 100%);
+    border-bottom: 1px solid #7c3aed33;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  header .logo {
+    width: 36px; height: 36px;
+    background: #7c3aed;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: #fff;
+  }
+  header h1 { font-size: 18px; font-weight: 600; color: #c4b5fd; }
+  header .subtitle { font-size: 12px; color: #8b7faa; margin-left: auto; }
+  .stats-bar {
+    background: #1a1025;
+    border-bottom: 1px solid #ffffff0d;
+    padding: 8px 24px;
+    display: flex;
+    gap: 24px;
+    font-size: 12px;
+    color: #8b7faa;
+  }
+  .stats-bar span strong { color: #c4b5fd; }
+  .main { flex: 1; display: flex; flex-direction: column; max-width: 900px; width: 100%; margin: 0 auto; padding: 0; }
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .msg {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: #7c3aed;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.ai {
+    align-self: flex-start;
+    background: #1e1630;
+    color: #d4d0e0;
+    border: 1px solid #2d2545;
+    border-bottom-left-radius: 4px;
+  }
+  .msg.system {
+    align-self: center;
+    background: transparent;
+    color: #6b5f85;
+    font-size: 12px;
+    text-align: center;
+    padding: 4px 12px;
+  }
+  .msg .gen-info {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #7c3aed99;
+    border-top: 1px solid #ffffff0d;
+    padding-top: 6px;
+  }
+  .quick-questions {
+    padding: 8px 24px 4px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .quick-btn {
+    background: #1e1630;
+    border: 1px solid #2d2545;
+    color: #c4b5fd;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .quick-btn:hover { background: #2d1b4e; border-color: #7c3aed; }
+  .input-area {
+    padding: 16px 24px;
+    border-top: 1px solid #ffffff0d;
+    display: flex;
+    gap: 10px;
+    background: #130e1f;
+  }
+  .input-area input {
+    flex: 1;
+    background: #1e1630;
+    border: 1px solid #2d2545;
+    color: #e2e0e8;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    outline: none;
+  }
+  .input-area input:focus { border-color: #7c3aed; }
+  .input-area input::placeholder { color: #5a5070; }
+  .btn {
+    background: #7c3aed;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: #6d28d9; }
+  .btn:disabled { background: #3b2566; color: #6b5f85; cursor: not-allowed; }
+  .btn.secondary {
+    background: #1e1630;
+    border: 1px solid #2d2545;
+    color: #c4b5fd;
+  }
+  .btn.secondary:hover { background: #2d1b4e; }
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #1e1630;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .progress-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, #7c3aed, #a78bfa);
+    border-radius: 3px;
+    transition: width 0.3s;
+    width: 0%;
+  }
+  .loading-dots::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+  }
+  @keyframes dots {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+  }
+  .fallback-badge {
+    display: inline-block;
+    background: #7c3aed33;
+    color: #a78bfa;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-bottom: 6px;
+  }
+  @media (max-width: 600px) {
+    .msg { max-width: 92%; }
+    .quick-questions { gap: 6px; }
+    .quick-btn { font-size: 11px; padding: 5px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Q</div>
+  <h1>Quantum AI Tutor</h1>
+  <span class="subtitle">FreeQuantumStore</span>
+</header>
+
+<div class="stats-bar">
+  <span>Model: <strong id="modelName">Not loaded</strong></span>
+  <span>Speed: <strong id="tokSpeed">--</strong></span>
+  <span>Mode: <strong id="modeLabel">Standby</strong></span>
+</div>
+
+<div class="main">
+  <div class="chat-area" id="chatArea">
+    <div class="msg system">Welcome to the Quantum Computing AI Tutor. Load the AI model or ask a question to get started.</div>
+  </div>
+
+  <div class="quick-questions">
+    <button class="quick-btn" onclick="askQuestion('What is a qubit?')">What is a qubit?</button>
+    <button class="quick-btn" onclick="askQuestion('Explain entanglement')">Explain entanglement</button>
+    <button class="quick-btn" onclick="askQuestion('How does Grover\'s algorithm work?')">How does Grover's work?</button>
+    <button class="quick-btn" onclick="askQuestion('What is decoherence?')">What is decoherence?</button>
+  </div>
+
+  <div class="input-area">
+    <button class="btn secondary" id="loadBtn" onclick="loadModel()">Load AI</button>
+    <input type="text" id="userInput" placeholder="Ask about quantum computing..." onkeydown="if(event.key==='Enter')sendMessage()">
+    <button class="btn" id="sendBtn" onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<script type="module">
+import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1';
+
+const SYSTEM_PROMPT = "You are a quantum computing tutor. Explain concepts clearly with examples. Use |0\u27E9 and |1\u27E9 notation.";
+
+const FALLBACK_QA = [
+  {
+    q: ["qubit", "what is a qubit"],
+    a: `A qubit (quantum bit) is the fundamental unit of quantum information, analogous to a classical bit.
+
+Unlike a classical bit which is either 0 or 1, a qubit can exist in a superposition of both states simultaneously:
+
+|\u03C8\u27E9 = \u03B1|0\u27E9 + \u03B2|1\u27E9
+
+where \u03B1 and \u03B2 are complex probability amplitudes satisfying |\u03B1|\u00B2 + |\u03B2|\u00B2 = 1.
+
+Physical implementations include:
+- Superconducting circuits (IBM, Google)
+- Trapped ions (IonQ, Quantinuum)
+- Photonic qubits (Xanadu)
+- Spin qubits in silicon (Intel)
+
+When measured, the qubit collapses to |0\u27E9 with probability |\u03B1|\u00B2 or |1\u27E9 with probability |\u03B2|\u00B2.`
+  },
+  {
+    q: ["entanglement", "explain entanglement", "what is entanglement"],
+    a: `Quantum entanglement is a phenomenon where two or more qubits become correlated in such a way that the quantum state of each particle cannot be described independently.
+
+A classic entangled state is the Bell state:
+|\u03A6\u207A\u27E9 = (1/\u221A2)(|00\u27E9 + |11\u27E9)
+
+Key properties:
+1. Measuring one qubit instantly determines the other's state, regardless of distance
+2. This correlation is stronger than any classical correlation (violates Bell inequalities)
+3. It cannot be used for faster-than-light communication (no-communication theorem)
+4. Entanglement is a resource consumed by quantum protocols
+
+Applications:
+- Quantum teleportation: transfer quantum states using entanglement + classical bits
+- Superdense coding: send 2 classical bits using 1 qubit + shared entanglement
+- Quantum key distribution (QKD): detect eavesdropping via entanglement
+- Entanglement-based quantum computing: powers CNOT gates and error correction`
+  },
+  {
+    q: ["grover", "grover's", "grover's algorithm", "search algorithm"],
+    a: `Grover's algorithm provides a quadratic speedup for unstructured search problems.
+
+Problem: Find a marked item in an unsorted database of N items.
+- Classical: O(N) queries needed
+- Grover's: O(\u221AN) queries needed
+
+How it works:
+1. Initialize all qubits in equal superposition using Hadamard gates:
+   |s\u27E9 = H\u2297\u207F|0\u27E9\u207F = (1/\u221AN) \u03A3|x\u27E9
+
+2. Repeat \u223C(\u03C0/4)\u221AN times:
+   a. Oracle: flip the sign of the target state |w\u27E9
+      O|x\u27E9 = -|x\u27E9 if x=w, else |x\u27E9
+   b. Diffusion: reflect about the average amplitude
+      D = 2|s\u27E9\u27E8s| - I
+
+3. Measure to get the answer with high probability
+
+Example: searching 1 million items needs only ~785 iterations instead of 1,000,000.
+
+The diffusion operator amplifies the amplitude of the marked state while suppressing others -- a process called amplitude amplification.`
+  },
+  {
+    q: ["decoherence", "what is decoherence"],
+    a: `Decoherence is the process by which a quantum system loses its quantum properties (superposition and entanglement) due to interaction with the environment.
+
+A qubit in superposition \u03B1|0\u27E9 + \u03B2|1\u27E9 gradually decays into a classical mixture, losing the phase relationship between \u03B1 and \u03B2.
+
+Types of decoherence:
+1. T1 (energy relaxation): excited state |1\u27E9 decays to |0\u27E9
+   - Like a ball rolling downhill -- energy leaks to environment
+   - Typical times: 50-300 \u03BCs for superconducting qubits
+
+2. T2 (dephasing): relative phase between |0\u27E9 and |1\u27E9 randomizes
+   - The "clock" between states drifts unpredictably
+   - T2 \u2264 2T1 (always shorter than or equal to twice T1)
+
+Why it matters:
+- Limits circuit depth (number of gates before errors dominate)
+- Drives the need for quantum error correction
+- Current qubits decohere in microseconds; useful algorithms need milliseconds
+
+Mitigation strategies:
+- Better isolation (colder temperatures, cleaner materials)
+- Quantum error correction codes (surface code, etc.)
+- Dynamical decoupling (pulse sequences to refocus phase)`
+  },
+  {
+    q: ["superposition", "what is superposition"],
+    a: `Superposition is the principle that a quantum system can exist in multiple states simultaneously until measured.
+
+For a single qubit:
+|\u03C8\u27E9 = \u03B1|0\u27E9 + \u03B2|1\u27E9
+
+This is NOT the same as "the qubit is 0 or 1 and we just don't know which." The qubit genuinely exists in both states at once, which leads to interference effects.
+
+Example with the Hadamard gate:
+H|0\u27E9 = (1/\u221A2)|0\u27E9 + (1/\u221A2)|1\u27E9
+
+This creates an equal superposition -- 50% chance of measuring |0\u27E9 or |1\u27E9.
+
+Key insight: multiple qubits in superposition create exponential state spaces.
+- 1 qubit: 2 states
+- 2 qubits: 4 states
+- n qubits: 2\u207F states
+- 300 qubits: more states than atoms in the observable universe
+
+This exponential scaling is the source of quantum computing's potential power -- but only if we can harness interference to make the right answer more probable.`
+  },
+  {
+    q: ["gate", "quantum gate", "quantum gates", "logic gate"],
+    a: `Quantum gates are unitary operations that manipulate qubits, analogous to classical logic gates.
+
+Single-qubit gates:
+- X (NOT): flips |0\u27E9 \u2194 |1\u27E9 (Pauli-X)
+- H (Hadamard): creates superposition, H|0\u27E9 = (|0\u27E9+|1\u27E9)/\u221A2
+- Z: adds phase, Z|1\u27E9 = -|1\u27E9 (Pauli-Z)
+- S, T: fractional phase gates (\u03C0/2 and \u03C0/4)
+- Rx, Ry, Rz: rotation gates with continuous angle parameters
+
+Two-qubit gates:
+- CNOT (CX): flips target if control is |1\u27E9
+  |00\u27E9 \u2192 |00\u27E9, |01\u27E9 \u2192 |01\u27E9, |10\u27E9 \u2192 |11\u27E9, |11\u27E9 \u2192 |10\u27E9
+- CZ: applies Z to target if control is |1\u27E9
+- SWAP: exchanges two qubits
+
+Key properties:
+- All quantum gates are reversible (unitary matrices)
+- {H, T, CNOT} is a universal gate set (can approximate any operation)
+- Physical gates have error rates: ~0.1% for single-qubit, ~1% for two-qubit`
+  },
+  {
+    q: ["measurement", "measuring", "measure a qubit"],
+    a: `Measurement in quantum computing collapses a qubit's superposition into a definite classical state.
+
+For a qubit |\u03C8\u27E9 = \u03B1|0\u27E9 + \u03B2|1\u27E9:
+- Probability of measuring |0\u27E9 = |\u03B1|\u00B2
+- Probability of measuring |1\u27E9 = |\u03B2|\u00B2
+
+After measurement, the qubit IS in the measured state -- the superposition is destroyed. This is irreversible.
+
+The Born rule:
+P(outcome) = |\u27E8outcome|\u03C8\u27E9|\u00B2
+
+Important consequences:
+1. You cannot copy an unknown quantum state (no-cloning theorem)
+2. You cannot determine \u03B1 and \u03B2 from a single measurement
+3. To estimate probabilities, you must run the circuit many times ("shots")
+4. Measurement in different bases (X, Y, Z) gives different information
+
+In quantum algorithms, measurement is always the final step -- you design the circuit so that the correct answer has the highest measurement probability.`
+  },
+  {
+    q: ["shor", "shor's", "shor's algorithm", "factoring"],
+    a: `Shor's algorithm efficiently factors large integers, threatening RSA encryption.
+
+Problem: Factor N into p \u00D7 q
+- Classical best: sub-exponential time (number field sieve)
+- Shor's: polynomial time O((log N)\u00B3)
+
+How it works (simplified):
+1. Pick random a < N
+2. Use quantum period-finding to find the period r of f(x) = a^x mod N
+3. If r is even, compute gcd(a^(r/2) \u00B1 1, N) to find factors
+
+The quantum part (period-finding):
+- Create superposition of all x values
+- Compute a^x mod N in a quantum register
+- Apply Quantum Fourier Transform (QFT)
+- Measure to get information about the period r
+
+Example: Factor 15
+- With a=7: f(x) = 7^x mod 15 has period r=4
+- gcd(7\u00B2+1, 15) = gcd(50,15) = 5
+- gcd(7\u00B2-1, 15) = gcd(48,15) = 3
+- 15 = 5 \u00D7 3
+
+Impact: RSA-2048 would need ~4000 error-corrected qubits. Current machines have ~1000+ noisy qubits. Post-quantum cryptography (lattice-based, etc.) is being standardized now.`
+  },
+  {
+    q: ["error correction", "qec", "quantum error correction"],
+    a: `Quantum error correction (QEC) protects quantum information from decoherence and gate errors by encoding logical qubits into many physical qubits.
+
+The challenge:
+- Classical: just copy the bit (redundancy)
+- Quantum: no-cloning theorem forbids copying
+- Solution: encode information in entangled states across multiple qubits
+
+Surface code (most popular):
+- Arranges qubits in a 2D grid
+- Data qubits store information
+- Ancilla qubits detect errors via syndrome measurements
+- Distance d code: uses ~2d\u00B2 physical qubits per logical qubit
+- Can correct up to (d-1)/2 errors
+
+Error types:
+- Bit flip (X error): |0\u27E9 \u2192 |1\u27E9
+- Phase flip (Z error): |+\u27E9 \u2192 |-\u27E9
+- Both can occur: Y = iXZ
+
+Overhead reality:
+- Current error rates: ~0.1-1% per gate
+- Threshold: need physical error rate < ~1% for surface code
+- A useful logical qubit may need 1000+ physical qubits
+- Running Shor's algorithm on RSA-2048: estimated ~20 million physical qubits`
+  },
+  {
+    q: ["hardware", "quantum hardware", "quantum computer hardware"],
+    a: `Quantum computing hardware uses several physical platforms, each with trade-offs:
+
+Superconducting qubits (IBM, Google, Rigetti):
+- Josephson junctions cooled to ~15 millikelvin
+- Fast gates (~20-100 ns), short coherence (~100-300 \u03BCs)
+- Google's Sycamore: 53 qubits, IBM Eagle: 127+ qubits
+- Most mature platform, but requires extreme cooling
+
+Trapped ions (IonQ, Quantinuum):
+- Individual ions held by electromagnetic fields
+- Slow gates (~1-100 \u03BCs) but long coherence (~seconds)
+- All-to-all connectivity (any qubit can interact with any other)
+- Highest gate fidelities (>99.9% single-qubit)
+
+Photonic (Xanadu, PsiQuantum):
+- Qubits encoded in photon properties
+- Room temperature operation
+- Natural for networking/communication
+- Measurement-based computing model
+
+Neutral atoms (QuEra, Pasqal):
+- Arrays of atoms held by laser tweezers
+- Scalable to many qubits (256+)
+- Reconfigurable connectivity
+- Long coherence times
+
+Topological (Microsoft):
+- Majorana fermions (not yet demonstrated convincingly)
+- Theoretically error-resistant by design
+- Still in fundamental research phase`
+  },
+  {
+    q: ["application", "applications", "what can quantum computers do", "use case"],
+    a: `Quantum computers offer advantages for specific problem classes:
+
+Near-certain advantages (proven speedups):
+1. Cryptography: Shor's algorithm breaks RSA/ECC (exponential speedup)
+2. Search: Grover's algorithm (quadratic speedup for unstructured search)
+3. Simulation: quantum chemistry, materials science (exponential speedup)
+
+Promising applications:
+4. Optimization: QAOA, quantum annealing for combinatorial problems
+   - Portfolio optimization, logistics routing, scheduling
+   - Advantage over classical still debated
+
+5. Machine learning: quantum kernel methods, variational classifiers
+   - Potential speedups for specific data structures
+   - Active research area (quantum advantage unclear)
+
+6. Drug discovery: simulating molecular interactions
+   - Protein folding, binding affinity prediction
+   - Requires error-corrected qubits (future)
+
+7. Financial modeling: Monte Carlo simulation speedup
+   - Risk analysis, derivative pricing
+   - Quadratic speedup via amplitude estimation
+
+What quantum computers are NOT good at:
+- General-purpose computing (email, web browsing)
+- Big data processing (classical parallelism is better)
+- Simple arithmetic
+- Tasks without exploitable quantum structure
+
+Timeline: Most practical advantages require fault-tolerant quantum computers, likely 5-15+ years away.`
+  }
+];
+
+let generator = null;
+let isModelLoaded = false;
+let isGenerating = false;
+let useFallback = false;
+
+const chatArea = document.getElementById('chatArea');
+const userInput = document.getElementById('userInput');
+const loadBtn = document.getElementById('loadBtn');
+const sendBtn = document.getElementById('sendBtn');
+const modelNameEl = document.getElementById('modelName');
+const tokSpeedEl = document.getElementById('tokSpeed');
+const modeLabelEl = document.getElementById('modeLabel');
+
+function addMessage(text, type, genInfo) {
+  const div = document.createElement('div');
+  div.className = `msg ${type}`;
+  if (type === 'ai' && useFallback && !isModelLoaded) {
+    div.innerHTML = `<div class="fallback-badge">Pre-written answer</div>\n${escapeHtml(text)}`;
+  } else {
+    div.textContent = text;
+  }
+  if (genInfo) {
+    const info = document.createElement('div');
+    info.className = 'gen-info';
+    info.textContent = genInfo;
+    div.appendChild(info);
+  }
+  chatArea.appendChild(div);
+  chatArea.scrollTop = chatArea.scrollHeight;
+  return div;
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+function findFallbackAnswer(question) {
+  const q = question.toLowerCase().trim();
+  for (const entry of FALLBACK_QA) {
+    for (const keyword of entry.q) {
+      if (q.includes(keyword)) return entry.a;
+    }
+  }
+  return null;
+}
+
+window.loadModel = async function() {
+  if (isModelLoaded || isGenerating) return;
+
+  loadBtn.disabled = true;
+  loadBtn.textContent = 'Loading...';
+  modeLabelEl.textContent = 'Loading model...';
+
+  const statusMsg = addMessage('', 'system');
+  statusMsg.innerHTML = 'Downloading SmolLM2-135M-Instruct<span class="loading-dots"></span>';
+
+  const progressDiv = document.createElement('div');
+  progressDiv.innerHTML = '<div class="progress-bar"><div class="fill" id="progressFill"></div></div><div style="font-size:11px;color:#6b5f85;margin-top:4px" id="progressText">Starting download...</div>';
+  statusMsg.appendChild(progressDiv);
+
+  try {
+    generator = await pipeline('text-generation', 'HuggingFaceTB/SmolLM2-135M-Instruct', {
+      dtype: 'q4',
+      device: 'webgpu',
+      progress_callback: (progress) => {
+        const fill = document.getElementById('progressFill');
+        const text = document.getElementById('progressText');
+        if (progress.status === 'progress' && progress.progress != null) {
+          fill.style.width = progress.progress.toFixed(1) + '%';
+          const mb = (progress.loaded / 1048576).toFixed(1);
+          const total = (progress.total / 1048576).toFixed(1);
+          text.textContent = `${progress.file}: ${mb}MB / ${total}MB`;
+        } else if (progress.status === 'done') {
+          fill.style.width = '100%';
+          text.textContent = 'Download complete';
+        }
+      }
+    });
+
+    isModelLoaded = true;
+    useFallback = false;
+    statusMsg.textContent = 'SmolLM2-135M-Instruct loaded via WebGPU. Ask your quantum computing questions!';
+    statusMsg.className = 'msg system';
+    modelNameEl.textContent = 'SmolLM2-135M';
+    modeLabelEl.textContent = 'AI Ready';
+    loadBtn.textContent = 'Loaded';
+  } catch (err) {
+    console.error('Model load failed:', err);
+    useFallback = true;
+    statusMsg.textContent = 'Could not load AI model (WebGPU may not be supported). Switched to pre-written answers mode.';
+    statusMsg.className = 'msg system';
+    modelNameEl.textContent = 'Fallback (Q&A)';
+    modeLabelEl.textContent = 'Fallback mode';
+    loadBtn.textContent = 'Fallback';
+  }
+};
+
+window.askQuestion = function(q) {
+  userInput.value = q;
+  sendMessage();
+};
+
+window.sendMessage = async function() {
+  const text = userInput.value.trim();
+  if (!text || isGenerating) return;
+
+  addMessage(text, 'user');
+  userInput.value = '';
+
+  if (!isModelLoaded) {
+    const fallback = findFallbackAnswer(text);
+    if (fallback) {
+      useFallback = true;
+      addMessage(fallback, 'ai');
+      return;
+    }
+    if (!useFallback) {
+      try {
+        await window.loadModel();
+      } catch(e) { /* handled inside */ }
+    }
+    if (!isModelLoaded) {
+      const fb = findFallbackAnswer(text);
+      if (fb) {
+        addMessage(fb, 'ai');
+      } else {
+        addMessage("I don't have a pre-written answer for that question. Try loading the AI model, or ask about: qubits, entanglement, superposition, quantum gates, measurement, Grover's algorithm, Shor's algorithm, error correction, hardware, or applications.", 'ai');
+      }
+      return;
+    }
+  }
+
+  isGenerating = true;
+  sendBtn.disabled = true;
+  modeLabelEl.textContent = 'Generating...';
+
+  const thinkingMsg = addMessage('', 'ai');
+  thinkingMsg.innerHTML = 'Thinking<span class="loading-dots"></span>';
+
+  try {
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: text }
+    ];
+
+    const startTime = performance.now();
+    const output = await generator(messages, {
+      max_new_tokens: 512,
+      temperature: 0.7,
+      do_sample: true,
+      top_p: 0.9,
+    });
+
+    const endTime = performance.now();
+    const genTime = ((endTime - startTime) / 1000).toFixed(1);
+
+    let reply = '';
+    if (output && output[0] && output[0].generated_text) {
+      const gen = output[0].generated_text;
+      if (Array.isArray(gen)) {
+        const lastMsg = gen[gen.length - 1];
+        reply = lastMsg.content || lastMsg.text || '';
+      } else {
+        reply = typeof gen === 'string' ? gen : JSON.stringify(gen);
+      }
+    }
+
+    if (!reply) reply = 'I was unable to generate a response. Please try again.';
+
+    const tokens = reply.split(/\s+/).length;
+    const tokPerSec = (tokens / (endTime - startTime) * 1000).toFixed(1);
+
+    thinkingMsg.textContent = reply;
+    const info = document.createElement('div');
+    info.className = 'gen-info';
+    info.textContent = `${tokens} tokens | ${tokPerSec} tok/s | ${genTime}s`;
+    thinkingMsg.appendChild(info);
+
+    tokSpeedEl.textContent = `${tokPerSec} tok/s`;
+  } catch (err) {
+    console.error('Generation error:', err);
+    thinkingMsg.textContent = 'Generation failed. ' + err.message;
+    const fallback = findFallbackAnswer(text);
+    if (fallback) {
+      useFallback = true;
+      addMessage(fallback, 'ai');
+    }
+  }
+
+  isGenerating = false;
+  sendBtn.disabled = false;
+  modeLabelEl.textContent = isModelLoaded ? 'AI Ready' : 'Fallback mode';
+  chatArea.scrollTop = chatArea.scrollHeight;
+};
+</script>
+
+</body>
+</html>
