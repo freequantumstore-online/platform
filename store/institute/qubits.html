@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qubits — Quantum Computing Institute</title>
+  <meta name="description" content="Everything about qubits: Dirac notation, Bloch sphere, Bell states, physical implementations, measurement, and decoherence.">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--accent:#7c3aed;--paper:#0a0a0a;--ink:#fafafa;--muted:#737373;--panel:#141414;--line:#262626}
+    body{font-family:'Manrope',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
+    .container{max-width:900px;margin:0 auto;padding:0 1.5rem}
+    a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+    header{border-bottom:1px solid var(--line);padding:.75rem 0}
+    header .container{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--ink)}
+    .brand-emoji{font-size:1.5rem}
+    .brand-text{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:700}
+    .brand-tag{font-size:.68rem;color:var(--muted)}
+    nav{display:flex;gap:1rem;font-size:.82rem;font-weight:600;margin-left:auto;flex-wrap:wrap}
+    nav a{color:var(--muted)}nav a:hover{color:var(--ink)}nav a.active{color:var(--accent)}
+    .hero{text-align:center;padding:2.5rem 0 1.5rem;border-bottom:1px solid var(--line)}
+    .hero h1{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:700;margin-bottom:.5rem}
+    .hero h1 em{color:var(--accent);font-style:normal}
+    .hero p{color:var(--muted);max-width:600px;margin:0 auto;font-size:.95rem}
+    .toc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:1rem 1.25rem;margin:1.5rem 0}
+    .toc h3{font-size:.85rem;font-weight:700;margin-bottom:.5rem;color:var(--accent)}
+    .toc ul{list-style:none;padding:0;columns:2}
+    .toc li{margin:.2rem 0}.toc a{color:#a3a3a3;font-size:.82rem}.toc a:hover{color:var(--ink)}
+    .section{margin-bottom:2rem;padding-top:1rem}
+    .section h2{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:700;margin-bottom:.5rem;padding-bottom:.35rem;border-bottom:1px solid var(--line)}
+    .section h3{font-size:.95rem;font-weight:700;margin:1rem 0 .35rem;color:#e5e5e5}
+    .section p,.section li{color:#a3a3a3;font-size:.88rem}
+    ul{padding-left:1.25rem;margin:.35rem 0}
+    li{margin-bottom:.3rem}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.6rem;margin:.5rem 0}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:.85rem;transition:border-color .15s}
+    .card:hover{border-color:var(--accent)}
+    .card h4{font-size:.85rem;font-weight:700;margin-bottom:.2rem}
+    .card h4 a{color:var(--ink)}.card p{font-size:.75rem;color:var(--muted);margin:0;line-height:1.5}
+    .card .meta{font-size:.65rem;color:#525252;margin-top:.25rem}
+    footer{border-top:1px solid var(--line);padding:1.5rem 0;text-align:center;font-size:.75rem;color:#525252}
+    /* Subpage extras */
+    .math{font-family:'Courier New',monospace;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:.75rem 1rem;margin:.5rem 0;font-size:.85rem;color:#e5e5e5;overflow-x:auto;white-space:pre-wrap}
+    .math-inline{font-family:'Courier New',monospace;color:#e5e5e5;background:var(--panel);padding:.1rem .35rem;border-radius:3px;font-size:.84rem}
+    table{width:100%;border-collapse:collapse;margin:.5rem 0;font-size:.82rem}
+    th{text-align:left;padding:.5rem .6rem;background:var(--panel);border:1px solid var(--line);color:var(--accent);font-weight:700;font-size:.78rem}
+    td{padding:.5rem .6rem;border:1px solid var(--line);color:#a3a3a3}
+    tr:hover td{background:var(--panel)}
+    .diagram{display:flex;justify-content:center;align-items:center;margin:1rem 0}
+    .bloch{position:relative;width:220px;height:220px}
+    .bloch-circle{width:200px;height:200px;border:2px solid var(--line);border-radius:50%;position:absolute;top:10px;left:10px}
+    .bloch-ellipse{width:200px;height:60px;border:1.5px solid #333;border-radius:50%;position:absolute;top:80px;left:10px}
+    .bloch-axis-z{position:absolute;left:109px;top:0;width:2px;height:220px;background:linear-gradient(180deg,var(--accent),#333)}
+    .bloch-axis-x{position:absolute;top:109px;left:0;width:220px;height:2px;background:linear-gradient(90deg,#333,var(--accent))}
+    .bloch-label{position:absolute;font-size:.7rem;font-weight:700;color:var(--accent)}
+    .bloch-label-0{top:-4px;left:104px}
+    .bloch-label-1{bottom:-4px;left:104px}
+    .bloch-label-plus{top:100px;right:-14px}
+    .bloch-label-minus{top:100px;left:-10px}
+    .bloch-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);position:absolute;box-shadow:0 0 8px var(--accent)}
+    .bloch-vector{position:absolute;width:2px;background:var(--accent);transform-origin:bottom center}
+    .note{background:#1a1625;border-left:3px solid var(--accent);padding:.6rem .85rem;margin:.5rem 0;border-radius:0 6px 6px 0;font-size:.82rem;color:#c4b5fd}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="/institute/" class="brand">
+        <span class="brand-emoji">&#9883;&#65039;</span>
+        <span><span class="brand-text">Quantum Institute</span><br><span class="brand-tag"></span></span>
+      </a>
+      <nav>
+        <a href="/institute/">Overview</a>
+        <a href="/institute/qubits.html" class="active">Qubits</a>
+        <a href="/institute/gates.html">Gates</a>
+        <a href="/institute/algorithms.html">Algorithms</a>
+        <a href="/institute/hardware.html">Hardware</a>
+        <a href="/institute/error-correction.html">QEC</a>
+        <a href="/">Simulations</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="hero">
+      <h1>Everything About <em>Qubits</em></h1>
+      <p>The fundamental unit of quantum information. From Dirac notation to physical implementations, measurement theory, and decoherence.</p>
+    </section>
+
+    <nav class="toc">
+      <h3>Contents</h3>
+      <ul>
+        <li><a href="#what-is-a-qubit">What Is a Qubit?</a></li>
+        <li><a href="#dirac">Dirac Notation</a></li>
+        <li><a href="#bloch">Bloch Sphere</a></li>
+        <li><a href="#single-qubit">Single-Qubit States</a></li>
+        <li><a href="#multi-qubit">Multi-Qubit Systems</a></li>
+        <li><a href="#bell-states">Bell States</a></li>
+        <li><a href="#ghz">GHZ States</a></li>
+        <li><a href="#implementations">Physical Implementations</a></li>
+        <li><a href="#measurement">Measurement</a></li>
+        <li><a href="#decoherence">Decoherence</a></li>
+      </ul>
+    </nav>
+
+    <!-- WHAT IS A QUBIT -->
+    <section class="section" id="what-is-a-qubit">
+      <h2>What Is a Qubit?</h2>
+      <p>A <strong>qubit</strong> (quantum bit) is the fundamental unit of quantum information. While a classical bit can be either 0 or 1, a qubit can exist in a <strong>superposition</strong> of both states simultaneously. Mathematically, a qubit state is a unit vector in a two-dimensional complex Hilbert space.</p>
+
+      <h3>General qubit state</h3>
+      <div class="math">|&#968;&#10217; = &#945;|0&#10217; + &#946;|1&#10217;
+
+where &#945;, &#946; &#8712; &#8450; and |&#945;|&#178; + |&#946;|&#178; = 1</div>
+
+      <p>The complex numbers &#945; and &#946; are called <strong>probability amplitudes</strong>. When you measure a qubit, the probability of getting outcome 0 is |&#945;|&#178; and the probability of getting outcome 1 is |&#946;|&#178;. The constraint |&#945;|&#178; + |&#946;|&#178; = 1 is called the <strong>normalization condition</strong> and ensures the probabilities sum to 1.</p>
+
+      <h3>Key differences from classical bits</h3>
+      <ul>
+        <li><strong>Superposition:</strong> A qubit can be in a linear combination of |0&#10217; and |1&#10217;. A classical bit is always exactly one or the other.</li>
+        <li><strong>Interference:</strong> Amplitudes are complex numbers that can add constructively or destructively, enabling quantum algorithms.</li>
+        <li><strong>Entanglement:</strong> Two or more qubits can share correlations with no classical analog. Measuring one instantly constrains the other, regardless of distance.</li>
+        <li><strong>No-cloning theorem:</strong> An unknown quantum state cannot be perfectly copied. This is fundamental to quantum cryptography (BB84).</li>
+        <li><strong>Measurement collapse:</strong> Observation irreversibly destroys the superposition, yielding a definite classical outcome.</li>
+      </ul>
+
+      <div class="note">A qubit is not "both 0 and 1 at the same time" in the sense of storing two values. It holds a single quantum state that, upon measurement, probabilistically yields one outcome. The power of quantum computing lies in manipulating amplitudes before measurement to make the desired answer overwhelmingly likely.</div>
+    </section>
+
+    <!-- DIRAC NOTATION -->
+    <section class="section" id="dirac">
+      <h2>Dirac (Bra-Ket) Notation</h2>
+      <p>Quantum mechanics uses <strong>Dirac notation</strong>, invented by Paul Dirac in 1939. It provides a clean, compact way to describe quantum states and operations.</p>
+
+      <h3>Kets (column vectors)</h3>
+      <p>A <strong>ket</strong> <span class="math-inline">|&#968;&#10217;</span> represents a quantum state as a column vector in Hilbert space.</p>
+      <div class="math">|0&#10217; = [1, 0]&#7488;    (computational basis state zero)
+|1&#10217; = [0, 1]&#7488;    (computational basis state one)
+|&#968;&#10217; = &#945;|0&#10217; + &#946;|1&#10217; = [&#945;, &#946;]&#7488;</div>
+
+      <h3>Bras (row vectors)</h3>
+      <p>A <strong>bra</strong> <span class="math-inline">&#10216;&#968;|</span> is the conjugate transpose (adjoint) of the corresponding ket.</p>
+      <div class="math">&#10216;&#968;| = (|&#968;&#10217;)&#8224; = [&#945;*, &#946;*]</div>
+
+      <h3>Inner product (bra-ket)</h3>
+      <p>The inner product of two states gives a complex number representing their overlap.</p>
+      <div class="math">&#10216;&#966;|&#968;&#10217; = &#8721;&#7522; &#966;&#7522;* &#968;&#7522;
+
+&#10216;0|0&#10217; = 1    &#10216;1|1&#10217; = 1    &#10216;0|1&#10217; = 0    &#10216;1|0&#10217; = 0</div>
+      <p>Orthonormal basis states have inner product 0 with each other and 1 with themselves.</p>
+
+      <h3>Outer product (ket-bra)</h3>
+      <p>The outer product produces a matrix (an operator).</p>
+      <div class="math">|0&#10217;&#10216;0| = [[1,0],[0,0]]    (projector onto |0&#10217;)
+|1&#10217;&#10216;1| = [[0,0],[0,1]]    (projector onto |1&#10217;)
+|0&#10217;&#10216;0| + |1&#10217;&#10216;1| = I    (completeness relation)</div>
+
+      <h3>Tensor product</h3>
+      <p>Multi-qubit states are written using the tensor product <span class="math-inline">&#8855;</span>.</p>
+      <div class="math">|0&#10217; &#8855; |1&#10217; = |01&#10217; = [0, 1, 0, 0]&#7488;
+|&#968;&#10217; &#8855; |&#966;&#10217; is often written |&#968;&#966;&#10217; or |&#968;,&#966;&#10217;</div>
+    </section>
+
+    <!-- BLOCH SPHERE -->
+    <section class="section" id="bloch">
+      <h2>The Bloch Sphere</h2>
+      <p>Any single-qubit pure state can be visualized as a point on the <strong>Bloch sphere</strong>, a unit sphere in 3D space. This is possible because the global phase of a quantum state is unobservable, leaving two real parameters (&#952; and &#966;) to specify a state on the sphere.</p>
+
+      <h3>Parametrization</h3>
+      <div class="math">|&#968;&#10217; = cos(&#952;/2)|0&#10217; + e^(i&#966;) sin(&#952;/2)|1&#10217;
+
+&#952; &#8712; [0, &#960;]    polar angle (latitude from north pole)
+&#966; &#8712; [0, 2&#960;)   azimuthal angle (longitude)</div>
+
+      <div class="diagram">
+        <div class="bloch">
+          <div class="bloch-circle"></div>
+          <div class="bloch-ellipse"></div>
+          <div class="bloch-axis-z"></div>
+          <div class="bloch-axis-x"></div>
+          <div class="bloch-label bloch-label-0">|0&#10217;</div>
+          <div class="bloch-label bloch-label-1">|1&#10217;</div>
+          <div class="bloch-label bloch-label-plus">|+&#10217;</div>
+          <div class="bloch-label bloch-label-minus">|-&#10217;</div>
+          <div class="bloch-dot" style="top:30px;left:140px"></div>
+          <div style="position:absolute;top:32px;left:152px;font-size:.6rem;color:var(--accent)">|&#968;&#10217;</div>
+        </div>
+      </div>
+
+      <h3>Key points on the Bloch sphere</h3>
+      <table>
+        <tr><th>State</th><th>Vector</th><th>&#952;</th><th>&#966;</th><th>Position</th></tr>
+        <tr><td>|0&#10217;</td><td>[1, 0]&#7488;</td><td>0</td><td>-</td><td>North pole (+Z)</td></tr>
+        <tr><td>|1&#10217;</td><td>[0, 1]&#7488;</td><td>&#960;</td><td>-</td><td>South pole (-Z)</td></tr>
+        <tr><td>|+&#10217;</td><td>[1, 1]&#7488;/&#8730;2</td><td>&#960;/2</td><td>0</td><td>+X axis</td></tr>
+        <tr><td>|-&#10217;</td><td>[1, -1]&#7488;/&#8730;2</td><td>&#960;/2</td><td>&#960;</td><td>-X axis</td></tr>
+        <tr><td>|i&#10217;</td><td>[1, i]&#7488;/&#8730;2</td><td>&#960;/2</td><td>&#960;/2</td><td>+Y axis</td></tr>
+        <tr><td>|-i&#10217;</td><td>[1, -i]&#7488;/&#8730;2</td><td>&#960;/2</td><td>3&#960;/2</td><td>-Y axis</td></tr>
+      </table>
+
+      <h3>Bloch sphere and quantum gates</h3>
+      <p>Every single-qubit gate corresponds to a rotation of the Bloch sphere. The Pauli X gate is a 180-degree rotation about the X axis. The Hadamard gate is a 180-degree rotation about the axis halfway between X and Z. The S gate is a 90-degree rotation about Z. The T gate is a 45-degree rotation about Z.</p>
+
+      <div class="note">Mixed states (due to decoherence or entanglement with other systems) map to points <em>inside</em> the Bloch sphere. The maximally mixed state (I/2) sits at the center. Pure states always lie on the surface.</div>
+    </section>
+
+    <!-- SINGLE-QUBIT STATES -->
+    <section class="section" id="single-qubit">
+      <h2>Single-Qubit States</h2>
+      <p>The six cardinal states of the Bloch sphere form three mutually unbiased bases (MUBs). These are the most commonly used single-qubit states in quantum computing.</p>
+
+      <h3>Computational basis (Z basis)</h3>
+      <div class="math">|0&#10217; = [1, 0]&#7488;    Eigenstate of Z with eigenvalue +1
+|1&#10217; = [0, 1]&#7488;    Eigenstate of Z with eigenvalue -1</div>
+      <p>The computational basis is the standard measurement basis. All quantum computation ultimately reduces to preparing, manipulating, and measuring in this basis.</p>
+
+      <h3>Hadamard basis (X basis)</h3>
+      <div class="math">|+&#10217; = (|0&#10217; + |1&#10217;) / &#8730;2 = [1/&#8730;2, 1/&#8730;2]&#7488;    Eigenstate of X, eigenvalue +1
+|-&#10217; = (|0&#10217; - |1&#10217;) / &#8730;2 = [1/&#8730;2, -1/&#8730;2]&#7488;   Eigenstate of X, eigenvalue -1</div>
+      <p>Created from |0&#10217; and |1&#10217; by applying the Hadamard gate. The |+&#10217; state is equal superposition with equal phases; |-&#10217; has a relative phase flip.</p>
+
+      <h3>Circular basis (Y basis)</h3>
+      <div class="math">|i&#10217;  = (|0&#10217; + i|1&#10217;) / &#8730;2 = [1/&#8730;2, i/&#8730;2]&#7488;    Eigenstate of Y, eigenvalue +1
+|-i&#10217; = (|0&#10217; - i|1&#10217;) / &#8730;2 = [1/&#8730;2, -i/&#8730;2]&#7488;   Eigenstate of Y, eigenvalue -1</div>
+      <p>These states have a relative phase of &#177;i between the |0&#10217; and |1&#10217; components. They correspond to right and left circular polarization in photonic qubits.</p>
+
+      <h3>General pure state</h3>
+      <div class="math">|&#968;&#10217; = cos(&#952;/2)|0&#10217; + e^(i&#966;) sin(&#952;/2)|1&#10217;
+
+Probability of measuring 0: cos&#178;(&#952;/2)
+Probability of measuring 1: sin&#178;(&#952;/2)
+Relative phase between components: &#966;</div>
+
+      <div class="note">The global phase factor e^(i&#947;) multiplying the entire state is physically unobservable. Only the relative phase between |0&#10217; and |1&#10217; matters. This is why we can always choose &#945; to be real and non-negative.</div>
+    </section>
+
+    <!-- MULTI-QUBIT SYSTEMS -->
+    <section class="section" id="multi-qubit">
+      <h2>Multi-Qubit Systems</h2>
+      <p>The state space of N qubits is the tensor product of individual qubit spaces, giving a 2&#8319;-dimensional complex Hilbert space. This exponential growth is the origin of quantum computing's potential power.</p>
+
+      <h3>Tensor products</h3>
+      <div class="math">Two qubits: |&#968;&#10217; &#8855; |&#966;&#10217; lives in &#8450;&#178; &#8855; &#8450;&#178; = &#8450;&#8308;
+Three qubits: &#8450;&#178; &#8855; &#8450;&#178; &#8855; &#8450;&#178; = &#8450;&#8312;
+
+|00&#10217; = [1,0,0,0]&#7488;    |01&#10217; = [0,1,0,0]&#7488;
+|10&#10217; = [0,0,1,0]&#7488;    |11&#10217; = [0,0,0,1]&#7488;</div>
+
+      <h3>Product states vs entangled states</h3>
+      <p>A two-qubit state <span class="math-inline">|&#968;&#10217;</span> is a <strong>product state</strong> if it can be written as <span class="math-inline">|a&#10217; &#8855; |b&#10217;</span> for some single-qubit states. Otherwise, it is <strong>entangled</strong>.</p>
+      <div class="math">Product state:  |+0&#10217; = (|00&#10217; + |10&#10217;) / &#8730;2  &#10003; separable
+Entangled:      |&#934;&#8314;&#10217; = (|00&#10217; + |11&#10217;) / &#8730;2   &#10007; cannot factor</div>
+
+      <p>To check if a two-qubit state is entangled, compute the reduced density matrix by tracing out one qubit. If the result is a mixed state (not rank 1), the state is entangled. Equivalently, compute the <strong>Schmidt decomposition</strong>: the state is entangled if and only if it has more than one non-zero Schmidt coefficient.</p>
+
+      <h3>Counting parameters</h3>
+      <table>
+        <tr><th>Qubits</th><th>Dimension</th><th>Real parameters</th><th>Classical bits to describe</th></tr>
+        <tr><td>1</td><td>2</td><td>2</td><td>2</td></tr>
+        <tr><td>2</td><td>4</td><td>6</td><td>4</td></tr>
+        <tr><td>3</td><td>8</td><td>14</td><td>8</td></tr>
+        <tr><td>10</td><td>1,024</td><td>2,046</td><td>10</td></tr>
+        <tr><td>50</td><td>~10&#185;&#8309;</td><td>~2 &#215; 10&#185;&#8309;</td><td>50</td></tr>
+        <tr><td>300</td><td>~10&#8313;&#8304;</td><td>~2 &#215; 10&#8313;&#8304;</td><td>300</td></tr>
+      </table>
+      <p>At 300 qubits, the number of complex amplitudes exceeds the number of particles in the observable universe (~10&#8312;&#8304;). This is why simulating quantum systems on classical computers is fundamentally intractable.</p>
+    </section>
+
+    <!-- BELL STATES -->
+    <section class="section" id="bell-states">
+      <h2>Bell States</h2>
+      <p>The four <strong>Bell states</strong> (or EPR pairs) are maximally entangled two-qubit states. They form an orthonormal basis for the two-qubit Hilbert space and are the fundamental resource for quantum teleportation, superdense coding, and entanglement-based cryptography (E91).</p>
+
+      <div class="math">|&#934;&#8314;&#10217; = (|00&#10217; + |11&#10217;) / &#8730;2    "Bell state" or "EPR pair"
+|&#934;&#8315;&#10217; = (|00&#10217; - |11&#10217;) / &#8730;2
+|&#936;&#8314;&#10217; = (|01&#10217; + |10&#10217;) / &#8730;2
+|&#936;&#8315;&#10217; = (|01&#10217; - |10&#10217;) / &#8730;2    "singlet state"</div>
+
+      <h3>Properties</h3>
+      <ul>
+        <li><strong>Maximal entanglement:</strong> Each qubit individually is in the maximally mixed state I/2. All information is in the correlations.</li>
+        <li><strong>Perfect correlations:</strong> In |&#934;&#8314;&#10217;, measuring both qubits in the Z basis always gives the same result (both 0 or both 1). In |&#936;&#8315;&#10217;, they always differ.</li>
+        <li><strong>Basis independence:</strong> The correlations hold in any measurement basis, not just Z. This is what Bell's theorem proves cannot be explained classically.</li>
+        <li><strong>LOCC indistinguishable:</strong> The four Bell states cannot be perfectly distinguished using only local operations and classical communication on one copy.</li>
+      </ul>
+
+      <h3>Creating Bell states</h3>
+      <div class="math">Circuit: |0&#10217;|0&#10217; &#8594; H&#8855;I &#8594; (|0&#10217;+|1&#10217;)|0&#10217;/&#8730;2 &#8594; CNOT &#8594; (|00&#10217;+|11&#10217;)/&#8730;2 = |&#934;&#8314;&#10217;
+
+All four: apply {I, X, Z, XZ} to the first qubit of |&#934;&#8314;&#10217;</div>
+
+      <h3>Applications</h3>
+      <ul>
+        <li><strong>Quantum teleportation</strong> — transfer an unknown qubit state using one Bell pair and 2 classical bits</li>
+        <li><strong>Superdense coding</strong> — send 2 classical bits using one qubit (with pre-shared entanglement)</li>
+        <li><strong>Quantum key distribution (E91)</strong> — Bell inequality violations certify secure key generation</li>
+        <li><strong>Entanglement swapping</strong> — entangle particles that have never interacted, via Bell measurement on intermediaries</li>
+      </ul>
+    </section>
+
+    <!-- GHZ STATES -->
+    <section class="section" id="ghz">
+      <h2>GHZ and W States</h2>
+      <p>For three or more qubits, there are inequivalent classes of entanglement. The two most important multi-qubit entangled states are the <strong>GHZ state</strong> (Greenberger-Horne-Zeilinger) and the <strong>W state</strong>.</p>
+
+      <h3>GHZ state</h3>
+      <div class="math">|GHZ&#10217; = (|000&#10217; + |111&#10217;) / &#8730;2    (3-qubit)
+|GHZ_n&#10217; = (|0&#10217;&#8855;&#8319; + |1&#10217;&#8855;&#8319;) / &#8730;2    (n-qubit generalization)</div>
+      <p>The GHZ state is a "cat state" (Schrodinger's cat): a superposition of all-zero and all-one. It is maximally entangled but fragile: tracing out <em>any single qubit</em> completely destroys the entanglement, leaving the remaining qubits in a separable mixed state.</p>
+
+      <h3>W state</h3>
+      <div class="math">|W&#10217; = (|001&#10217; + |010&#10217; + |100&#10217;) / &#8730;3    (3-qubit)</div>
+      <p>The W state distributes a single excitation symmetrically among all qubits. Unlike GHZ, tracing out one qubit leaves the remaining two still entangled. W states are more robust to particle loss but less useful for tasks requiring maximal multi-party correlations.</p>
+
+      <h3>GHZ vs W: entanglement classes</h3>
+      <table>
+        <tr><th>Property</th><th>GHZ</th><th>W</th></tr>
+        <tr><td>Lose one qubit</td><td>All entanglement lost</td><td>Remaining qubits still entangled</td></tr>
+        <tr><td>LOCC conversion</td><td>Cannot convert to W</td><td>Cannot convert to GHZ</td></tr>
+        <tr><td>Bell inequality violation</td><td>Maximal (Mermin inequality)</td><td>Weaker violation</td></tr>
+        <tr><td>Quantum secret sharing</td><td>Ideal</td><td>Not directly useful</td></tr>
+        <tr><td>Robustness</td><td>Fragile</td><td>Robust to qubit loss</td></tr>
+      </table>
+    </section>
+
+    <!-- PHYSICAL IMPLEMENTATIONS -->
+    <section class="section" id="implementations">
+      <h2>Physical Implementations</h2>
+      <p>A qubit needs a controllable two-level quantum system. Several physical platforms compete, each with different strengths. No single technology has emerged as the definitive winner.</p>
+
+      <h3>Superconducting qubits</h3>
+      <p>Used by IBM, Google, Rigetti, and others. A superconducting circuit containing a Josephson junction creates an anharmonic oscillator whose lowest two energy levels serve as |0&#10217; and |1&#10217;.</p>
+      <ul>
+        <li><strong>Transmon qubit:</strong> The dominant design. A Cooper-pair box with a large shunting capacitor that reduces charge noise sensitivity. Introduced by Koch et al. (2007).</li>
+        <li><strong>Gate time:</strong> ~20-50 ns for single-qubit, ~100-500 ns for two-qubit (CZ/CNOT)</li>
+        <li><strong>T1:</strong> 100-300 &#956;s (energy relaxation), T2: 50-200 &#956;s (dephasing)</li>
+        <li><strong>Operating temperature:</strong> ~15 mK (millikelvin), requires dilution refrigerator</li>
+        <li><strong>Connectivity:</strong> Fixed coupling topology (nearest-neighbor on grid/heavy-hex). SWAP operations needed for non-adjacent qubits.</li>
+        <li><strong>Milestones:</strong> Google Sycamore (72 qubits, 2019 supremacy), IBM Eagle (127q, 2021), IBM Condor (1121q, 2023), Google Willow (105q, 2024 below-threshold QEC)</li>
+      </ul>
+
+      <h3>Trapped ions</h3>
+      <p>Used by IonQ, Quantinuum (Honeywell), and academic labs. Individual ions (typically Yb&#185;&#8311;&#185; or Ba&#185;&#179;&#8311;) are held in electromagnetic traps and addressed with laser beams.</p>
+      <ul>
+        <li><strong>Qubit encoding:</strong> Two hyperfine ground states or an optical transition serve as |0&#10217; and |1&#10217;.</li>
+        <li><strong>Gate time:</strong> ~1-10 &#956;s for single-qubit, ~100-600 &#956;s for two-qubit (Molmer-Sorensen gate)</li>
+        <li><strong>T1/T2:</strong> Seconds to minutes (orders of magnitude longer than superconducting)</li>
+        <li><strong>Gate fidelity:</strong> 99.9%+ single-qubit, 99.5-99.8% two-qubit (highest in any platform)</li>
+        <li><strong>Connectivity:</strong> All-to-all (any pair of ions can interact directly). Huge advantage for algorithm mapping.</li>
+        <li><strong>Milestones:</strong> IonQ Aria (25 algorithmic qubits, 2022), Quantinuum H2 (56 qubits, highest quantum volume 2&#185;&#8310; = 65,536, 2024)</li>
+      </ul>
+
+      <h3>Photonic qubits</h3>
+      <p>Used by Xanadu, PsiQuantum, and academic groups. Information is encoded in properties of single photons: polarization, path, time-bin, or photon number.</p>
+      <ul>
+        <li><strong>Qubit encoding:</strong> Horizontal/vertical polarization, dual-rail path encoding, or squeezed states (continuous variable).</li>
+        <li><strong>Advantages:</strong> Room-temperature operation, natural fiber-optic networking, inherent speed-of-light transmission.</li>
+        <li><strong>Challenges:</strong> Photon loss, non-deterministic gates (two-photon interactions are weak), requires feed-forward or cluster states.</li>
+        <li><strong>Xanadu Borealis:</strong> Gaussian boson sampling with 216 squeezed modes (2022). Demonstrated quantum advantage for a specific sampling task.</li>
+        <li><strong>PsiQuantum:</strong> Building a million-qubit photonic chip using silicon photonics manufacturing (GlobalFoundries fab).</li>
+      </ul>
+
+      <h3>Neutral atoms</h3>
+      <p>Used by QuEra, Pasqal, and academic labs. Individual neutral atoms (typically Rb or Cs) are trapped in optical tweezers and interact via Rydberg excitation.</p>
+      <ul>
+        <li><strong>Qubit encoding:</strong> Two hyperfine ground states of the atom.</li>
+        <li><strong>Two-qubit gates:</strong> Rydberg blockade mechanism provides strong, tunable interactions.</li>
+        <li><strong>Advantages:</strong> Reconfigurable geometry (move atoms with tweezers), scalable to thousands of qubits, long coherence times.</li>
+        <li><strong>QuEra Aquila:</strong> 256-atom analog quantum processor available on AWS Braket.</li>
+        <li><strong>Milestones:</strong> Harvard/MIT demonstrated 48 logical qubits with error correction on a 280-atom system (Nature, 2023).</li>
+      </ul>
+
+      <h3>Topological qubits</h3>
+      <p>Pursued by Microsoft. The idea: encode quantum information in topological properties of exotic quasiparticles (non-Abelian anyons, specifically Majorana zero modes) that are inherently protected from local noise.</p>
+      <ul>
+        <li><strong>Advantage:</strong> Hardware-level error protection. Qubits would be far more stable without active error correction.</li>
+        <li><strong>Status:</strong> Microsoft announced the first topological qubit demonstration in February 2025, using a topoconductor device. Still early-stage compared to other platforms.</li>
+        <li><strong>Challenge:</strong> Proving the existence of the required quasiparticles and building a scalable system remain open problems.</li>
+      </ul>
+    </section>
+
+    <!-- MEASUREMENT -->
+    <section class="section" id="measurement">
+      <h2>Measurement</h2>
+      <p>Quantum measurement is fundamentally different from classical observation. It is probabilistic, irreversible, and changes the state of the system.</p>
+
+      <h3>Born rule</h3>
+      <p>The <strong>Born rule</strong> (Max Born, 1926) is the fundamental postulate connecting quantum states to experimental outcomes.</p>
+      <div class="math">Given |&#968;&#10217; = &#945;|0&#10217; + &#946;|1&#10217;:
+
+P(outcome = 0) = |&#10216;0|&#968;&#10217;|&#178; = |&#945;|&#178;
+P(outcome = 1) = |&#10216;1|&#968;&#10217;|&#178; = |&#946;|&#178;</div>
+
+      <h3>Projective measurement</h3>
+      <p>A projective (von Neumann) measurement in basis {|m&#10217;} is described by projection operators P_m = |m&#10217;&#10216;m|.</p>
+      <div class="math">Probability: P(m) = &#10216;&#968;|P_m|&#968;&#10217;
+Post-measurement state: P_m|&#968;&#10217; / &#8730;P(m)
+
+Example: measuring |+&#10217; = (|0&#10217;+|1&#10217;)/&#8730;2 in Z basis:
+  P(0) = |&#10216;0|+&#10217;|&#178; = |1/&#8730;2|&#178; = 1/2
+  P(1) = |&#10216;1|+&#10217;|&#178; = |1/&#8730;2|&#178; = 1/2
+  If outcome 0: state collapses to |0&#10217;
+  If outcome 1: state collapses to |1&#10217;</div>
+
+      <h3>Measurement in different bases</h3>
+      <p>You can measure in any orthonormal basis by first rotating to that basis, then measuring in the computational basis.</p>
+      <table>
+        <tr><th>Basis</th><th>States</th><th>Pre-rotation gate</th><th>Observable</th></tr>
+        <tr><td>Z (computational)</td><td>|0&#10217;, |1&#10217;</td><td>None (identity)</td><td>Z = [[1,0],[0,-1]]</td></tr>
+        <tr><td>X (Hadamard)</td><td>|+&#10217;, |-&#10217;</td><td>H</td><td>X = [[0,1],[1,0]]</td></tr>
+        <tr><td>Y (circular)</td><td>|i&#10217;, |-i&#10217;</td><td>S&#8224;H</td><td>Y = [[0,-i],[i,0]]</td></tr>
+      </table>
+
+      <h3>POVM (generalized measurement)</h3>
+      <p>A <strong>Positive Operator-Valued Measure</strong> generalizes projective measurement. A POVM is a set of positive semidefinite operators {E_m} satisfying &#8721;E_m = I.</p>
+      <div class="math">P(m) = &#10216;&#968;|E_m|&#968;&#10217;
+
+Unlike projective measurement:
+- POVM elements need not be orthogonal
+- You can have more outcomes than the dimension of the space
+- Useful for optimal state discrimination (e.g., distinguishing non-orthogonal states)</div>
+
+      <div class="note">Measurement is the only non-unitary operation in quantum computing. All other operations (gates) are unitary and reversible. This asymmetry is fundamental: quantum computation builds up superpositions through unitary gates, then extracts classical information through measurement.</div>
+    </section>
+
+    <!-- DECOHERENCE -->
+    <section class="section" id="decoherence">
+      <h2>Decoherence</h2>
+      <p>Decoherence is the loss of quantum information due to unwanted interaction with the environment. It is the primary enemy of quantum computing and the reason we need quantum error correction.</p>
+
+      <h3>T1: energy relaxation time</h3>
+      <p><strong>T1</strong> measures how long a qubit stays in the excited state |1&#10217; before decaying to |0&#10217;. This is analogous to the spontaneous emission lifetime of an atom.</p>
+      <div class="math">P(|1&#10217; at time t) = e^(-t/T1)
+
+After time T1: ~37% probability of still being in |1&#10217;
+After 3&#215;T1: ~5% probability</div>
+
+      <h3>T2: dephasing time</h3>
+      <p><strong>T2</strong> measures how long the relative phase between |0&#10217; and |1&#10217; remains coherent. Dephasing destroys superpositions without changing populations.</p>
+      <div class="math">|&#968;(t)&#10217; = cos(&#952;/2)|0&#10217; + e^(i&#966;(t)) sin(&#952;/2)|1&#10217;
+
+&#966;(t) fluctuates randomly due to environment noise.
+T2 &#8804; 2&#215;T1 (always; dephasing cannot be slower than relaxation)
+
+T2* (Ramsey): includes static noise, often shorter
+T2 (echo): refocused with spin echo, filters out slow drift</div>
+
+      <h3>Error rates by hardware platform</h3>
+      <table>
+        <tr><th>Platform</th><th>T1</th><th>T2</th><th>1Q gate fidelity</th><th>2Q gate fidelity</th><th>Readout fidelity</th></tr>
+        <tr><td>Superconducting (IBM Eagle)</td><td>100-300 &#956;s</td><td>50-200 &#956;s</td><td>99.9%</td><td>99.0-99.5%</td><td>98-99%</td></tr>
+        <tr><td>Superconducting (Google Willow)</td><td>~70 &#956;s</td><td>~30 &#956;s</td><td>99.85%</td><td>99.4-99.7%</td><td>~99%</td></tr>
+        <tr><td>Trapped ion (Quantinuum H2)</td><td>~10 s</td><td>~1 s</td><td>99.99%</td><td>99.5-99.8%</td><td>99.7%</td></tr>
+        <tr><td>Trapped ion (IonQ Forte)</td><td>~10 s</td><td>~1 s</td><td>99.97%</td><td>99.4-99.6%</td><td>99.6%</td></tr>
+        <tr><td>Neutral atom (QuEra)</td><td>~1 s</td><td>~1 s</td><td>99.5%</td><td>99.0-99.5%</td><td>97-99%</td></tr>
+        <tr><td>Photonic (Xanadu Borealis)</td><td>N/A (no decay)</td><td>Limited by loss</td><td>99%+</td><td>~95% (probabilistic)</td><td>~95%</td></tr>
+      </table>
+
+      <h3>Types of errors</h3>
+      <ul>
+        <li><strong>Bit-flip (X error):</strong> |0&#10217; &#8596; |1&#10217;. Caused by T1 relaxation or transverse noise.</li>
+        <li><strong>Phase-flip (Z error):</strong> |+&#10217; &#8596; |-&#10217;. Caused by T2 dephasing.</li>
+        <li><strong>Depolarizing:</strong> Random application of I, X, Y, or Z. Models worst-case noise.</li>
+        <li><strong>Amplitude damping:</strong> Decay from |1&#10217; to |0&#10217;. Physical model of T1 process.</li>
+        <li><strong>Leakage:</strong> Qubit population escapes the computational subspace into higher energy levels. Particularly problematic for transmons.</li>
+        <li><strong>Crosstalk:</strong> Operations on one qubit unintentionally affect neighbors. Major issue at scale.</li>
+      </ul>
+
+      <h3>Coherence budget</h3>
+      <p>The number of gates you can execute before errors accumulate too much is roughly T2 / gate_time. This is the "coherence budget."</p>
+      <div class="math">Superconducting: T2 ~100 &#956;s, gate ~50 ns  &#8594;  ~2,000 gates
+Trapped ion:     T2 ~1 s,    gate ~10 &#956;s   &#8594;  ~100,000 gates
+
+But: trapped ion gates are 100-1000x slower,
+so wall-clock time per circuit is comparable.</div>
+
+      <div class="note">Current error rates (~0.1-1% per gate) are too high for algorithms like Shor's that require millions of gates. This is why quantum error correction is essential for fault-tolerant quantum computing. See the <a href="/institute/error-correction.html">QEC page</a> for details.</div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="container">
+      <a href="/">FreeQuantumStore</a> · <a href="/institute/">Institute</a> · Built with <a href="https://zensical.org">Zensical</a>
+    </div>
+  </footer>
+</body>
+</html>

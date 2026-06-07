@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Circuit Simulator — FreeQuantumStore</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0a0a0a;color:#fafafa;font-family:'Manrope',system-ui,sans-serif;display:flex;flex-direction:column;min-height:100vh}
+    header{border-bottom:1px solid #1a1a1a;padding:.6rem 1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    header h1{font-size:1rem;font-weight:700} header h1 span{color:#7c3aed}
+    .toolbar{display:flex;gap:.35rem;flex-wrap:wrap;margin-left:auto}
+    .gate-palette{display:flex;gap:3px;padding:.25rem;background:#141414;border:1px solid #1a1a1a;border-radius:8px}
+    .gate-pill{padding:.3rem .55rem;border-radius:5px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:'JetBrains Mono',monospace;border:1px solid transparent;user-select:none;transition:all .1s}
+    .gate-pill:hover{border-color:#7c3aed;color:#7c3aed}
+    .gate-pill.active{background:#7c3aed;color:#fff;border-color:#7c3aed}
+    .gate-pill.single{color:#a78bfa}
+    .gate-pill.two{color:#60a5fa}
+    .gate-pill.measure{color:#10b981}
+    button{padding:.3rem .7rem;border-radius:6px;border:1px solid #262626;background:#171717;color:#fafafa;font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit}
+    button:hover{border-color:#7c3aed;color:#7c3aed}
+    button.primary{background:#7c3aed;border-color:#7c3aed;color:#fff}
+    button.danger{border-color:#ef4444;color:#ef4444}
+    .main{display:flex;flex:1;overflow:hidden}
+    .circuit-panel{flex:1;overflow:auto;padding:1rem;border-right:1px solid #1a1a1a;min-width:0}
+    .results-panel{width:320px;padding:1rem;overflow-y:auto;flex-shrink:0}
+    @media(max-width:800px){.main{flex-direction:column} .results-panel{width:100%;border-top:1px solid #1a1a1a}}
+
+    /* Circuit grid */
+    .circuit{display:flex;flex-direction:column;gap:0;min-width:fit-content}
+    .wire{display:flex;align-items:center;height:44px;position:relative}
+    .wire-label{width:50px;font-size:.75rem;font-weight:700;color:#525252;font-family:'JetBrains Mono',monospace;text-align:right;padding-right:.5rem;flex-shrink:0}
+    .wire-line{flex:1;display:flex;align-items:center;position:relative}
+    .wire-line::before{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:#262626}
+    .slot{width:44px;height:44px;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;cursor:pointer;flex-shrink:0}
+    .slot:hover{background:rgba(124,58,237,.05);border-radius:4px}
+    .gate-box{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;font-family:'JetBrains Mono',monospace;border:2px solid;cursor:pointer;position:relative;z-index:2}
+    .gate-box.H{background:#1e1b4b;border-color:#7c3aed;color:#a78bfa}
+    .gate-box.X{background:#1e1b4b;border-color:#ef4444;color:#fca5a5}
+    .gate-box.Y{background:#1e1b4b;border-color:#f97316;color:#fdba74}
+    .gate-box.Z{background:#1e1b4b;border-color:#3b82f6;color:#93c5fd}
+    .gate-box.S{background:#1e1b4b;border-color:#06b6d4;color:#67e8f9}
+    .gate-box.T{background:#1e1b4b;border-color:#8b5cf6;color:#c4b5fd}
+    .gate-box.M{background:#052e16;border-color:#10b981;color:#6ee7b7;border-radius:50%}
+    .gate-box.CNOT-ctrl{width:14px;height:14px;border-radius:50%;background:#3b82f6;border:2px solid #60a5fa}
+    .gate-box.CNOT-tgt{width:28px;height:28px;border-radius:50%;background:transparent;border:2px solid #3b82f6;color:#60a5fa;font-size:1.2rem}
+    .cnot-line{position:absolute;width:2px;background:#3b82f6;left:50%;transform:translateX(-50%);z-index:1}
+
+    /* State vector */
+    .sv-title{font-size:.85rem;font-weight:700;margin-bottom:.5rem;color:#7c3aed}
+    .sv-table{width:100%;border-collapse:collapse;font-size:.72rem;font-family:'JetBrains Mono',monospace}
+    .sv-table th{text-align:left;padding:.3rem .4rem;color:#525252;border-bottom:1px solid #1a1a1a;font-weight:600}
+    .sv-table td{padding:.3rem .4rem;border-bottom:1px solid #0f0f0f}
+    .sv-table .amp{color:#a78bfa}
+    .sv-table .prob{color:#10b981}
+    .sv-table .basis{color:#a3a3a3}
+
+    /* Probability bars */
+    .prob-bar{display:flex;align-items:center;gap:.35rem;margin:.15rem 0}
+    .prob-label{font-size:.68rem;font-family:'JetBrains Mono',monospace;color:#525252;width:45px;text-align:right}
+    .prob-fill{height:14px;border-radius:3px;background:#7c3aed;transition:width .3s;min-width:1px}
+    .prob-val{font-size:.65rem;color:#737373;min-width:35px}
+
+    /* Measurement results */
+    .meas-result{background:#141414;border:1px solid #1a1a1a;border-radius:8px;padding:.75rem;margin-top:.75rem}
+    .meas-result h4{font-size:.78rem;font-weight:700;color:#10b981;margin-bottom:.35rem}
+    .shot{font-family:'JetBrains Mono',monospace;font-size:.82rem;margin:.15rem 0}
+    .shot b{color:#10b981}
+
+    footer{border-top:1px solid #1a1a1a;padding:.5rem 1rem;font-size:.68rem;color:#333;display:flex;justify-content:space-between}
+    footer a{color:#404040}
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚛️ Quantum <span>Circuit Simulator</span></h1>
+  <div class="gate-palette">
+    <span class="gate-pill single active" data-gate="H">H</span>
+    <span class="gate-pill single" data-gate="X">X</span>
+    <span class="gate-pill single" data-gate="Y">Y</span>
+    <span class="gate-pill single" data-gate="Z">Z</span>
+    <span class="gate-pill single" data-gate="S">S</span>
+    <span class="gate-pill single" data-gate="T">T</span>
+    <span class="gate-pill two" data-gate="CNOT">CX</span>
+    <span class="gate-pill measure" data-gate="M">M</span>
+  </div>
+  <div class="toolbar">
+    <button class="primary" id="btn-run">Run ▶</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-shots">100 Shots</button>
+    <button id="btn-clear" class="danger">Clear</button>
+    <button id="btn-bell">Bell Pair</button>
+    <button id="btn-ghz">GHZ</button>
+    <button id="btn-add-q">+ Qubit</button>
+    <button id="btn-rm-q">- Qubit</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="circuit-panel">
+    <div class="circuit" id="circuit"></div>
+  </div>
+
+  <div class="results-panel">
+    <div class="sv-title">State Vector</div>
+    <table class="sv-table" id="state-table">
+      <thead><tr><th>Basis</th><th>Amplitude</th><th>Prob</th></tr></thead>
+      <tbody id="state-body"></tbody>
+    </table>
+
+    <div class="sv-title" style="margin-top:1rem">Probabilities</div>
+    <div id="prob-bars"></div>
+
+    <div class="meas-result" id="meas-result" style="display:none">
+      <h4>Measurement Results</h4>
+      <div id="meas-body"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>Up to 6 qubits (64 amplitudes) | Real state-vector simulation</span>
+  <a href="https://freequantumstore.pages.dev">FreeQuantumStore</a>
+</footer>
+
+<script>
+// ─── Quantum Simulator Engine ───────────────────────────────────
+class QuantumSimulator {
+  constructor(n) {
+    this.n = n;
+    this.N = 1 << n;
+    // State vector: array of [real, imag] pairs
+    this.state = new Array(this.N);
+    this.reset();
+  }
+
+  reset() {
+    for (let i = 0; i < this.N; i++) this.state[i] = [0, 0];
+    this.state[0] = [1, 0]; // |00...0>
+  }
+
+  // Apply single-qubit gate to qubit q
+  applyGate(gate, q) {
+    const matrix = this.getMatrix(gate);
+    const mask = 1 << (this.n - 1 - q);
+
+    for (let i = 0; i < this.N; i++) {
+      if (i & mask) continue; // only process pairs once
+      const j = i | mask;
+      const a = this.state[i];
+      const b = this.state[j];
+
+      // [a', b'] = M * [a, b]
+      this.state[i] = this.cmul(matrix[0][0], a, matrix[0][1], b);
+      this.state[j] = this.cmul(matrix[1][0], a, matrix[1][1], b);
+    }
+  }
+
+  // CNOT: control q1, target q2
+  applyCNOT(ctrl, tgt) {
+    const cmask = 1 << (this.n - 1 - ctrl);
+    const tmask = 1 << (this.n - 1 - tgt);
+
+    for (let i = 0; i < this.N; i++) {
+      if (!(i & cmask)) continue; // only when control is 1
+      if (i & tmask) continue; // only process pairs once
+
+      const j = i ^ tmask;
+      // Swap amplitudes
+      const tmp = this.state[i];
+      this.state[i] = this.state[j];
+      this.state[j] = tmp;
+    }
+  }
+
+  // Measure qubit q, collapse state
+  measure(q) {
+    const mask = 1 << (this.n - 1 - q);
+    let p0 = 0, p1 = 0;
+
+    for (let i = 0; i < this.N; i++) {
+      const p = this.state[i][0]**2 + this.state[i][1]**2;
+      if (i & mask) p1 += p; else p0 += p;
+    }
+
+    const result = Math.random() < p0 ? 0 : 1;
+    const norm = Math.sqrt(result === 0 ? p0 : p1);
+
+    // Collapse
+    for (let i = 0; i < this.N; i++) {
+      const bit = (i & mask) ? 1 : 0;
+      if (bit !== result) {
+        this.state[i] = [0, 0];
+      } else {
+        this.state[i] = [this.state[i][0] / norm, this.state[i][1] / norm];
+      }
+    }
+    return result;
+  }
+
+  // Measure all qubits (sample from distribution, no collapse)
+  sample() {
+    let r = Math.random(), cum = 0;
+    for (let i = 0; i < this.N; i++) {
+      cum += this.state[i][0]**2 + this.state[i][1]**2;
+      if (r <= cum) return i;
+    }
+    return this.N - 1;
+  }
+
+  getProbs() {
+    return this.state.map(([re, im]) => re*re + im*im);
+  }
+
+  getMatrix(gate) {
+    const s2 = 1/Math.sqrt(2);
+    const matrices = {
+      H: [[[s2,0],[s2,0]],[[s2,0],[-s2,0]]],
+      X: [[[0,0],[1,0]],[[1,0],[0,0]]],
+      Y: [[[0,0],[0,-1]],[[0,1],[0,0]]],
+      Z: [[[1,0],[0,0]],[[0,0],[-1,0]]],
+      S: [[[1,0],[0,0]],[[0,0],[0,1]]],
+      T: [[[1,0],[0,0]],[[0,0],[Math.cos(Math.PI/4),Math.sin(Math.PI/4)]]],
+    };
+    return matrices[gate];
+  }
+
+  // Complex multiply and add: a*x + b*y where a,b,x,y are [re,im]
+  cmul(a, x, b, y) {
+    return [
+      a[0]*x[0] - a[1]*x[1] + b[0]*y[0] - b[1]*y[1],
+      a[0]*x[1] + a[1]*x[0] + b[0]*y[1] + b[1]*y[0]
+    ];
+  }
+}
+
+// ─── Circuit Editor ─────────────────────────────────────────────
+let nQubits = 3;
+const COLS = 12;
+let circuit = []; // circuit[col][qubit] = gate or null
+let selectedGate = 'H';
+let sim = new QuantumSimulator(nQubits);
+let cnotCtrl = null; // for two-step CNOT placement
+
+function initCircuit() {
+  circuit = [];
+  for (let c = 0; c < COLS; c++) {
+    circuit.push(new Array(nQubits).fill(null));
+  }
+  sim = new QuantumSimulator(nQubits);
+  cnotCtrl = null;
+  render();
+  updateState();
+}
+
+function render() {
+  const el = document.getElementById('circuit');
+  let html = '';
+
+  for (let q = 0; q < nQubits; q++) {
+    html += `<div class="wire"><div class="wire-label">q${q} |0⟩</div><div class="wire-line">`;
+    for (let c = 0; c < COLS; c++) {
+      const g = circuit[c][q];
+      if (g === null) {
+        html += `<div class="slot" data-q="${q}" data-c="${c}"></div>`;
+      } else if (g === 'CNOT-ctrl') {
+        // Find target
+        let tgt = -1;
+        for (let qq = 0; qq < nQubits; qq++) {
+          if (qq !== q && circuit[c][qq] === 'CNOT-tgt-' + q) tgt = qq;
+        }
+        const lineTop = Math.min(q, tgt) * 44 + 22;
+        const lineH = Math.abs(tgt - q) * 44;
+        html += `<div class="slot" data-q="${q}" data-c="${c}"><div class="gate-box CNOT-ctrl"></div></div>`;
+      } else if (g && g.startsWith('CNOT-tgt')) {
+        html += `<div class="slot" data-q="${q}" data-c="${c}"><div class="gate-box CNOT-tgt">+</div></div>`;
+      } else if (g === 'M') {
+        html += `<div class="slot" data-q="${q}" data-c="${c}"><div class="gate-box M">M</div></div>`;
+      } else {
+        html += `<div class="slot" data-q="${q}" data-c="${c}"><div class="gate-box ${g}">${g}</div></div>`;
+      }
+    }
+    html += `</div></div>`;
+  }
+
+  // Draw CNOT vertical lines via overlay
+  el.innerHTML = html;
+
+  // Add click handlers
+  el.querySelectorAll('.slot').forEach(slot => {
+    slot.addEventListener('click', () => {
+      const q = +slot.dataset.q, c = +slot.dataset.c;
+      placeGate(q, c);
+    });
+    // Right-click to remove
+    slot.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const q = +slot.dataset.q, c = +slot.dataset.c;
+      circuit[c][q] = null;
+      render();
+    });
+  });
+}
+
+function placeGate(q, c) {
+  if (selectedGate === 'CNOT') {
+    if (cnotCtrl === null) {
+      cnotCtrl = { q, c };
+      circuit[c][q] = 'CNOT-ctrl';
+      render();
+    } else {
+      if (cnotCtrl.c === c && cnotCtrl.q !== q) {
+        circuit[c][q] = 'CNOT-tgt-' + cnotCtrl.q;
+        cnotCtrl = null;
+        render();
+      } else {
+        // Cancel and retry
+        circuit[cnotCtrl.c][cnotCtrl.q] = null;
+        cnotCtrl = { q, c };
+        circuit[c][q] = 'CNOT-ctrl';
+        render();
+      }
+    }
+  } else {
+    circuit[c][q] = selectedGate;
+    render();
+  }
+}
+
+function runCircuit(reset = true) {
+  if (reset) sim.reset();
+  const results = {};
+
+  for (let c = 0; c < COLS; c++) {
+    for (let q = 0; q < nQubits; q++) {
+      const g = circuit[c][q];
+      if (!g) continue;
+      if (g === 'M') {
+        results[`q${q}`] = sim.measure(q);
+      } else if (g === 'CNOT-ctrl') {
+        // Find target
+        for (let qq = 0; qq < nQubits; qq++) {
+          if (circuit[c][qq] === 'CNOT-tgt-' + q) {
+            sim.applyCNOT(q, qq);
+            break;
+          }
+        }
+      } else if (g && !g.startsWith('CNOT-tgt')) {
+        sim.applyGate(g, q);
+      }
+    }
+  }
+
+  updateState();
+  return results;
+}
+
+function runShots(nShots) {
+  const counts = {};
+  for (let s = 0; s < nShots; s++) {
+    sim.reset();
+    // Run without measurement, then sample
+    for (let c = 0; c < COLS; c++) {
+      for (let q = 0; q < nQubits; q++) {
+        const g = circuit[c][q];
+        if (!g || g === 'M') continue;
+        if (g === 'CNOT-ctrl') {
+          for (let qq = 0; qq < nQubits; qq++) {
+            if (circuit[c][qq] === 'CNOT-tgt-' + q) { sim.applyCNOT(q, qq); break; }
+          }
+        } else if (!g.startsWith('CNOT-tgt')) {
+          sim.applyGate(g, q);
+        }
+      }
+    }
+    const result = sim.sample();
+    const key = result.toString(2).padStart(nQubits, '0');
+    counts[key] = (counts[key] || 0) + 1;
+  }
+
+  // Show results
+  const measEl = document.getElementById('meas-result');
+  measEl.style.display = 'block';
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  let html = `<div style="font-size:.72rem;color:#525252;margin-bottom:.35rem">${nShots} shots:</div>`;
+  for (const [state, count] of sorted) {
+    const pct = (count / nShots * 100).toFixed(1);
+    html += `<div class="prob-bar">
+      <span class="prob-label">|${state}⟩</span>
+      <div class="prob-fill" style="width:${pct}%;max-width:150px"></div>
+      <span class="prob-val">${count} (${pct}%)</span>
+    </div>`;
+  }
+  document.getElementById('meas-body').innerHTML = html;
+
+  // Also update state for display
+  sim.reset();
+  runCircuit(true);
+}
+
+function updateState() {
+  const probs = sim.getProbs();
+  let html = '';
+  let probHtml = '';
+
+  for (let i = 0; i < sim.N; i++) {
+    const [re, im] = sim.state[i];
+    const p = probs[i];
+    if (p < 1e-10) continue; // skip zero amplitudes
+
+    const basis = i.toString(2).padStart(nQubits, '0');
+    const ampStr = im === 0 ? re.toFixed(4) :
+                   re === 0 ? `${im.toFixed(4)}i` :
+                   `${re.toFixed(3)}${im >= 0 ? '+' : ''}${im.toFixed(3)}i`;
+    const probStr = (p * 100).toFixed(2);
+
+    html += `<tr>
+      <td class="basis">|${basis}⟩</td>
+      <td class="amp">${ampStr}</td>
+      <td class="prob">${probStr}%</td>
+    </tr>`;
+  }
+
+  // All probability bars (including zeros)
+  for (let i = 0; i < sim.N; i++) {
+    const p = probs[i] * 100;
+    const basis = i.toString(2).padStart(nQubits, '0');
+    probHtml += `<div class="prob-bar">
+      <span class="prob-label">|${basis}⟩</span>
+      <div class="prob-fill" style="width:${Math.max(0, p)}%;max-width:200px;${p < 0.1 ? 'opacity:.2' : ''}"></div>
+      <span class="prob-val">${p.toFixed(1)}%</span>
+    </div>`;
+  }
+
+  document.getElementById('state-body').innerHTML = html;
+  document.getElementById('prob-bars').innerHTML = probHtml;
+}
+
+// ─── Event Handlers ─────────────────────────────────────────────
+document.querySelectorAll('.gate-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    selectedGate = pill.dataset.gate;
+    document.querySelectorAll('.gate-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    cnotCtrl = null;
+  });
+});
+
+document.getElementById('btn-run').addEventListener('click', () => runCircuit(true));
+document.getElementById('btn-step').addEventListener('click', () => {
+  // Find next non-empty column after current
+  runCircuit(true); // for now just run all
+});
+document.getElementById('btn-shots').addEventListener('click', () => runShots(100));
+document.getElementById('btn-clear').addEventListener('click', initCircuit);
+
+document.getElementById('btn-bell').addEventListener('click', () => {
+  initCircuit();
+  circuit[1][0] = 'H';
+  circuit[3][0] = 'CNOT-ctrl';
+  circuit[3][1] = 'CNOT-tgt-0';
+  render();
+  runCircuit(true);
+});
+
+document.getElementById('btn-ghz').addEventListener('click', () => {
+  if (nQubits < 3) { nQubits = 3; initCircuit(); }
+  initCircuit();
+  circuit[1][0] = 'H';
+  circuit[3][0] = 'CNOT-ctrl';
+  circuit[3][1] = 'CNOT-tgt-0';
+  circuit[5][0] = 'CNOT-ctrl';
+  circuit[5][2] = 'CNOT-tgt-0';
+  render();
+  runCircuit(true);
+});
+
+document.getElementById('btn-add-q').addEventListener('click', () => {
+  if (nQubits < 6) { nQubits++; initCircuit(); }
+});
+document.getElementById('btn-rm-q').addEventListener('click', () => {
+  if (nQubits > 1) { nQubits--; initCircuit(); }
+});
+
+// Keyboard shortcuts
+addEventListener('keydown', e => {
+  const map = { h:'H', x:'X', y:'Y', z:'Z', s:'S', t:'T', m:'M', c:'CNOT' };
+  if (map[e.key]) {
+    selectedGate = map[e.key];
+    document.querySelectorAll('.gate-pill').forEach(p => p.classList.remove('active'));
+    document.querySelector(`[data-gate="${map[e.key]}"]`)?.classList.add('active');
+  }
+  if (e.key === 'Enter') runCircuit(true);
+  if (e.key === 'Delete' || e.key === 'Backspace') initCircuit();
+});
+
+// Init
+initCircuit();
+</script>
+</body>
+</html>

@@ -173,7 +173,7 @@
 
     <section>
       <div class="tabs">
-          <button class="tab active" onclick="switchTab('all')">All <span class="tab-count">4</span></button>
+          <button class="tab active" onclick="switchTab('all')">All <span class="tab-count">5</span></button>
           <button class="tab" onclick="switchTab('library')">Libraries <span class="tab-count">undefined</span></button>
           <button class="tab" onclick="switchTab('model')">Models <span class="tab-count">0</span></button>
           <button class="tab" onclick="switchTab('agent')">Agents <span class="tab-count">undefined</span></button>
@@ -183,18 +183,37 @@
         <input type="text" class="search-input" id="searchInput" placeholder="Search agents..." autocomplete="off" />
         <button class="filter-btn active" onclick="filterCategory('all')">All</button>
         <button class="filter-btn" onclick="filterCategory('education')">Education</button>
+        <button class="filter-btn" onclick="filterCategory('simulator')">Simulator</button>
         <button class="filter-btn" onclick="filterCategory('visualization')">Visualization</button>
         <button class="filter-btn" onclick="filterCategory('phenomena')">Phenomena</button>
         <button class="filter-btn" onclick="filterCategory('algorithms')">Algorithms</button>
-        <span class="agent-count" id="agentCount">4 agents</span>
+        <span class="agent-count" id="agentCount">5 agents</span>
       </div>
             <div class="agents-grid" id="agentsGrid">
-        <div class="agent-card" data-category="visualization" data-store-type="behavior" data-name="bloch sphere" data-desc="3d qubit state visualization — drag to orbit, apply x/y/z/h/s/t gates, see state vector + probabilities update.">
+        <div class="agent-card" data-category="simulator" data-store-type="behavior" data-name="circuit simulator" data-desc="full quantum circuit editor + state-vector simulator. click to place gates, see amplitudes + probabilities. up to 6 qubits. run 100 shots.">
+          <a href="/circuits/qubit-sim/" class="agent-card-body">
+            <div class="agent-icon" style="background:#3b82f6">💻</div>
+            <div class="agent-body">
+              <span class="agent-name">Circuit Simulator</span>
+              <span class="agent-desc">Full quantum circuit editor + state-vector simulator. Click ...</span>
+              <div class="agent-meta">
+                <span class="tag" style="background:rgba(124,58,237,0.15);color:#a78bfa">Interactive</span>
+                <span class="tag"></span>
+              </div>
+            </div>
+          </a>
+          <a href="/circuits/qubit-sim/" class="agent-cta">
+            <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
+            Open
+          </a>
+        </div>
+
+        <div class="agent-card" data-category="visualization" data-store-type="behavior" data-name="bloch sphere" data-desc="3d qubit state visualization — apply x/y/z/h/s/t gates, see state vector + probabilities update live.">
           <a href="/circuits/bloch-sphere/" class="agent-card-body">
             <div class="agent-icon" style="background:#7c3aed">🔮</div>
             <div class="agent-body">
               <span class="agent-name">Bloch Sphere</span>
-              <span class="agent-desc">3D qubit state visualization — drag to orbit, apply X/Y/Z/H/...</span>
+              <span class="agent-desc">3D qubit state visualization — apply X/Y/Z/H/S/T gates, see ...</span>
               <div class="agent-meta">
                 <span class="tag" style="background:rgba(124,58,237,0.15);color:#a78bfa">Interactive</span>
                 <span class="tag"></span>
@@ -207,12 +226,12 @@
           </a>
         </div>
 
-        <div class="agent-card" data-category="education" data-store-type="behavior" data-name="quantum gates explorer" data-desc="interactive gate reference — click any gate to see its matrix, effect on |0⟩ and |1⟩, bloch sphere rotation, and properties.">
+        <div class="agent-card" data-category="education" data-store-type="behavior" data-name="quantum gates" data-desc="interactive gate reference — matrix, bloch rotation, properties for every standard gate.">
           <a href="/circuits/quantum-gates/" class="agent-card-body">
             <div class="agent-icon" style="background:#7c3aed">🚪</div>
             <div class="agent-body">
-              <span class="agent-name">Quantum Gates Explorer</span>
-              <span class="agent-desc">Interactive gate reference — click any gate to see its matri...</span>
+              <span class="agent-name">Quantum Gates</span>
+              <span class="agent-desc">Interactive gate reference — matrix, Bloch rotation, propert...</span>
               <div class="agent-meta">
                 <span class="tag" style="background:rgba(124,58,237,0.15);color:#a78bfa">Interactive</span>
                 <span class="tag"></span>
@@ -225,12 +244,12 @@
           </a>
         </div>
 
-        <div class="agent-card" data-category="phenomena" data-store-type="behavior" data-name="entanglement" data-desc="bell pair experiment — create entangled qubits, measure alice, watch bob collapse. run 100x to see 100% correlation.">
+        <div class="agent-card" data-category="phenomena" data-store-type="behavior" data-name="entanglement" data-desc="bell pair experiment — create entangled qubits, measure, see 100% correlation over 100 runs.">
           <a href="/circuits/entanglement/" class="agent-card-body">
             <div class="agent-icon" style="background:#7c3aed">🔗</div>
             <div class="agent-body">
               <span class="agent-name">Entanglement</span>
-              <span class="agent-desc">Bell pair experiment — create entangled qubits, measure Alic...</span>
+              <span class="agent-desc">Bell pair experiment — create entangled qubits, measure, see...</span>
               <div class="agent-meta">
                 <span class="tag" style="background:rgba(124,58,237,0.15);color:#a78bfa">Interactive</span>
                 <span class="tag"></span>
@@ -243,12 +262,12 @@
           </a>
         </div>
 
-        <div class="agent-card" data-category="algorithms" data-store-type="behavior" data-name="grover's search" data-desc="quantum search — watch amplitude amplification find the target in √n steps. auto-run mode, adjustable qubits, measurement.">
+        <div class="agent-card" data-category="algorithms" data-store-type="behavior" data-name="grover's search" data-desc="quantum search — watch amplitude amplification, compare sqrt(n) quantum vs n classical steps.">
           <a href="/circuits/grovers/" class="agent-card-body">
             <div class="agent-icon" style="background:#7c3aed">🔍</div>
             <div class="agent-body">
               <span class="agent-name">Grover's Search</span>
-              <span class="agent-desc">Quantum search — watch amplitude amplification find the targ...</span>
+              <span class="agent-desc">Quantum search — watch amplitude amplification, compare sqrt...</span>
               <div class="agent-meta">
                 <span class="tag" style="background:rgba(124,58,237,0.15);color:#a78bfa">Interactive</span>
                 <span class="tag"></span>

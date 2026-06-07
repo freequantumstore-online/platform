@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Gates — Quantum Computing Institute</title>
+  <meta name="description" content="Complete reference for quantum gates: matrices, circuit symbols, decompositions, and hardware fidelity benchmarks.">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--accent:#7c3aed;--paper:#0a0a0a;--ink:#fafafa;--muted:#737373;--panel:#141414;--line:#262626}
+    body{font-family:'Manrope',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
+    .container{max-width:900px;margin:0 auto;padding:0 1.5rem}
+    a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+    header{border-bottom:1px solid var(--line);padding:.75rem 0}
+    header .container{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--ink)}
+    .brand-emoji{font-size:1.5rem}
+    .brand-text{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:700}
+    .brand-tag{font-size:.68rem;color:var(--muted)}
+    nav{display:flex;gap:1rem;font-size:.82rem;font-weight:600;margin-left:auto;flex-wrap:wrap}
+    nav a{color:var(--muted)}nav a:hover{color:var(--ink)}nav a.active{color:var(--accent)}
+    .hero{text-align:center;padding:2.5rem 0 1.5rem;border-bottom:1px solid var(--line)}
+    .hero h1{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:700;margin-bottom:.5rem}
+    .hero h1 em{color:var(--accent);font-style:normal}
+    .hero p{color:var(--muted);max-width:600px;margin:0 auto;font-size:.95rem}
+    .toc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:1rem 1.25rem;margin:1.5rem 0}
+    .toc h3{font-size:.85rem;font-weight:700;margin-bottom:.5rem;color:var(--accent)}
+    .toc ul{list-style:none;padding:0;columns:2}
+    .toc li{margin:.2rem 0}.toc a{color:#a3a3a3;font-size:.82rem}.toc a:hover{color:var(--ink)}
+    .section{margin-bottom:2rem;padding-top:1rem}
+    .section h2{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:700;margin-bottom:.5rem;padding-bottom:.35rem;border-bottom:1px solid var(--line)}
+    .section h3{font-size:.95rem;font-weight:700;margin:1rem 0 .35rem;color:#e5e5e5}
+    .section p,.section li{color:#a3a3a3;font-size:.88rem}
+    ul{padding-left:1.25rem;margin:.35rem 0}
+    li{margin-bottom:.3rem}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.6rem;margin:.5rem 0}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:.85rem;transition:border-color .15s}
+    .card:hover{border-color:var(--accent)}
+    .card h4{font-size:.85rem;font-weight:700;margin-bottom:.2rem}
+    .card h4 a{color:var(--ink)}.card p{font-size:.75rem;color:var(--muted);margin:0;line-height:1.5}
+    .card .meta{font-size:.65rem;color:#525252;margin-top:.25rem}
+    footer{border-top:1px solid var(--line);padding:1.5rem 0;text-align:center;font-size:.75rem;color:#525252}
+    .math{font-family:'Courier New',monospace;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:.75rem 1rem;margin:.5rem 0;font-size:.85rem;color:#e5e5e5;overflow-x:auto;white-space:pre-wrap}
+    .math-inline{font-family:'Courier New',monospace;color:#e5e5e5;background:var(--panel);padding:.1rem .35rem;border-radius:3px;font-size:.84rem}
+    table{width:100%;border-collapse:collapse;margin:.5rem 0;font-size:.82rem}
+    th{text-align:left;padding:.5rem .6rem;background:var(--panel);border:1px solid var(--line);color:var(--accent);font-weight:700;font-size:.78rem}
+    td{padding:.5rem .6rem;border:1px solid var(--line);color:#a3a3a3}
+    tr:hover td{background:var(--panel)}
+    .note{background:#1a1625;border-left:3px solid var(--accent);padding:.6rem .85rem;margin:.5rem 0;border-radius:0 6px 6px 0;font-size:.82rem;color:#c4b5fd}
+    .gate-box{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:2px solid var(--accent);border-radius:4px;font-size:.75rem;font-weight:700;color:var(--accent);vertical-align:middle;margin:0 .15rem}
+    .gate-wire{display:inline-block;width:30px;height:2px;background:var(--muted);vertical-align:middle}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="/institute/" class="brand">
+        <span class="brand-emoji">&#9883;&#65039;</span>
+        <span><span class="brand-text">Quantum Institute</span><br><span class="brand-tag"></span></span>
+      </a>
+      <nav>
+        <a href="/institute/">Overview</a>
+        <a href="/institute/qubits.html">Qubits</a>
+        <a href="/institute/gates.html" class="active">Gates</a>
+        <a href="/institute/algorithms.html">Algorithms</a>
+        <a href="/institute/hardware.html">Hardware</a>
+        <a href="/institute/error-correction.html">QEC</a>
+        <a href="/">Simulations</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="hero">
+      <h1>Quantum <em>Gates</em> Reference</h1>
+      <p>Every standard quantum gate: matrix representation, circuit notation, physical meaning, decomposition, and hardware fidelity.</p>
+    </section>
+
+    <nav class="toc">
+      <h3>Contents</h3>
+      <ul>
+        <li><a href="#overview">Gates Overview</a></li>
+        <li><a href="#identity">Identity (I)</a></li>
+        <li><a href="#pauli">Pauli Gates (X, Y, Z)</a></li>
+        <li><a href="#hadamard">Hadamard (H)</a></li>
+        <li><a href="#phase">Phase Gates (S, T)</a></li>
+        <li><a href="#rotation">Rotation Gates (Rx, Ry, Rz)</a></li>
+        <li><a href="#cnot">CNOT (CX)</a></li>
+        <li><a href="#two-qubit">Two-Qubit Gates</a></li>
+        <li><a href="#three-qubit">Three-Qubit Gates</a></li>
+        <li><a href="#decomposition">Gate Decomposition</a></li>
+        <li><a href="#fidelity">Gate Fidelity</a></li>
+      </ul>
+    </nav>
+
+    <!-- OVERVIEW -->
+    <section class="section" id="overview">
+      <h2>What Is a Quantum Gate?</h2>
+      <p>A quantum gate is a <strong>unitary operation</strong> that transforms qubit states. Unitary means the operation is reversible: U&#8224;U = UU&#8224; = I. Every quantum gate can be represented as a unitary matrix.</p>
+
+      <h3>Key properties</h3>
+      <ul>
+        <li><strong>Reversibility:</strong> Every quantum gate has an inverse (its conjugate transpose). Unlike classical gates (AND, OR), no information is destroyed.</li>
+        <li><strong>Linearity:</strong> Gates act linearly on superpositions: U(&#945;|0&#10217; + &#946;|1&#10217;) = &#945;U|0&#10217; + &#946;U|1&#10217;.</li>
+        <li><strong>Composition:</strong> Applying gate A then B is the matrix product BA (right to left, matching circuit left to right).</li>
+        <li><strong>Universality:</strong> A small set of gates can approximate any unitary operation to arbitrary precision. {H, T, CNOT} is universal.</li>
+      </ul>
+
+      <h3>Circuit notation</h3>
+      <p>In circuit diagrams, qubits are horizontal lines (wires) and gates are boxes or symbols on those lines. Time flows left to right. Multi-qubit gates connect wires with vertical lines.</p>
+      <div class="math">Single-qubit: &#9473;&#9473;[H]&#9473;&#9473;     (wire through a box labeled H)
+CNOT:         &#9473;&#9473;&#9679;&#9473;&#9473;       (control: filled dot)
+              &#9473;&#9473;&#8853;&#9473;&#9473;       (target: circled plus)
+Measurement:  &#9473;&#9473;[M]&#9473;&#9473;     (meter symbol, produces classical bit)</div>
+    </section>
+
+    <!-- IDENTITY -->
+    <section class="section" id="identity">
+      <h2>Identity Gate (I)</h2>
+      <p>The identity gate does nothing. It is included for completeness and is useful in tensor products to indicate "no operation on this qubit."</p>
+      <div class="math">I = | 1  0 |
+    | 0  1 |
+
+I|0&#10217; = |0&#10217;
+I|1&#10217; = |1&#10217;
+
+Circuit symbol: empty wire (no box drawn)</div>
+      <p>When specifying multi-qubit operations, I &#8855; H means "do nothing to qubit 0, apply H to qubit 1."</p>
+    </section>
+
+    <!-- PAULI GATES -->
+    <section class="section" id="pauli">
+      <h2>Pauli Gates (X, Y, Z)</h2>
+      <p>The three Pauli matrices, along with the identity, form a basis for all 2&#215;2 Hermitian matrices. They are simultaneously the generators of SU(2) rotations and the most common error operators in quantum error correction.</p>
+
+      <h3>Pauli-X (NOT gate, bit-flip)</h3>
+      <div class="math">X = | 0  1 |     Circuit: &#9473;[X]&#9473; or &#9473;&#8853;&#9473;
+    | 1  0 |
+
+X|0&#10217; = |1&#10217;      X|1&#10217; = |0&#10217;
+X|+&#10217; = |+&#10217;      X|-&#10217; = -|-&#10217;
+
+Eigenvalues: +1 (eigenvector |+&#10217;), -1 (eigenvector |-&#10217;)
+X&#178; = I      X&#8224; = X</div>
+      <p>The quantum analog of the classical NOT gate. On the Bloch sphere, it is a 180-degree rotation about the X axis.</p>
+
+      <h3>Pauli-Y</h3>
+      <div class="math">Y = | 0  -i |    Circuit: &#9473;[Y]&#9473;
+    | i   0 |
+
+Y|0&#10217; = i|1&#10217;     Y|1&#10217; = -i|0&#10217;
+Y = iXZ
+
+Eigenvalues: +1 (eigenvector |i&#10217;), -1 (eigenvector |-i&#10217;)
+Y&#178; = I      Y&#8224; = Y</div>
+      <p>Combines both bit-flip and phase-flip. 180-degree rotation about the Y axis of the Bloch sphere.</p>
+
+      <h3>Pauli-Z (phase-flip)</h3>
+      <div class="math">Z = | 1   0 |    Circuit: &#9473;[Z]&#9473;
+    | 0  -1 |
+
+Z|0&#10217; = |0&#10217;      Z|1&#10217; = -|1&#10217;
+Z|+&#10217; = |-&#10217;      Z|-&#10217; = |+&#10217;
+
+Eigenvalues: +1 (eigenvector |0&#10217;), -1 (eigenvector |1&#10217;)
+Z&#178; = I      Z&#8224; = Z</div>
+      <p>Flips the phase of the |1&#10217; component without changing probabilities. 180-degree rotation about Z axis. The computational basis states are eigenstates of Z.</p>
+
+      <h3>Pauli algebra</h3>
+      <div class="math">Commutation:  [X,Y] = 2iZ    [Y,Z] = 2iX    [Z,X] = 2iY
+Anti-commute: {X,Y} = 0      {Y,Z} = 0      {Z,X} = 0
+Products:     XY = iZ        YZ = iX        ZX = iY
+              XYZ = iI</div>
+    </section>
+
+    <!-- HADAMARD -->
+    <section class="section" id="hadamard">
+      <h2>Hadamard Gate (H)</h2>
+      <p>The Hadamard gate is the most important single-qubit gate. It creates superpositions from computational basis states and is the starting point for nearly every quantum algorithm.</p>
+      <div class="math">H = (1/&#8730;2) | 1   1 |    Circuit: &#9473;[H]&#9473;
+             | 1  -1 |
+
+H|0&#10217; = |+&#10217; = (|0&#10217; + |1&#10217;) / &#8730;2
+H|1&#10217; = |-&#10217; = (|0&#10217; - |1&#10217;) / &#8730;2
+H|+&#10217; = |0&#10217;
+H|-&#10217; = |1&#10217;
+
+H&#178; = I    (self-inverse: applying H twice returns to original state)
+H = (X + Z) / &#8730;2</div>
+
+      <p>On the Bloch sphere, H is a 180-degree rotation about the axis halfway between X and Z (the X+Z direction). It maps the Z-basis to the X-basis and vice versa.</p>
+
+      <h3>Uses</h3>
+      <ul>
+        <li><strong>Creating superposition:</strong> Start in |0&#10217;, apply H to get equal superposition |+&#10217;.</li>
+        <li><strong>Changing measurement basis:</strong> Apply H before Z-measurement to effectively measure in the X-basis.</li>
+        <li><strong>Quantum parallelism:</strong> H&#8855;&#8319; applied to |0&#10217;&#8855;&#8319; creates uniform superposition over all 2&#8319; computational basis states.</li>
+        <li><strong>Part of universal gate set:</strong> {H, T, CNOT} is universal for quantum computation.</li>
+      </ul>
+    </section>
+
+    <!-- PHASE GATES -->
+    <section class="section" id="phase">
+      <h2>Phase Gates (S, S&#8224;, T, T&#8224;)</h2>
+      <p>Phase gates add a relative phase to the |1&#10217; component without affecting |0&#10217;. They are rotations about the Z axis of the Bloch sphere.</p>
+
+      <h3>S gate (&#960;/2 phase, &#8730;Z)</h3>
+      <div class="math">S = | 1  0 |    Circuit: &#9473;[S]&#9473;
+    | 0  i |
+
+S|0&#10217; = |0&#10217;      S|1&#10217; = i|1&#10217;
+S|+&#10217; = |i&#10217;      S|-&#10217; = |-i&#10217;
+
+S = Z^(1/2) = Rz(&#960;/2) (up to global phase)
+S&#178; = Z      S&#8224;S = I</div>
+
+      <h3>S&#8224; gate (S-dagger, inverse of S)</h3>
+      <div class="math">S&#8224; = | 1   0 |    Circuit: &#9473;[S&#8224;]&#9473;
+     | 0  -i |
+
+S&#8224;|0&#10217; = |0&#10217;     S&#8224;|1&#10217; = -i|1&#10217;
+S&#8224; = S&#8315;&#185; = S&#179;</div>
+
+      <h3>T gate (&#960;/4 phase, &#8730;S)</h3>
+      <div class="math">T = | 1       0     |    Circuit: &#9473;[T]&#9473;
+    | 0  e^(i&#960;/4) |
+
+T|0&#10217; = |0&#10217;      T|1&#10217; = e^(i&#960;/4)|1&#10217;
+
+T = S^(1/2) = Z^(1/4) = Rz(&#960;/4) (up to global phase)
+T&#178; = S      T&#8308; = Z      T&#8312; = I</div>
+      <p>The T gate is critical for universality. The Clifford gates alone (H, S, CNOT) can be efficiently simulated classically (Gottesman-Knill theorem). Adding the T gate makes the set universal, enabling any quantum computation.</p>
+
+      <h3>T&#8224; gate (T-dagger)</h3>
+      <div class="math">T&#8224; = | 1        0      |    Circuit: &#9473;[T&#8224;]&#9473;
+     | 0  e^(-i&#960;/4) |
+
+T&#8224; = T&#8315;&#185; = T&#8311;</div>
+
+      <div class="note">The Clifford group is generated by {H, S, CNOT}. Clifford circuits can be simulated classically in polynomial time (Gottesman-Knill theorem). The T gate breaks out of the Clifford group and is the key ingredient for quantum computational advantage. In fault-tolerant quantum computing, T gates are by far the most expensive operation, requiring magic state distillation.</div>
+    </section>
+
+    <!-- ROTATION GATES -->
+    <section class="section" id="rotation">
+      <h2>Rotation Gates</h2>
+      <p>Rotation gates parameterize continuous rotations about the X, Y, and Z axes of the Bloch sphere. Any single-qubit gate can be decomposed as a sequence of three rotations (ZYZ or ZXZ decomposition).</p>
+
+      <h3>Rx(&#952;) &#8212; rotation about X</h3>
+      <div class="math">Rx(&#952;) = | cos(&#952;/2)   -i&#183;sin(&#952;/2) |
+         | -i&#183;sin(&#952;/2)   cos(&#952;/2)  |
+
+Rx(&#960;) = -iX     (Pauli X up to global phase)
+Rx(&#960;/2): the &#8730;X gate</div>
+
+      <h3>Ry(&#952;) &#8212; rotation about Y</h3>
+      <div class="math">Ry(&#952;) = | cos(&#952;/2)   -sin(&#952;/2) |
+         | sin(&#952;/2)    cos(&#952;/2) |
+
+Ry(&#960;) = -iY
+Ry(&#952;)|0&#10217; = cos(&#952;/2)|0&#10217; + sin(&#952;/2)|1&#10217;
+
+Note: Ry has only real entries. Useful for preparing states
+with real amplitudes (common in variational circuits).</div>
+
+      <h3>Rz(&#952;) &#8212; rotation about Z</h3>
+      <div class="math">Rz(&#952;) = | e^(-i&#952;/2)      0      |
+         |     0       e^(i&#952;/2)  |
+
+Rz(&#960;) = -iZ     Rz(&#960;/2) = e^(-i&#960;/4)&#183;S     Rz(&#960;/4) = e^(-i&#960;/8)&#183;T</div>
+
+      <h3>General single-qubit gate (ZYZ decomposition)</h3>
+      <div class="math">Any U &#8712; SU(2) can be written as:
+U = e^(i&#945;) &#183; Rz(&#946;) &#183; Ry(&#947;) &#183; Rz(&#948;)
+
+where &#945; is a global phase and &#946;, &#947;, &#948; are Euler angles.
+This means at most 3 rotation gates suffice for any 1Q operation.</div>
+
+      <h3>The general phase gate P(&#952;)</h3>
+      <div class="math">P(&#952;) = | 1       0    |
+        | 0   e^(i&#952;) |
+
+P(&#960;)   = Z
+P(&#960;/2) = S
+P(&#960;/4) = T
+
+This is Rz(&#952;) up to a global phase: P(&#952;) = e^(i&#952;/2) Rz(&#952;)</div>
+    </section>
+
+    <!-- CNOT -->
+    <section class="section" id="cnot">
+      <h2>CNOT Gate (Controlled-X)</h2>
+      <p>The <strong>CNOT</strong> (controlled-NOT) gate is the most important two-qubit gate. It flips the target qubit if and only if the control qubit is |1&#10217;. Together with single-qubit gates, CNOT is sufficient for universal quantum computation.</p>
+
+      <div class="math">CNOT = | 1 0 0 0 |    Circuit:  &#9473;&#9679;&#9473;  (control)
+       | 0 1 0 0 |              |
+       | 0 0 0 1 |             &#9473;&#8853;&#9473;  (target)
+       | 0 0 1 0 |
+
+CNOT|00&#10217; = |00&#10217;     CNOT|01&#10217; = |01&#10217;
+CNOT|10&#10217; = |11&#10217;     CNOT|11&#10217; = |10&#10217;
+
+Control in |+&#10217;: CNOT(|+0&#10217;) = |&#934;&#8314;&#10217; = (|00&#10217;+|11&#10217;)/&#8730;2  &#8594; creates entanglement!</div>
+
+      <h3>Properties</h3>
+      <ul>
+        <li><strong>Self-inverse:</strong> CNOT&#178; = I (applying twice cancels)</li>
+        <li><strong>Entanglement generation:</strong> CNOT turns product states into Bell states (with H on control)</li>
+        <li><strong>Classical reversible computing:</strong> CNOT is the quantum analog of the classical XOR gate</li>
+        <li><strong>Basis change symmetry:</strong> In the Hadamard basis, CNOT with control and target swapped: (H&#8855;H)CNOT(H&#8855;H) = CNOT with reversed roles</li>
+      </ul>
+    </section>
+
+    <!-- TWO-QUBIT GATES -->
+    <section class="section" id="two-qubit">
+      <h2>Other Two-Qubit Gates</h2>
+
+      <h3>CZ (Controlled-Z)</h3>
+      <div class="math">CZ = | 1  0  0   0 |    Circuit:  &#9473;&#9679;&#9473;
+     | 0  1  0   0 |              |
+     | 0  0  1   0 |             &#9473;&#9679;&#9473;  (both dots: symmetric)
+     | 0  0  0  -1 |
+
+CZ|11&#10217; = -|11&#10217;    (phase flip only when both qubits are |1&#10217;)
+CZ is symmetric: control and target are interchangeable
+CZ = (I&#8855;H) CNOT (I&#8855;H)     (convert between CZ and CNOT with H)</div>
+      <p>CZ is the native two-qubit gate on many superconducting platforms (Google Sycamore, Rigetti). It is symmetric, which simplifies circuit design.</p>
+
+      <h3>SWAP</h3>
+      <div class="math">SWAP = | 1 0 0 0 |    Circuit:  &#9473;&#215;&#9473;
+       | 0 0 1 0 |              |
+       | 0 1 0 0 |             &#9473;&#215;&#9473;
+       | 0 0 0 1 |
+
+SWAP|&#968;&#966;&#10217; = |&#966;&#968;&#10217;     (exchanges two qubits)
+SWAP = 3 CNOTs:  CNOT&#8321;&#8322; &#183; CNOT&#8322;&#8321; &#183; CNOT&#8321;&#8322;</div>
+
+      <h3>iSWAP</h3>
+      <div class="math">iSWAP = | 1 0 0 0 |
+        | 0 0 i 0 |
+        | 0 i 0 0 |
+        | 0 0 0 1 |
+
+iSWAP|01&#10217; = i|10&#10217;     iSWAP|10&#10217; = i|01&#10217;
+Native gate on some superconducting architectures.
+iSWAP = SWAP &#183; CZ (up to single-qubit phases)</div>
+
+      <h3>&#8730;SWAP</h3>
+      <div class="math">&#8730;SWAP = | 1       0       0    0 |
+         | 0   (1+i)/2  (1-i)/2  0 |
+         | 0   (1-i)/2  (1+i)/2  0 |
+         | 0       0       0    1 |
+
+(&#8730;SWAP)&#178; = SWAP
+&#8730;SWAP is universal: combined with single-qubit gates, it can build any circuit.</div>
+
+      <h3>Controlled-U (general)</h3>
+      <div class="math">CU = | I  0 |    (block matrix form)
+     | 0  U |
+
+Applies unitary U to target qubit only when control is |1&#10217;.
+CNOT = CX,  CZ = Controlled-Z,  CS = Controlled-S, etc.
+
+Controlled-Rz(&#952;): native in many hardware platforms</div>
+
+      <h3>Two-qubit gate equivalences</h3>
+      <table>
+        <tr><th>Gate</th><th>Decomposition into CNOT</th><th>CNOT count</th></tr>
+        <tr><td>CZ</td><td>(I&#8855;H) CNOT (I&#8855;H)</td><td>1</td></tr>
+        <tr><td>SWAP</td><td>CNOT&#8321;&#8322; CNOT&#8322;&#8321; CNOT&#8321;&#8322;</td><td>3</td></tr>
+        <tr><td>iSWAP</td><td>H&#8321; CNOT&#8321;&#8322; CNOT&#8322;&#8321; H&#8322; S&#8322; CNOT&#8321;&#8322;</td><td>3</td></tr>
+        <tr><td>&#8730;SWAP</td><td>CNOT&#8321;&#8322; Ry(&#960;/2)&#8322; CNOT&#8321;&#8322;</td><td>2</td></tr>
+        <tr><td>General SU(4)</td><td>At most 3 CNOTs + local 1Q gates</td><td>&#8804;3</td></tr>
+      </table>
+    </section>
+
+    <!-- THREE-QUBIT GATES -->
+    <section class="section" id="three-qubit">
+      <h2>Three-Qubit Gates</h2>
+
+      <h3>Toffoli gate (CCX, CCNOT)</h3>
+      <div class="math">Toffoli flips the target qubit iff BOTH controls are |1&#10217;.
+
+Circuit:  &#9473;&#9679;&#9473;   (control 1)
+          |
+         &#9473;&#9679;&#9473;   (control 2)
+          |
+         &#9473;&#8853;&#9473;   (target)
+
+Truth table:
+|000&#10217; &#8594; |000&#10217;    |100&#10217; &#8594; |100&#10217;
+|001&#10217; &#8594; |001&#10217;    |101&#10217; &#8594; |101&#10217;
+|010&#10217; &#8594; |010&#10217;    |110&#10217; &#8594; |111&#10217;  &#10004;
+|011&#10217; &#8594; |011&#10217;    |111&#10217; &#8594; |110&#10217;  &#10004;</div>
+
+      <p>The Toffoli gate is the quantum version of the classical AND gate (when target starts at |0&#10217;). It is universal for classical reversible computing and, combined with H, is universal for quantum computing.</p>
+
+      <h3>Toffoli decomposition</h3>
+      <div class="math">The Toffoli can be decomposed into 6 CNOTs + single-qubit gates:
+
+&#9473;&#9679;&#9473;&#9473;&#9473;&#9473;&#9473;&#9679;&#9473;&#9473;&#9473;&#9473;&#9473;&#9679;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;
+  |           |           |
+&#9473;&#9473;&#9679;&#9473;&#9473;&#9473;&#9679;&#9473;&#9473;&#9473;&#9473;&#9473;&#9679;&#9473;&#9679;&#9473;&#9473;&#9473;&#9473;&#9473;
+    |     |             | |
+&#9473;[H]&#8853;[T&#8224;]&#8853;[T]&#9473;&#9473;&#9473;[T&#8224;]&#8853;[T][H]&#9473;
+
+(Simplified schematic - actual decomposition uses
+ H, T, T&#8224;, and CNOT gates in specific arrangement)</div>
+
+      <h3>Fredkin gate (CSWAP)</h3>
+      <div class="math">Fredkin swaps two target qubits iff the control is |1&#10217;.
+
+Circuit:  &#9473;&#9679;&#9473;   (control)
+          |
+         &#9473;&#215;&#9473;   (target 1)
+          |
+         &#9473;&#215;&#9473;   (target 2)
+
+CSWAP|1&#10217;|&#968;&#10217;|&#966;&#10217; = |1&#10217;|&#966;&#10217;|&#968;&#10217;
+CSWAP|0&#10217;|&#968;&#10217;|&#966;&#10217; = |0&#10217;|&#968;&#10217;|&#966;&#10217;
+
+Decomposes into: 1 Toffoli + 2 CNOTs (or 8 CNOTs total)</div>
+
+      <p>The Fredkin gate is useful for comparison (the SWAP test for state overlap) and is also universal for classical reversible computation.</p>
+    </section>
+
+    <!-- GATE DECOMPOSITION -->
+    <section class="section" id="decomposition">
+      <h2>Gate Decomposition</h2>
+      <p>Any quantum gate can be built from a small universal gate set. The standard universal set is <strong>{H, T, CNOT}</strong>. The Solovay-Kitaev theorem guarantees that any single-qubit gate can be approximated to precision &#949; using O(log&#179;&#8260;&#178;(1/&#949;)) gates from this set.</p>
+
+      <h3>Universal gate sets</h3>
+      <table>
+        <tr><th>Gate set</th><th>Universal?</th><th>Notes</th></tr>
+        <tr><td>{H, T, CNOT}</td><td>Yes</td><td>Standard. H and T generate dense subset of SU(2).</td></tr>
+        <tr><td>{H, S, CNOT}</td><td>No (Clifford)</td><td>Efficiently simulable classically (Gottesman-Knill).</td></tr>
+        <tr><td>{H, T}</td><td>Yes (1Q only)</td><td>Dense in SU(2) but needs CNOT for multi-qubit.</td></tr>
+        <tr><td>{Ry, Rz, CNOT}</td><td>Yes</td><td>Continuous parameters. Used in variational circuits.</td></tr>
+        <tr><td>{&#8730;SWAP, 1Q gates}</td><td>Yes</td><td>Alternative native gate for some hardware.</td></tr>
+        <tr><td>{Toffoli, H}</td><td>Yes</td><td>Toffoli is classical-universal; H adds superposition.</td></tr>
+      </table>
+
+      <h3>Solovay-Kitaev theorem</h3>
+      <div class="math">Theorem: If a set of gates generates a dense subgroup of SU(2),
+then any target gate U can be &#949;-approximated using
+O(log^c(1/&#949;)) gates, where c &#8776; 3.97 (best known: c &#8776; 1.44).
+
+Example: To approximate Ry(&#960;/7) to 10&#8315;&#185;&#8304; precision
+using {H, T}: roughly 100-200 gates needed.
+
+Modern approach: Use the Ross-Selinger algorithm (2014)
+which achieves optimal T-count for single-qubit synthesis
+with O(log(1/&#949;)) T gates.</div>
+
+      <h3>Common decompositions</h3>
+      <div class="math">S = T&#178;
+Z = S&#178; = T&#8308;
+X = HZH
+Y = XZ &#183; (global phase i)
+SWAP = CNOT&#8321;&#8322; CNOT&#8322;&#8321; CNOT&#8321;&#8322;
+CZ = (I&#8855;H) CNOT (I&#8855;H)
+Toffoli = 6 CNOTs + 1Q gates (optimal)
+Any 1Q gate = Rz(&#945;) Ry(&#946;) Rz(&#947;) &#183; e^(i&#948;)</div>
+    </section>
+
+    <!-- FIDELITY -->
+    <section class="section" id="fidelity">
+      <h2>Gate Fidelity on Real Hardware</h2>
+      <p>Gate fidelity measures how close a real gate operation is to the ideal unitary. Fidelity = 1 means perfect; real hardware has errors from decoherence, calibration drift, crosstalk, and control imprecision.</p>
+
+      <h3>IBM Quantum (superconducting, Heron r2)</h3>
+      <table>
+        <tr><th>Gate</th><th>Fidelity</th><th>Duration</th><th>Notes</th></tr>
+        <tr><td>Single-qubit (SX, Rz)</td><td>99.95%</td><td>~28 ns</td><td>Rz is virtual (0 ns)</td></tr>
+        <tr><td>ECR (native 2Q)</td><td>99.0-99.5%</td><td>~500 ns</td><td>Echoed cross-resonance</td></tr>
+        <tr><td>CNOT (compiled)</td><td>98.5-99.3%</td><td>~500-700 ns</td><td>Decomposed into ECR + 1Q</td></tr>
+        <tr><td>Readout</td><td>98.5-99.5%</td><td>~700 ns</td><td>Dispersive readout</td></tr>
+      </table>
+
+      <h3>Google Quantum AI (superconducting, Willow)</h3>
+      <table>
+        <tr><th>Gate</th><th>Fidelity</th><th>Duration</th><th>Notes</th></tr>
+        <tr><td>Single-qubit</td><td>99.85%</td><td>~25 ns</td><td>Microwave pulses</td></tr>
+        <tr><td>CZ (native 2Q)</td><td>99.4-99.7%</td><td>~32 ns</td><td>Tunable coupler</td></tr>
+        <tr><td>iSWAP (native)</td><td>~99.5%</td><td>~32 ns</td><td>Alternative native gate</td></tr>
+        <tr><td>Readout</td><td>~99%</td><td>~500 ns</td><td>Dispersive</td></tr>
+      </table>
+
+      <h3>IonQ (trapped ion, Forte Enterprise)</h3>
+      <table>
+        <tr><th>Gate</th><th>Fidelity</th><th>Duration</th><th>Notes</th></tr>
+        <tr><td>Single-qubit</td><td>99.97%</td><td>~10 &#956;s</td><td>Laser-driven</td></tr>
+        <tr><td>Two-qubit (XX)</td><td>99.4-99.6%</td><td>~200-600 &#956;s</td><td>Molmer-Sorensen; all-to-all</td></tr>
+        <tr><td>Readout</td><td>99.6%</td><td>~100 &#956;s</td><td>Fluorescence detection</td></tr>
+      </table>
+
+      <h3>Quantinuum (trapped ion, H2)</h3>
+      <table>
+        <tr><th>Gate</th><th>Fidelity</th><th>Duration</th><th>Notes</th></tr>
+        <tr><td>Single-qubit</td><td>99.99%</td><td>~5 &#956;s</td><td>Best in class</td></tr>
+        <tr><td>Two-qubit (ZZ)</td><td>99.5-99.8%</td><td>~200 &#956;s</td><td>All-to-all via shuttling</td></tr>
+        <tr><td>Readout</td><td>99.7%</td><td>~50 &#956;s</td><td>State-dependent fluorescence</td></tr>
+      </table>
+
+      <h3>What fidelity means in practice</h3>
+      <div class="math">For a circuit with N two-qubit gates:
+Overall success probability &#8776; F^N
+
+Example with 99.5% gate fidelity:
+  10 gates:  (0.995)^10  = 95.1%  &#10003; usable
+  100 gates: (0.995)^100 = 60.6%  marginal
+  1000 gates:(0.995)^1000 = 0.7%  &#10007; unusable without QEC
+
+Shor's algorithm for RSA-2048: ~10&#8312;-10&#185;&#8304; gates needed
+&#8594; requires fault-tolerant QEC with logical error rate &lt; 10&#8315;&#185;&#8304;</div>
+
+      <div class="note">Current hardware can reliably execute circuits with tens to low hundreds of two-qubit gates. For deeper circuits, error mitigation techniques (zero-noise extrapolation, probabilistic error cancellation) can extend the useful range, as demonstrated by IBM's 127-qubit experiments (Nature, 2023). True fault tolerance requires quantum error correction — see the <a href="/institute/error-correction.html">QEC page</a>.</div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="container">
+      <a href="/">FreeQuantumStore</a> · <a href="/institute/">Institute</a> · Built with <a href="https://zensical.org">Zensical</a>
+    </div>
+  </footer>
+</body>
+</html>

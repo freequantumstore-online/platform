@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Algorithms — Quantum Computing Institute</title>
+  <meta name="description" content="Deep dive into quantum algorithms: Deutsch-Jozsa, Bernstein-Vazirani, Simon, Shor, Grover, VQE, QAOA, QPE, and HHL.">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--accent:#7c3aed;--paper:#0a0a0a;--ink:#fafafa;--muted:#737373;--panel:#141414;--line:#262626}
+    body{font-family:'Manrope',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
+    .container{max-width:900px;margin:0 auto;padding:0 1.5rem}
+    a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+    header{border-bottom:1px solid var(--line);padding:.75rem 0}
+    header .container{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--ink)}
+    .brand-emoji{font-size:1.5rem}
+    .brand-text{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:700}
+    .brand-tag{font-size:.68rem;color:var(--muted)}
+    nav{display:flex;gap:1rem;font-size:.82rem;font-weight:600;margin-left:auto;flex-wrap:wrap}
+    nav a{color:var(--muted)}nav a:hover{color:var(--ink)}nav a.active{color:var(--accent)}
+    .hero{text-align:center;padding:2.5rem 0 1.5rem;border-bottom:1px solid var(--line)}
+    .hero h1{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:700;margin-bottom:.5rem}
+    .hero h1 em{color:var(--accent);font-style:normal}
+    .hero p{color:var(--muted);max-width:600px;margin:0 auto;font-size:.95rem}
+    .toc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:1rem 1.25rem;margin:1.5rem 0}
+    .toc h3{font-size:.85rem;font-weight:700;margin-bottom:.5rem;color:var(--accent)}
+    .toc ul{list-style:none;padding:0;columns:2}
+    .toc li{margin:.2rem 0}.toc a{color:#a3a3a3;font-size:.82rem}.toc a:hover{color:var(--ink)}
+    .section{margin-bottom:2rem;padding-top:1rem}
+    .section h2{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:700;margin-bottom:.5rem;padding-bottom:.35rem;border-bottom:1px solid var(--line)}
+    .section h3{font-size:.95rem;font-weight:700;margin:1rem 0 .35rem;color:#e5e5e5}
+    .section p,.section li{color:#a3a3a3;font-size:.88rem}
+    ul{padding-left:1.25rem;margin:.35rem 0}
+    li{margin-bottom:.3rem}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.6rem;margin:.5rem 0}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:.85rem;transition:border-color .15s}
+    .card:hover{border-color:var(--accent)}
+    .card h4{font-size:.85rem;font-weight:700;margin-bottom:.2rem}
+    .card h4 a{color:var(--ink)}.card p{font-size:.75rem;color:var(--muted);margin:0;line-height:1.5}
+    .card .meta{font-size:.65rem;color:#525252;margin-top:.25rem}
+    footer{border-top:1px solid var(--line);padding:1.5rem 0;text-align:center;font-size:.75rem;color:#525252}
+    .math{font-family:'Courier New',monospace;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:.75rem 1rem;margin:.5rem 0;font-size:.85rem;color:#e5e5e5;overflow-x:auto;white-space:pre-wrap}
+    .math-inline{font-family:'Courier New',monospace;color:#e5e5e5;background:var(--panel);padding:.1rem .35rem;border-radius:3px;font-size:.84rem}
+    table{width:100%;border-collapse:collapse;margin:.5rem 0;font-size:.82rem}
+    th{text-align:left;padding:.5rem .6rem;background:var(--panel);border:1px solid var(--line);color:var(--accent);font-weight:700;font-size:.78rem}
+    td{padding:.5rem .6rem;border:1px solid var(--line);color:#a3a3a3}
+    tr:hover td{background:var(--panel)}
+    .note{background:#1a1625;border-left:3px solid var(--accent);padding:.6rem .85rem;margin:.5rem 0;border-radius:0 6px 6px 0;font-size:.82rem;color:#c4b5fd}
+    .step{counter-increment:step;margin:.5rem 0;padding-left:2rem;position:relative}
+    .step::before{content:counter(step);position:absolute;left:0;top:0;width:1.5rem;height:1.5rem;background:var(--accent);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700}
+    .steps{counter-reset:step;margin:.5rem 0}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="/institute/" class="brand">
+        <span class="brand-emoji">&#9883;&#65039;</span>
+        <span><span class="brand-text">Quantum Institute</span><br><span class="brand-tag"></span></span>
+      </a>
+      <nav>
+        <a href="/institute/">Overview</a>
+        <a href="/institute/qubits.html">Qubits</a>
+        <a href="/institute/gates.html">Gates</a>
+        <a href="/institute/algorithms.html" class="active">Algorithms</a>
+        <a href="/institute/hardware.html">Hardware</a>
+        <a href="/institute/error-correction.html">QEC</a>
+        <a href="/">Simulations</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="hero">
+      <h1>Quantum <em>Algorithms</em></h1>
+      <p>From the simplest proof of quantum advantage to the algorithms that will break cryptography and simulate nature. Step-by-step explanations with the real math.</p>
+    </section>
+
+    <nav class="toc">
+      <h3>Contents</h3>
+      <ul>
+        <li><a href="#overview">Algorithm Landscape</a></li>
+        <li><a href="#deutsch-jozsa">Deutsch-Jozsa</a></li>
+        <li><a href="#bernstein-vazirani">Bernstein-Vazirani</a></li>
+        <li><a href="#simon">Simon's Algorithm</a></li>
+        <li><a href="#shor">Shor's Algorithm</a></li>
+        <li><a href="#grover">Grover's Algorithm</a></li>
+        <li><a href="#qpe">Quantum Phase Estimation</a></li>
+        <li><a href="#vqe">VQE</a></li>
+        <li><a href="#qaoa">QAOA</a></li>
+        <li><a href="#hhl">HHL (Linear Systems)</a></li>
+      </ul>
+    </nav>
+
+    <!-- OVERVIEW -->
+    <section class="section" id="overview">
+      <h2>The Quantum Algorithm Landscape</h2>
+      <p>Quantum algorithms exploit superposition, entanglement, and interference to solve problems faster than any known classical algorithm. They fall into several families based on the technique used.</p>
+
+      <table>
+        <tr><th>Family</th><th>Technique</th><th>Speedup</th><th>Key algorithms</th></tr>
+        <tr><td>Hidden subgroup</td><td>Quantum Fourier Transform</td><td>Exponential</td><td>Shor, Simon, Deutsch-Jozsa</td></tr>
+        <tr><td>Amplitude amplification</td><td>Grover diffusion</td><td>Quadratic</td><td>Grover, quantum counting</td></tr>
+        <tr><td>Variational / hybrid</td><td>Classical optimization loop</td><td>Heuristic (unproven)</td><td>VQE, QAOA, QML</td></tr>
+        <tr><td>Hamiltonian simulation</td><td>Trotter, qubitization</td><td>Exponential (for quantum systems)</td><td>Product formulas, QSP</td></tr>
+        <tr><td>Linear algebra</td><td>Phase estimation + amplitude encoding</td><td>Exponential (with caveats)</td><td>HHL, QLSP</td></tr>
+      </table>
+
+      <div class="note">Exponential speedup means the quantum algorithm runs in time polynomial in N where the best known classical algorithm requires exponential time. This does not mean every problem gets a speedup. For NP-complete problems, quantum computers offer at most a quadratic speedup (Grover), not exponential. The quantum advantage is problem-specific.</div>
+    </section>
+
+    <!-- DEUTSCH-JOZSA -->
+    <section class="section" id="deutsch-jozsa">
+      <h2>Deutsch-Jozsa Algorithm</h2>
+      <p>The simplest demonstration of quantum advantage. Given a black-box function f: {0,1}&#8319; &#8594; {0,1} that is promised to be either <strong>constant</strong> (all outputs same) or <strong>balanced</strong> (exactly half 0s and half 1s), determine which one with certainty.</p>
+
+      <h3>Classical complexity</h3>
+      <p>A deterministic classical algorithm requires 2&#8319;&#8315;&#185; + 1 queries in the worst case (check just over half the inputs). A probabilistic algorithm needs O(1) queries for high confidence but cannot achieve certainty.</p>
+
+      <h3>Quantum complexity: 1 query</h3>
+
+      <div class="steps">
+        <div class="step">
+          <p><strong>Initialize:</strong> Prepare n+1 qubits: |0&#10217;&#8855;&#8319; |1&#10217;</p>
+        </div>
+        <div class="step">
+          <p><strong>Hadamard all qubits:</strong> Apply H&#8855;&#8319;&#8314;&#185;. The first n qubits become uniform superposition over all 2&#8319; inputs. The last qubit becomes |-&#10217;.</p>
+        </div>
+        <div class="step">
+          <p><strong>Query the oracle:</strong> Apply U_f, which maps |x&#10217;|y&#10217; &#8594; |x&#10217;|y &#8853; f(x)&#10217;. Due to the |-&#10217; ancilla, this introduces a phase: |x&#10217; &#8594; (-1)^f(x) |x&#10217;</p>
+        </div>
+        <div class="step">
+          <p><strong>Hadamard the first n qubits again.</strong></p>
+        </div>
+        <div class="step">
+          <p><strong>Measure the first n qubits.</strong> If all zeros &#8594; f is constant. Otherwise &#8594; f is balanced.</p>
+        </div>
+      </div>
+
+      <h3>Why it works</h3>
+      <div class="math">After step 3, the state of the first n qubits is:
+
+|&#968;&#10217; = (1/2^(n/2)) &#8721;_x (-1)^f(x) |x&#10217;
+
+Apply H&#8855;n:
+
+|&#968;'&#10217; = (1/2^n) &#8721;_y [ &#8721;_x (-1)^(f(x) + x&#183;y) ] |y&#10217;
+
+Amplitude of |0...0&#10217; = (1/2^n) &#8721;_x (-1)^f(x)
+
+If f is constant: all (-1)^f(x) are the same &#8594; amplitude = &#177;1
+If f is balanced: half are +1, half are -1 &#8594; amplitude = 0</div>
+
+      <p><strong>Reference:</strong> <a href="https://royalsocietypublishing.org/doi/10.1098/rspa.1992.0167">Deutsch & Jozsa (1992)</a></p>
+    </section>
+
+    <!-- BERNSTEIN-VAZIRANI -->
+    <section class="section" id="bernstein-vazirani">
+      <h2>Bernstein-Vazirani Algorithm</h2>
+      <p>Given a black-box function f(x) = s&#183;x (mod 2) for some hidden binary string s, find s using a single query. Classically, n queries are needed (one per bit of s).</p>
+
+      <h3>The algorithm</h3>
+      <div class="math">1. Prepare |0&#10217;&#8855;n |1&#10217;
+2. Apply H to all qubits
+3. Query oracle: U_f|x&#10217;|y&#10217; = |x&#10217;|y &#8853; s&#183;x&#10217;
+   Phase kickback: |x&#10217; &#8594; (-1)^(s&#183;x) |x&#10217;
+4. Apply H&#8855;n to first n qubits
+5. Measure &#8594; get s directly
+
+Why: H&#8855;n transforms (-1)^(s&#183;x)|x&#10217; back to |s&#10217;.
+This is exactly the Fourier transform of the function (-1)^(s&#183;x).</div>
+
+      <h3>Speedup</h3>
+      <table>
+        <tr><th>Approach</th><th>Queries</th><th>Type</th></tr>
+        <tr><td>Classical deterministic</td><td>n</td><td>Query each standard basis vector e_i</td></tr>
+        <tr><td>Classical randomized</td><td>n</td><td>Cannot do better (information-theoretic)</td></tr>
+        <tr><td>Quantum</td><td>1</td><td>Exponential speedup in query complexity</td></tr>
+      </table>
+
+      <p>Bernstein-Vazirani is structurally identical to Deutsch-Jozsa. The difference is the promise: DJ asks "constant or balanced?", BV asks "what is the hidden string?" Both exploit the same Hadamard-oracle-Hadamard structure.</p>
+
+      <p><strong>Reference:</strong> <a href="https://epubs.siam.org/doi/10.1137/S0097539796300921">Bernstein & Vazirani (1997)</a></p>
+    </section>
+
+    <!-- SIMON -->
+    <section class="section" id="simon">
+      <h2>Simon's Algorithm</h2>
+      <p>Given a black-box function f: {0,1}&#8319; &#8594; {0,1}&#8319; with the promise that f(x) = f(y) iff x &#8853; y &#8712; {0, s} for some hidden string s, find s. This is the <strong>hidden period problem</strong> for the group (Z/2Z)&#8319;.</p>
+
+      <h3>Significance</h3>
+      <p>Simon's algorithm (1994) provided the first provable exponential quantum speedup over any classical algorithm (not just deterministic, but also randomized). It directly inspired Peter Shor to develop his factoring algorithm — Shor's algorithm is essentially Simon's algorithm generalized from (Z/2Z)&#8319; to Z/NZ.</p>
+
+      <h3>The algorithm</h3>
+      <div class="math">Repeat O(n) times:
+  1. Prepare |0&#10217;&#8855;n |0&#10217;&#8855;n
+  2. Apply H&#8855;n to first register
+  3. Query oracle: |x&#10217;|0&#10217; &#8594; |x&#10217;|f(x)&#10217;
+  4. Measure second register (collapse first register to |x&#10217; + |x&#8853;s&#10217;)
+  5. Apply H&#8855;n to first register
+  6. Measure first register &#8594; get some y where y&#183;s = 0
+
+After n-1 linearly independent y values:
+  Solve the system y&#8321;&#183;s = 0, y&#8322;&#183;s = 0, ..., y_(n-1)&#183;s = 0
+  &#8594; unique solution s (by Gaussian elimination over GF(2))</div>
+
+      <h3>Complexity comparison</h3>
+      <table>
+        <tr><th>Approach</th><th>Queries</th><th>Total time</th></tr>
+        <tr><td>Classical (best possible)</td><td>&#937;(2^(n/2))</td><td>Exponential</td></tr>
+        <tr><td>Quantum (Simon's)</td><td>O(n)</td><td>O(n&#179;) including classical post-processing</td></tr>
+      </table>
+
+      <p><strong>Reference:</strong> <a href="https://epubs.siam.org/doi/10.1137/S0097539796298637">Simon (1997)</a>, originally presented at FOCS 1994</p>
+    </section>
+
+    <!-- SHOR -->
+    <section class="section" id="shor">
+      <h2>Shor's Algorithm</h2>
+      <p>Shor's algorithm (1994) factors integers in polynomial time, breaking RSA and other public-key cryptosystems that rely on the hardness of factoring. It is the most consequential quantum algorithm and the primary motivation for building large-scale quantum computers.</p>
+
+      <h3>The problem</h3>
+      <p>Given an integer N, find its prime factors. The best known classical algorithm (general number field sieve) runs in sub-exponential time exp(O(n&#185;&#8725;&#179;(log n)&#178;&#8725;&#179;)) where n = log N. Shor's algorithm runs in O(n&#178; log n log log n) — polynomial.</p>
+
+      <h3>Key insight: factoring reduces to period finding</h3>
+      <div class="math">To factor N:
+1. Pick random a where 1 &lt; a &lt; N, gcd(a, N) = 1
+2. Find the period r of f(x) = a^x mod N
+   (i.e., smallest r &gt; 0 such that a^r &#8801; 1 mod N)
+3. If r is even: compute gcd(a^(r/2) &#177; 1, N) &#8594; factors of N
+
+The quantum part solves step 2 (period finding) exponentially
+faster than any known classical method.</div>
+
+      <h3>Step-by-step walkthrough</h3>
+      <div class="steps">
+        <div class="step">
+          <p><strong>Choose parameters:</strong> Pick random a coprime to N. If gcd(a,N) &gt; 1, you already found a factor (lucky). Set q = 2&#8319; where 2&#8319; is between N&#178; and 2N&#178;.</p>
+        </div>
+        <div class="step">
+          <p><strong>Initialize registers:</strong> Two quantum registers: |0&#10217;&#8855;&#8319; (input, 2n qubits) and |0&#10217;&#8855;&#8319; (output, n qubits).</p>
+        </div>
+        <div class="step">
+          <p><strong>Create superposition:</strong> Apply H&#8855;&#178;&#8319; to input register: (1/&#8730;q) &#8721;_{x=0}^{q-1} |x&#10217;|0&#10217;</p>
+        </div>
+        <div class="step">
+          <p><strong>Compute modular exponentiation:</strong> Apply U_f: |x&#10217;|0&#10217; &#8594; |x&#10217;|a&#8319; mod N&#10217;. Uses repeated squaring — O(n&#179;) elementary gates. This is the most expensive part of the circuit.</p>
+        </div>
+        <div class="step">
+          <p><strong>Apply Quantum Fourier Transform</strong> to the input register. This maps the periodic signal in the amplitudes to peaks at multiples of q/r.</p>
+        </div>
+        <div class="step">
+          <p><strong>Measure the input register.</strong> Get some value c &#8776; j&#183;q/r for some integer j. Use the continued fractions algorithm to extract r from c/q.</p>
+        </div>
+        <div class="step">
+          <p><strong>Classical post-processing:</strong> If r is even and a^(r/2) &#8802; -1 (mod N), compute gcd(a^(r/2) &#177; 1, N). With probability &#8805; 1/2, this gives a non-trivial factor. Repeat if needed.</p>
+        </div>
+      </div>
+
+      <h3>Example: factoring 15</h3>
+      <div class="math">N = 15, pick a = 7
+f(x) = 7^x mod 15:
+  7^0=1, 7^1=7, 7^2=4, 7^3=13, 7^4=1, 7^5=7, ...
+  Period r = 4
+
+r is even, a^(r/2) = 7&#178; = 49, 49 mod 15 = 4 &#8800; -1 &#10003;
+gcd(49 - 1, 15) = gcd(48, 15) = 3
+gcd(49 + 1, 15) = gcd(50, 15) = 5
+
+Factors: 3 &#215; 5 = 15 &#10003;</div>
+
+      <h3>Resource requirements for RSA-2048</h3>
+      <table>
+        <tr><th>Resource</th><th>Estimate</th><th>Notes</th></tr>
+        <tr><td>Logical qubits</td><td>~4,000</td><td>2n+3 minimum for n-bit number</td></tr>
+        <tr><td>T gates</td><td>~10&#185;&#8304;</td><td>Dominated by modular exponentiation</td></tr>
+        <tr><td>Physical qubits (surface code)</td><td>~20 million</td><td>Assuming 10&#8315;&#179; physical error rate</td></tr>
+        <tr><td>Runtime</td><td>~8 hours</td><td>At 1 &#956;s error correction cycle</td></tr>
+      </table>
+
+      <p><strong>Reference:</strong> <a href="https://arxiv.org/abs/quant-ph/9508027">Shor (1994)</a></p>
+    </section>
+
+    <!-- GROVER -->
+    <section class="section" id="grover">
+      <h2>Grover's Algorithm</h2>
+      <p>Grover's algorithm searches an unstructured database of N items for a marked item in O(&#8730;N) queries, compared to O(N) classically. This quadratic speedup is provably optimal for unstructured search.</p>
+
+      <h3>The problem</h3>
+      <p>Given an oracle function f: {0,...,N-1} &#8594; {0,1} where f(x) = 1 for exactly one target x = w (the "marked item"), find w.</p>
+
+      <h3>The algorithm</h3>
+      <div class="steps">
+        <div class="step">
+          <p><strong>Initialize:</strong> Start with |0&#10217;&#8855;&#8319;. Apply H&#8855;&#8319; to create uniform superposition: |s&#10217; = (1/&#8730;N) &#8721;_x |x&#10217;</p>
+        </div>
+        <div class="step">
+          <p><strong>Repeat &#8970;&#960;&#8730;N/4&#8971; times (the "Grover iteration"):</strong></p>
+          <ul>
+            <li><strong>Oracle:</strong> Apply O_f that flips the phase of the marked item: |x&#10217; &#8594; (-1)^f(x) |x&#10217;</li>
+            <li><strong>Diffusion:</strong> Apply the Grover diffusion operator D = 2|s&#10217;&#10216;s| - I (reflect about the mean amplitude)</li>
+          </ul>
+        </div>
+        <div class="step">
+          <p><strong>Measure.</strong> Get w with probability close to 1.</p>
+        </div>
+      </div>
+
+      <h3>Amplitude amplification: the math</h3>
+      <div class="math">Define the 2D subspace spanned by |w&#10217; (target) and |s'&#10217; (uniform
+superposition of all non-target states).
+
+Initial state: |s&#10217; = sin(&#952;)|w&#10217; + cos(&#952;)|s'&#10217;
+where sin(&#952;) = 1/&#8730;N, so &#952; &#8776; 1/&#8730;N for large N.
+
+Each Grover iteration is a rotation by 2&#952; in this 2D plane:
+
+After k iterations: sin((2k+1)&#952;)|w&#10217; + cos((2k+1)&#952;)|s'&#10217;
+
+Maximum probability at |w&#10217; when (2k+1)&#952; &#8776; &#960;/2:
+  k &#8776; &#960;/(4&#952;) &#8776; (&#960;/4)&#8730;N
+
+If you iterate too many times, the amplitude rotates PAST
+the target and success probability drops. This is critical:
+you must know (approximately) how many items are marked.</div>
+
+      <h3>Multiple marked items</h3>
+      <div class="math">If M items are marked out of N:
+  Optimal iterations: k = &#8970;(&#960;/4)&#8730;(N/M)&#8971;
+  Success probability &#8805; 1 - M/N
+
+For unknown M: use quantum counting (QPE on Grover operator)
+to estimate M first, then run Grover with correct iteration count.</div>
+
+      <h3>Applications beyond search</h3>
+      <ul>
+        <li><strong>Amplitude amplification:</strong> Generalization that boosts success probability of any quantum algorithm from p to ~1 using O(1/&#8730;p) repetitions instead of O(1/p).</li>
+        <li><strong>SAT solving:</strong> Search for satisfying assignments — quadratic speedup over brute force.</li>
+        <li><strong>Minimum finding:</strong> Find the minimum of an unordered list in O(&#8730;N). (Durr-Hoyer algorithm)</li>
+        <li><strong>Cryptographic brute force:</strong> AES-128 effectively becomes AES-64 strength. Post-quantum recommendation: double key sizes.</li>
+      </ul>
+
+      <p><strong>Reference:</strong> <a href="https://arxiv.org/abs/quant-ph/9605043">Grover (1996)</a></p>
+    </section>
+
+    <!-- QPE -->
+    <section class="section" id="qpe">
+      <h2>Quantum Phase Estimation (QPE)</h2>
+      <p>Given a unitary U and an eigenstate |u&#10217; with U|u&#10217; = e^(2&#960;i&#966;)|u&#10217;, estimate the phase &#966; to n bits of precision using O(n) controlled-U operations. QPE is the core subroutine of Shor's algorithm, HHL, and quantum chemistry simulations.</p>
+
+      <h3>The circuit</h3>
+      <div class="math">Input:  |0&#10217;&#8855;n |u&#10217;   (n counting qubits + eigenstate register)
+
+1. Apply H&#8855;n to counting register
+2. Apply controlled-U^(2^k) from counting qubit k to eigenstate register
+   for k = 0, 1, ..., n-1
+3. Apply inverse QFT (QFT&#8224;) to counting register
+4. Measure counting register &#8594; n-bit approximation of &#966;
+
+After step 2, counting register contains:
+  (1/&#8730;2^n) &#8721;_k e^(2&#960;i&#183;&#966;&#183;k) |k&#10217;
+
+This is exactly the Fourier transform of |&#966;&#10217; (in the frequency domain).
+Inverse QFT maps it back to |&#966;&#10217; &#8776; |&#966;&#8321;&#966;&#8322;...&#966;n&#10217; in binary.</div>
+
+      <h3>Precision and success probability</h3>
+      <div class="math">With n counting qubits:
+  &#966; is estimated to n bits of precision
+  Success probability &#8805; 1 - 1/(2(2^n - 2)) &#8776; 1 - &#949;
+
+To get &#949; failure probability with t-bit precision:
+  Use n = t + &#8968;log(2 + 1/(2&#949;))&#8969; counting qubits
+
+The expensive part: controlled-U^(2^k) requires exponentially
+many applications of U unless U has efficient power structure.</div>
+
+      <h3>Applications</h3>
+      <ul>
+        <li><strong>Shor's algorithm:</strong> QPE with U = modular multiplication finds the period of a^x mod N.</li>
+        <li><strong>Quantum chemistry:</strong> QPE with U = e^(-iHt) gives eigenvalues (energy levels) of molecular Hamiltonians.</li>
+        <li><strong>HHL algorithm:</strong> QPE extracts eigenvalues of a matrix for solving linear systems.</li>
+        <li><strong>Quantum counting:</strong> QPE on the Grover operator estimates the number of marked items.</li>
+      </ul>
+
+      <p><strong>Reference:</strong> <a href="https://arxiv.org/abs/quant-ph/9511026">Kitaev (1995)</a></p>
+    </section>
+
+    <!-- VQE -->
+    <section class="section" id="vqe">
+      <h2>Variational Quantum Eigensolver (VQE)</h2>
+      <p>VQE is a hybrid quantum-classical algorithm for finding the ground state energy of a Hamiltonian. It is the most promising near-term algorithm for quantum chemistry and materials science, designed to work on noisy (NISQ) hardware.</p>
+
+      <h3>The variational principle</h3>
+      <div class="math">For any trial state |&#968;(&#952;)&#10217;:
+  E(&#952;) = &#10216;&#968;(&#952;)|H|&#968;(&#952;)&#10217; &#8805; E_0
+
+where E_0 is the true ground state energy.
+VQE minimizes E(&#952;) over parameters &#952; to find the best
+approximation to E_0 using a parameterized quantum circuit.</div>
+
+      <h3>The algorithm</h3>
+      <div class="steps">
+        <div class="step">
+          <p><strong>Choose an ansatz:</strong> A parameterized quantum circuit U(&#952;) that prepares trial states |&#968;(&#952;)&#10217; = U(&#952;)|0&#10217;. Common choices: UCCSD (chemistry-inspired), hardware-efficient ansatz, ADAPT-VQE.</p>
+        </div>
+        <div class="step">
+          <p><strong>Prepare the state:</strong> Run U(&#952;) on the quantum computer for current parameters &#952;.</p>
+        </div>
+        <div class="step">
+          <p><strong>Measure the energy:</strong> Decompose H into a sum of Pauli strings: H = &#8721;_i c_i P_i. Measure each P_i independently (multiple circuit runs) and compute E(&#952;) = &#8721;_i c_i &#10216;P_i&#10217;.</p>
+        </div>
+        <div class="step">
+          <p><strong>Classical optimization:</strong> Feed E(&#952;) to a classical optimizer (COBYLA, SPSA, L-BFGS-B). Get new parameters &#952;'.</p>
+        </div>
+        <div class="step">
+          <p><strong>Repeat steps 2-4</strong> until convergence: |E(&#952;_k) - E(&#952;_{k-1})| &lt; threshold.</p>
+        </div>
+      </div>
+
+      <h3>Ansatz circuits</h3>
+      <div class="math">Hardware-efficient ansatz (example for 4 qubits):
+  Layer: Ry(&#952;_i) on each qubit &#8594; CNOT ladder &#8594; Ry(&#952;_j) &#8594; CNOT ladder
+  Repeat for d layers. Total parameters: O(n&#183;d)
+
+UCCSD (Unitary Coupled Cluster):
+  U(&#952;) = exp(T(&#952;) - T(&#952;)&#8224;)
+  T = T&#8321; + T&#8322; (single + double excitations)
+  Chemically motivated, but deep circuits (many CNOTs)</div>
+
+      <h3>Challenges</h3>
+      <ul>
+        <li><strong>Barren plateaus:</strong> For random ansatze, gradients vanish exponentially with qubit count, making optimization intractable.</li>
+        <li><strong>Measurement overhead:</strong> Each Pauli string requires O(1/&#949;&#178;) shots for &#949; precision. With O(N&#8308;) Pauli strings for molecular Hamiltonians, total measurement count is enormous.</li>
+        <li><strong>Local minima:</strong> The energy landscape is non-convex. Classical optimizers can get stuck.</li>
+        <li><strong>Noise:</strong> NISQ hardware noise biases energy estimates upward. Error mitigation helps but adds overhead.</li>
+      </ul>
+
+      <p><strong>Reference:</strong> <a href="https://arxiv.org/abs/1304.3061">Peruzzo et al. (2014), Nature Communications</a></p>
+    </section>
+
+    <!-- QAOA -->
+    <section class="section" id="qaoa">
+      <h2>Quantum Approximate Optimization Algorithm (QAOA)</h2>
+      <p>QAOA is a hybrid quantum-classical algorithm for combinatorial optimization problems. It encodes the objective function as a quantum Hamiltonian and uses alternating layers of problem and mixer unitaries to find approximate solutions.</p>
+
+      <h3>MaxCut example</h3>
+      <p>The canonical QAOA problem: given a graph G = (V, E), partition vertices into two sets to maximize the number of edges between them.</p>
+      <div class="math">Classical objective:  C = &#8721;_{(i,j) &#8712; E} (1 - z_i z_j) / 2
+                         where z_i &#8712; {+1, -1}
+
+Quantum Hamiltonian: H_C = &#8721;_{(i,j) &#8712; E} (I - Z_i Z_j) / 2
+
+Goal: find bitstring z that maximizes &#10216;z|H_C|z&#10217;</div>
+
+      <h3>The QAOA circuit</h3>
+      <div class="math">For depth p, with parameters &#947; = (&#947;&#8321;,...,&#947;_p) and &#946; = (&#946;&#8321;,...,&#946;_p):
+
+|&#968;(&#947;,&#946;)&#10217; = U_B(&#946;_p) U_C(&#947;_p) ... U_B(&#946;&#8321;) U_C(&#947;&#8321;) |+&#10217;&#8855;n
+
+where:
+  U_C(&#947;) = e^(-i&#947; H_C) = &#8719;_{(i,j)&#8712;E} e^(-i&#947;(I-Z_iZ_j)/2)
+             (problem unitary: encodes the objective)
+
+  U_B(&#946;) = e^(-i&#946; H_B) = &#8719;_i e^(-i&#946; X_i)
+             (mixer unitary: explores solution space)
+
+Each U_C layer: one Rzz(-&#947;) gate per edge
+Each U_B layer: one Rx(-2&#946;) gate per vertex</div>
+
+      <h3>Algorithm flow</h3>
+      <div class="steps">
+        <div class="step">
+          <p><strong>Start in |+&#10217;&#8855;n</strong> (uniform superposition over all bitstrings).</p>
+        </div>
+        <div class="step">
+          <p><strong>Apply p layers</strong> of alternating U_C(&#947;_k) and U_B(&#946;_k).</p>
+        </div>
+        <div class="step">
+          <p><strong>Measure all qubits</strong> to get a candidate solution bitstring.</p>
+        </div>
+        <div class="step">
+          <p><strong>Evaluate the cut value</strong> classically.</p>
+        </div>
+        <div class="step">
+          <p><strong>Repeat</strong> with different (&#947;, &#946;) using a classical optimizer to maximize &#10216;H_C&#10217;.</p>
+        </div>
+      </div>
+
+      <h3>Performance</h3>
+      <table>
+        <tr><th>Depth p</th><th>Approximation ratio (3-regular MaxCut)</th><th>Circuit depth</th></tr>
+        <tr><td>p = 1</td><td>0.6924 (vs 0.5 random)</td><td>O(|E|)</td></tr>
+        <tr><td>p = 2</td><td>~0.7559</td><td>O(2|E|)</td></tr>
+        <tr><td>p &#8594; &#8734;</td><td>&#8594; 1 (exact)</td><td>O(p|E|)</td></tr>
+        <tr><td>Classical best (GW)</td><td>0.878 (polynomial time)</td><td>N/A</td></tr>
+      </table>
+
+      <div class="note">Whether QAOA at any fixed depth p can outperform the best classical algorithms for MaxCut remains an open question. At p=1, it is provably worse than the Goemans-Williamson SDP relaxation (0.878 ratio). The hope is that moderate-depth QAOA on real hardware, perhaps with problem-specific modifications, finds practical speedups for specific instances — but this is not yet demonstrated.</div>
+
+      <p><strong>Reference:</strong> <a href="https://arxiv.org/abs/1411.4028">Farhi, Goldstone, Gutmann (2014)</a></p>
+    </section>
+
+    <!-- HHL -->
+    <section class="section" id="hhl">
+      <h2>HHL Algorithm (Quantum Linear Systems)</h2>
+      <p>The HHL algorithm (Harrow, Hassidim, Lloyd, 2009) solves the linear system Ax = b exponentially faster than classical methods — under specific conditions. It maps the solution |x&#10217; &#8733; A&#8315;&#185;|b&#10217; onto a quantum state.</p>
+
+      <h3>The problem</h3>
+      <div class="math">Given: N&#215;N matrix A (Hermitian, s-sparse), vector b
+Find: x = A&#8315;&#185;b
+
+Classical: O(N&#183;s&#183;&#954; log(1/&#949;)) using conjugate gradient
+  where &#954; = condition number, &#949; = precision
+
+HHL: O(s&#178; &#954;&#178; log(N) / &#949;)   &#8594; exponential speedup in N!
+
+Caveats (big ones):
+  - b must be efficiently loadable as a quantum state |b&#10217;
+  - You only get |x&#10217; as a quantum state (not the classical vector)
+  - Useful only if you want a property of x (e.g., &#10216;x|M|x&#10217;)
+    not the full vector (reading out N amplitudes costs O(N))
+  - A must be sparse and well-conditioned (small &#954;)</div>
+
+      <h3>How it works</h3>
+      <div class="steps">
+        <div class="step">
+          <p><strong>State preparation:</strong> Encode b as a quantum state |b&#10217; = &#8721;_i b_i |i&#10217;. This can be the hardest step — general state preparation requires O(N) gates, destroying the exponential speedup.</p>
+        </div>
+        <div class="step">
+          <p><strong>QPE:</strong> Decompose |b&#10217; in the eigenbasis of A: |b&#10217; = &#8721;_j &#946;_j |u_j&#10217;. Use Quantum Phase Estimation to extract eigenvalues &#955;_j into an ancilla register: &#8721;_j &#946;_j |&#955;_j&#10217;|u_j&#10217;.</p>
+        </div>
+        <div class="step">
+          <p><strong>Controlled rotation:</strong> Apply a rotation conditioned on |&#955;_j&#10217; to an ancilla qubit: rotate by angle arcsin(C/&#955;_j). The ancilla amplitude proportional to 1/&#955;_j encodes the inverse.</p>
+        </div>
+        <div class="step">
+          <p><strong>Inverse QPE:</strong> Uncompute the eigenvalue register.</p>
+        </div>
+        <div class="step">
+          <p><strong>Post-select:</strong> Measure the ancilla qubit. If it reads |1&#10217;, the remaining state is proportional to &#8721;_j (&#946;_j/&#955;_j)|u_j&#10217; = A&#8315;&#185;|b&#10217;. Success probability is O(1/&#954;&#178;), amplifiable with amplitude amplification to O(1/&#954;).</p>
+        </div>
+      </div>
+
+      <h3>Practical relevance</h3>
+      <ul>
+        <li><strong>Quantum machine learning:</strong> Solving linear regressions, least-squares problems, and support vector machines in log(N) time.</li>
+        <li><strong>Finite element methods:</strong> Solving PDEs (computational fluid dynamics, structural analysis) if the matrix is sparse and well-conditioned.</li>
+        <li><strong>Portfolio optimization:</strong> Solving constrained optimization problems that reduce to linear systems.</li>
+        <li><strong>Reality check:</strong> The state preparation and readout bottlenecks severely limit practical advantage. Recent dequantization results (Tang, 2018) show that for low-rank problems, classical algorithms can achieve similar log(N) scaling.</li>
+      </ul>
+
+      <p><strong>Reference:</strong> <a href="https://arxiv.org/abs/0811.3171">Harrow, Hassidim, Lloyd (2009), Physical Review Letters</a></p>
+    </section>
+  </div>
+
+  <footer>
+    <div class="container">
+      <a href="/">FreeQuantumStore</a> · <a href="/institute/">Institute</a> · Built with <a href="https://zensical.org">Zensical</a>
+    </div>
+  </footer>
+</body>
+</html>
