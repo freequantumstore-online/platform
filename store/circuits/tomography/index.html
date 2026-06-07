@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum State Tomography | FreeQuantumStore</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0a0f;color:#e2e2e8;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+  header{width:100%;padding:18px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1e1e2e}
+  header .logo{font-size:24px}
+  header h1{font-size:18px;font-weight:600;color:#c4b5fd}
+  header span{font-size:13px;color:#7c3aed;margin-left:auto;font-weight:500}
+  .container{max-width:1200px;width:100%;padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .panel{background:#12121c;border:1px solid #1e1e2e;border-radius:12px;padding:20px}
+  .panel h2{font-size:15px;font-weight:600;color:#c4b5fd;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  button{background:#7c3aed;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s}
+  button:hover{background:#6d28d9}
+  button.secondary{background:#1e1e2e;color:#c4b5fd;border:1px solid #2e2e3e}
+  button.secondary:hover{background:#2e2e3e}
+  button:disabled{opacity:0.4;cursor:not-allowed}
+  .state-info{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  .info-card{background:#0d0d14;border:1px solid #1e1e2e;border-radius:8px;padding:12px}
+  .info-card label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px}
+  .info-card .val{font-size:20px;font-weight:700;color:#c4b5fd;margin-top:4px;font-family:'Courier New',monospace}
+  .measurements-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  .measurements-table th{text-align:left;padding:6px 8px;color:#888;border-bottom:1px solid #1e1e2e;font-size:11px;text-transform:uppercase}
+  .measurements-table td{padding:5px 8px;border-bottom:1px solid #0d0d14;font-family:'Courier New',monospace}
+  .measurements-table .basis-x{color:#f472b6}
+  .measurements-table .basis-y{color:#34d399}
+  .measurements-table .basis-z{color:#60a5fa}
+  .matrix-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;max-width:280px}
+  .matrix-cell{background:#0d0d14;border:1px solid #1e1e2e;border-radius:6px;padding:8px;text-align:center;font-family:'Courier New',monospace;font-size:12px;color:#c4b5fd}
+  canvas{display:block;margin:0 auto}
+  .fidelity-bar{margin-top:14px}
+  .fidelity-bar .bar-bg{background:#1e1e2e;border-radius:6px;height:24px;overflow:hidden;position:relative}
+  .fidelity-bar .bar-fill{height:100%;background:linear-gradient(90deg,#7c3aed,#a78bfa);border-radius:6px;transition:width 0.5s}
+  .fidelity-bar .bar-label{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+  .full-width{grid-column:1/-1}
+  .counts{display:flex;gap:16px;margin-bottom:12px;font-size:13px}
+  .counts span{color:#888}
+  .counts strong{color:#c4b5fd}
+  @media(max-width:800px){.container{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">&#9883;</div>
+  <h1>Quantum State Tomography</h1>
+  <span>FreeQuantumStore</span>
+</header>
+<div class="container">
+  <div class="panel">
+    <h2>Measure the Unknown Qubit</h2>
+    <div class="btn-row">
+      <button onclick="measure('X')" id="btnX">Measure in X basis</button>
+      <button onclick="measure('Y')" id="btnY">Measure in Y basis</button>
+      <button onclick="measure('Z')" id="btnZ">Measure in Z basis</button>
+    </div>
+    <div class="btn-row">
+      <button class="secondary" onclick="revealState()" id="btnReveal">Reveal True State</button>
+      <button class="secondary" onclick="resetExperiment()">New Random State</button>
+    </div>
+    <div class="counts">
+      <span>Total measurements: <strong id="totalCount">0</strong></span>
+    </div>
+    <div style="max-height:280px;overflow-y:auto">
+      <table class="measurements-table">
+        <thead><tr><th>#</th><th>Basis</th><th>Result</th><th>Expectation</th></tr></thead>
+        <tbody id="mTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Bloch Sphere</h2>
+    <canvas id="bloch" width="380" height="380"></canvas>
+    <div id="legendBox" style="margin-top:10px;font-size:12px;color:#888;text-align:center">
+      <span style="color:#a78bfa">&#9679; Estimated</span>
+      <span id="trueLegend" style="display:none;margin-left:16px;color:#f472b6">&#9679; True state</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Reconstructed Density Matrix</h2>
+    <div class="matrix-grid" id="densityMatrix">
+      <div class="matrix-cell">-</div>
+      <div class="matrix-cell">-</div>
+      <div class="matrix-cell">-</div>
+      <div class="matrix-cell">-</div>
+    </div>
+    <div class="state-info">
+      <div class="info-card">
+        <label>Est. &lt;X&gt;</label>
+        <div class="val" id="estX">-</div>
+      </div>
+      <div class="info-card">
+        <label>Est. &lt;Y&gt;</label>
+        <div class="val" id="estY">-</div>
+      </div>
+      <div class="info-card">
+        <label>Est. &lt;Z&gt;</label>
+        <div class="val" id="estZ">-</div>
+      </div>
+      <div class="info-card">
+        <label>Purity</label>
+        <div class="val" id="purity">-</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Fidelity: Estimated vs True</h2>
+    <div class="fidelity-bar">
+      <div class="bar-bg">
+        <div class="bar-fill" id="fidelityFill" style="width:0%"></div>
+        <div class="bar-label" id="fidelityLabel">Measure 10+ times to see fidelity</div>
+      </div>
+    </div>
+    <div class="state-info" id="trueStateCards" style="display:none;margin-top:16px">
+      <div class="info-card">
+        <label>True &lt;X&gt;</label>
+        <div class="val" id="trueX">-</div>
+      </div>
+      <div class="info-card">
+        <label>True &lt;Y&gt;</label>
+        <div class="val" id="trueY">-</div>
+      </div>
+      <div class="info-card">
+        <label>True &lt;Z&gt;</label>
+        <div class="val" id="trueZ">-</div>
+      </div>
+      <div class="info-card">
+        <label>True Fidelity</label>
+        <div class="val" id="fidelityVal">-</div>
+      </div>
+    </div>
+    <div style="margin-top:16px">
+      <h2 style="margin-bottom:8px">How it works</h2>
+      <p style="font-size:13px;color:#999;line-height:1.6">
+        A qubit's state is described by a point on the Bloch sphere: (x, y, z) where x&sup2;+y&sup2;+z&sup2;=1.
+        By measuring in the X, Y, and Z bases repeatedly, we estimate &lt;X&gt;, &lt;Y&gt;, &lt;Z&gt;
+        (the expectation values). A measurement result of |0&gt; maps to +1, and |1&gt; maps to -1.
+        The density matrix is reconstructed as &rho; = (I + x&sigma;<sub>x</sub> + y&sigma;<sub>y</sub> + z&sigma;<sub>z</sub>)/2.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+// Quantum state: parameterized by (theta, phi) on Bloch sphere
+// |psi> = cos(theta/2)|0> + e^(i*phi)*sin(theta/2)|1>
+// Bloch vector: (sin(theta)cos(phi), sin(theta)sin(phi), cos(theta))
+
+let trueTheta, truePhi, trueBloch;
+let measurements = [];
+let revealed = false;
+
+function randomState() {
+  // Random point on Bloch sphere (uniform)
+  trueTheta = Math.acos(2 * Math.random() - 1);
+  truePhi = Math.random() * 2 * Math.PI;
+  trueBloch = {
+    x: Math.sin(trueTheta) * Math.cos(truePhi),
+    y: Math.sin(trueTheta) * Math.sin(truePhi),
+    z: Math.cos(trueTheta)
+  };
+}
+
+function measureProbability(basis) {
+  // Probability of getting |0> (result +1) in given basis
+  // X basis: P(+1) = (1 + <X>)/2
+  // Y basis: P(+1) = (1 + <Y>)/2
+  // Z basis: P(+1) = (1 + <Z>)/2
+  if (basis === 'X') return (1 + trueBloch.x) / 2;
+  if (basis === 'Y') return (1 + trueBloch.y) / 2;
+  if (basis === 'Z') return (1 + trueBloch.z) / 2;
+}
+
+function measure(basis) {
+  const p = measureProbability(basis);
+  const result = Math.random() < p ? 0 : 1; // 0 = +1 eigenvalue, 1 = -1
+  const eigenvalue = result === 0 ? +1 : -1;
+  measurements.push({ basis, result, eigenvalue });
+  updateUI();
+}
+
+function getExpectations() {
+  const byBasis = { X: [], Y: [], Z: [] };
+  measurements.forEach(m => byBasis[m.basis].push(m.eigenvalue));
+  const avg = arr => arr.length === 0 ? 0 : arr.reduce((a, b) => a + b, 0) / arr.length;
+  return {
+    x: avg(byBasis.X),
+    y: avg(byBasis.Y),
+    z: avg(byBasis.Z),
+    nx: byBasis.X.length,
+    ny: byBasis.Y.length,
+    nz: byBasis.Z.length
+  };
+}
+
+function updateUI() {
+  const exp = getExpectations();
+  const total = measurements.length;
+
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('estX').textContent = exp.nx > 0 ? exp.x.toFixed(3) : '-';
+  document.getElementById('estY').textContent = exp.ny > 0 ? exp.y.toFixed(3) : '-';
+  document.getElementById('estZ').textContent = exp.nz > 0 ? exp.z.toFixed(3) : '-';
+
+  const r2 = exp.x * exp.x + exp.y * exp.y + exp.z * exp.z;
+  document.getElementById('purity').textContent = total > 0 ? ((1 + r2) / 2).toFixed(3) : '-';
+
+  // Density matrix: rho = (I + x*sx + y*sy + z*sz)/2
+  // rho_00 = (1+z)/2, rho_01 = (x - iy)/2, rho_10 = (x + iy)/2, rho_11 = (1-z)/2
+  const dm = document.getElementById('densityMatrix');
+  if (total > 0) {
+    const r00 = ((1 + exp.z) / 2).toFixed(3);
+    const r11 = ((1 - exp.z) / 2).toFixed(3);
+    const r01r = (exp.x / 2).toFixed(3);
+    const r01i = (-exp.y / 2).toFixed(3);
+    const r10r = (exp.x / 2).toFixed(3);
+    const r10i = (exp.y / 2).toFixed(3);
+    dm.children[0].textContent = r00;
+    dm.children[1].textContent = `${r01r}${r01i >= 0 ? '+' : ''}${r01i}i`;
+    dm.children[2].textContent = `${r10r}${r10i >= 0 ? '+' : ''}${r10i}i`;
+    dm.children[3].textContent = r11;
+  }
+
+  // Measurements table
+  const tbody = document.getElementById('mTable');
+  tbody.innerHTML = '';
+  const recent = measurements.slice(-30).reverse();
+  recent.forEach((m, i) => {
+    const idx = measurements.length - i;
+    const bClass = `basis-${m.basis.toLowerCase()}`;
+    const cumExp = getCumulativeExpectation(m.basis, idx);
+    tbody.innerHTML += `<tr><td>${idx}</td><td class="${bClass}">${m.basis}</td><td>${m.result === 0 ? '|0⟩ (+1)' : '|1⟩ (-1)'}</td><td class="${bClass}">${cumExp}</td></tr>`;
+  });
+
+  // Fidelity
+  if (total >= 10) {
+    const fid = computeFidelity(exp);
+    document.getElementById('fidelityFill').style.width = (fid * 100) + '%';
+    document.getElementById('fidelityLabel').textContent = `Fidelity: ${(fid * 100).toFixed(1)}%`;
+    if (revealed) document.getElementById('fidelityVal').textContent = (fid * 100).toFixed(1) + '%';
+  }
+
+  drawBloch(exp);
+}
+
+function getCumulativeExpectation(basis, upToIdx) {
+  let sum = 0, count = 0;
+  for (let i = 0; i < upToIdx; i++) {
+    if (measurements[i].basis === basis) {
+      sum += measurements[i].eigenvalue;
+      count++;
+    }
+  }
+  return count > 0 ? (sum / count).toFixed(2) : '-';
+}
+
+function computeFidelity(exp) {
+  // Fidelity between estimated pure state and true pure state
+  // For pure states: F = (1 + r_est . r_true) / 2
+  const dot = exp.x * trueBloch.x + exp.y * trueBloch.y + exp.z * trueBloch.z;
+  return Math.max(0, Math.min(1, (1 + dot) / 2));
+}
+
+function revealState() {
+  revealed = true;
+  document.getElementById('trueStateCards').style.display = 'grid';
+  document.getElementById('trueX').textContent = trueBloch.x.toFixed(3);
+  document.getElementById('trueY').textContent = trueBloch.y.toFixed(3);
+  document.getElementById('trueZ').textContent = trueBloch.z.toFixed(3);
+  document.getElementById('trueLegend').style.display = 'inline';
+  updateUI();
+}
+
+function resetExperiment() {
+  measurements = [];
+  revealed = false;
+  document.getElementById('trueStateCards').style.display = 'none';
+  document.getElementById('trueLegend').style.display = 'none';
+  document.getElementById('fidelityFill').style.width = '0%';
+  document.getElementById('fidelityLabel').textContent = 'Measure 10+ times to see fidelity';
+  randomState();
+  updateUI();
+}
+
+// Bloch sphere rendering
+function drawBloch(exp) {
+  const canvas = document.getElementById('bloch');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2, R = 140;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Rotation for 3D perspective
+  const rotX = -0.4, rotZ = 0.6;
+  function project(x, y, z) {
+    // Rotate around Z
+    let x1 = x * Math.cos(rotZ) - y * Math.sin(rotZ);
+    let y1 = x * Math.sin(rotZ) + y * Math.cos(rotZ);
+    let z1 = z;
+    // Rotate around X
+    let y2 = y1 * Math.cos(rotX) - z1 * Math.sin(rotX);
+    let z2 = y1 * Math.sin(rotX) + z1 * Math.cos(rotX);
+    return { px: cx + x1 * R, py: cy - z2 * R, depth: y2 };
+  }
+
+  // Draw sphere wireframe
+  ctx.strokeStyle = '#1e1e2e';
+  ctx.lineWidth = 1;
+
+  // Equator
+  ctx.beginPath();
+  for (let a = 0; a <= 2 * Math.PI; a += 0.05) {
+    const p = project(Math.cos(a), Math.sin(a), 0);
+    a === 0 ? ctx.moveTo(p.px, p.py) : ctx.lineTo(p.px, p.py);
+  }
+  ctx.stroke();
+
+  // Meridian XZ
+  ctx.beginPath();
+  for (let a = 0; a <= 2 * Math.PI; a += 0.05) {
+    const p = project(Math.cos(a), 0, Math.sin(a));
+    a === 0 ? ctx.moveTo(p.px, p.py) : ctx.lineTo(p.px, p.py);
+  }
+  ctx.stroke();
+
+  // Meridian YZ
+  ctx.beginPath();
+  for (let a = 0; a <= 2 * Math.PI; a += 0.05) {
+    const p = project(0, Math.cos(a), Math.sin(a));
+    a === 0 ? ctx.moveTo(p.px, p.py) : ctx.lineTo(p.px, p.py);
+  }
+  ctx.stroke();
+
+  // Axes
+  const axes = [
+    { v: [1.3, 0, 0], label: 'X', color: '#f472b6' },
+    { v: [0, 1.3, 0], label: 'Y', color: '#34d399' },
+    { v: [0, 0, 1.3], label: 'Z', color: '#60a5fa' }
+  ];
+  axes.forEach(ax => {
+    const pPos = project(ax.v[0], ax.v[1], ax.v[2]);
+    const pNeg = project(-ax.v[0], -ax.v[1], -ax.v[2]);
+    const pO = project(0, 0, 0);
+    ctx.strokeStyle = ax.color + '44';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pNeg.px, pNeg.py);
+    ctx.lineTo(pPos.px, pPos.py);
+    ctx.stroke();
+    ctx.fillStyle = ax.color;
+    ctx.font = '12px sans-serif';
+    ctx.fillText(ax.label, pPos.px + 4, pPos.py - 4);
+  });
+
+  // Poles
+  const pN = project(0, 0, 1.15);
+  const pS = project(0, 0, -1.15);
+  ctx.fillStyle = '#60a5fa';
+  ctx.font = '13px sans-serif';
+  ctx.fillText('|0⟩', pN.px + 6, pN.py);
+  ctx.fillText('|1⟩', pS.px + 6, pS.py);
+
+  // Estimated state point
+  const totalM = measurements.length;
+  if (totalM > 0) {
+    // Normalize estimated Bloch vector to unit sphere for display
+    const len = Math.sqrt(exp.x ** 2 + exp.y ** 2 + exp.z ** 2);
+    const ex = len > 0 ? exp.x : 0;
+    const ey = len > 0 ? exp.y : 0;
+    const ez = len > 0 ? exp.z : 0;
+
+    // Line from origin to estimated point
+    const pO = project(0, 0, 0);
+    const pE = project(ex, ey, ez);
+    ctx.strokeStyle = '#a78bfa88';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(pO.px, pO.py);
+    ctx.lineTo(pE.px, pE.py);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Estimated dot
+    ctx.beginPath();
+    ctx.arc(pE.px, pE.py, 7, 0, 2 * Math.PI);
+    ctx.fillStyle = '#a78bfa';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // True state (if revealed)
+  if (revealed) {
+    const pT = project(trueBloch.x, trueBloch.y, trueBloch.z);
+    const pO = project(0, 0, 0);
+    ctx.strokeStyle = '#f472b688';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath();
+    ctx.moveTo(pO.px, pO.py);
+    ctx.lineTo(pT.px, pT.py);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.arc(pT.px, pT.py, 7, 0, 2 * Math.PI);
+    ctx.fillStyle = '#f472b6';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+// Init
+randomState();
+drawBloch({ x: 0, y: 0, z: 0 });
+</script>
+</body>
+</html>

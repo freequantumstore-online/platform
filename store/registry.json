@@ -1,6 +1,18 @@
 {
   "robots": [
     {
+      "id": "tomography",
+      "name": "Quantum Tomography",
+      "description": "Reconstruct an unknown qubit state from measurements in X/Y/Z bases. See density matrix and fidelity converge.",
+      "storeType": "behavior",
+      "category": "measurement",
+      "icon": "\ud83d\udd2c",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
       "id": "qubit-sim",
       "name": "Circuit Simulator",
       "description": "Full quantum circuit editor \u2014 place H/X/Y/Z/S/T/CNOT/M gates, see state vector + probabilities. Up to 6 qubits, 100-shot sampling.",
