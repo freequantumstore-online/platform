@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Crypto Pipeline</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e2e8f0;font-family:'Segoe UI',system-ui,sans-serif;padding:20px;min-height:100vh}
+h1{text-align:center;color:#7c3aed;font-size:1.8rem;margin-bottom:8px}
+.subtitle{text-align:center;color:#94a3b8;margin-bottom:24px;font-size:0.9rem}
+.pipeline-flow{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:32px;flex-wrap:wrap}
+.pipeline-stage{background:#1e1b2e;border:2px solid #2d2a3e;border-radius:12px;padding:12px 20px;text-align:center;min-width:160px;transition:all .3s}
+.pipeline-stage.active{border-color:#7c3aed;box-shadow:0 0 20px #7c3aed33}
+.pipeline-stage.done{border-color:#22c55e;box-shadow:0 0 12px #22c55e33}
+.pipeline-stage .label{font-size:0.75rem;color:#94a3b8;text-transform:uppercase;letter-spacing:1px}
+.pipeline-stage .name{font-size:1rem;color:#e2e8f0;font-weight:600;margin-top:4px}
+.arrow{color:#7c3aed;font-size:1.5rem;font-weight:bold}
+.steps{display:flex;flex-direction:column;gap:24px;max-width:900px;margin:0 auto}
+.step{background:#12111a;border:1px solid #1e1b2e;border-radius:16px;padding:24px;transition:all .3s}
+.step.active{border-color:#7c3aed}
+.step.done{border-color:#22c55e44}
+.step-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.step-num{width:32px;height:32px;border-radius:50%;background:#1e1b2e;color:#7c3aed;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:0.9rem;border:2px solid #7c3aed44}
+.step.done .step-num{background:#22c55e22;color:#22c55e;border-color:#22c55e}
+.step-title{font-size:1.1rem;font-weight:600}
+.step-desc{color:#94a3b8;font-size:0.85rem;margin-bottom:16px}
+.qubit-row{display:flex;align-items:center;gap:8px;margin:6px 0;font-family:'Courier New',monospace;font-size:0.85rem}
+.qubit-label{color:#7c3aed;width:24px}
+.gate-slot{width:36px;height:28px;border:1px solid #2d2a3e;border-radius:4px;display:flex;align-items:center;justify-content:center;background:#1a1728;cursor:pointer;font-size:0.75rem;color:#c4b5fd;transition:all .2s}
+.gate-slot:hover{border-color:#7c3aed}
+.gate-slot.h{background:#7c3aed33;color:#a78bfa}
+.gate-slot.m{background:#f59e0b22;color:#fbbf24}
+.measure-out{color:#22c55e;font-family:monospace;margin-left:8px;min-width:16px}
+.controls{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+button{background:#7c3aed;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:500;transition:all .2s}
+button:hover{background:#6d28d9}
+button:disabled{opacity:0.4;cursor:default}
+button.secondary{background:#1e1b2e;border:1px solid #2d2a3e;color:#94a3b8}
+button.secondary:hover{border-color:#7c3aed;color:#c4b5fd}
+button.run-all{background:linear-gradient(135deg,#7c3aed,#a855f7);padding:14px 32px;font-size:1rem;font-weight:600;display:block;margin:24px auto 0}
+.output-box{background:#0d0c14;border:1px solid #1e1b2e;border-radius:8px;padding:12px 16px;margin-top:12px;font-family:'Courier New',monospace;font-size:0.85rem;line-height:1.6;max-height:200px;overflow-y:auto}
+.key-display{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+.bit{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-family:monospace;font-weight:bold;font-size:0.85rem}
+.bit-0{background:#1e1b2e;color:#94a3b8}
+.bit-1{background:#7c3aed33;color:#a78bfa}
+.bb84-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:0.8rem}
+.bb84-table th,.bb84-table td{padding:6px 8px;border:1px solid #1e1b2e;text-align:center}
+.bb84-table th{background:#1a1728;color:#7c3aed;font-weight:600}
+.bb84-table .match{color:#22c55e}
+.bb84-table .mismatch{color:#ef4444;text-decoration:line-through}
+.encrypt-area{display:flex;flex-direction:column;gap:12px}
+.encrypt-area input,.encrypt-area textarea{background:#0d0c14;border:1px solid #1e1b2e;border-radius:8px;padding:10px 14px;color:#e2e8f0;font-size:0.9rem;font-family:inherit;width:100%}
+.encrypt-area textarea{resize:vertical;min-height:60px}
+.result-label{color:#7c3aed;font-size:0.8rem;text-transform:uppercase;letter-spacing:1px}
+.cipher-text{color:#f59e0b;word-break:break-all}
+.decrypted-text{color:#22c55e}
+.feed-arrow{text-align:center;color:#7c3aed;font-size:1.2rem;margin:4px 0;opacity:0;transition:opacity .3s}
+.feed-arrow.visible{opacity:1}
+</style>
+</head>
+<body>
+<h1>Quantum Crypto Pipeline</h1>
+<p class="subtitle">Circuit Builder &rarr; BB84 Key Distribution &rarr; XOR Encryption</p>
+
+<div class="pipeline-flow">
+  <div class="pipeline-stage" id="ps1"><div class="label">Step 1</div><div class="name">Circuit Builder</div></div>
+  <div class="arrow">&rarr;</div>
+  <div class="pipeline-stage" id="ps2"><div class="label">Step 2</div><div class="name">BB84 Protocol</div></div>
+  <div class="arrow">&rarr;</div>
+  <div class="pipeline-stage" id="ps3"><div class="label">Step 3</div><div class="name">XOR Encryption</div></div>
+</div>
+
+<div class="steps">
+  <!-- Step 1: Circuit Builder -->
+  <div class="step" id="step1">
+    <div class="step-header"><div class="step-num">1</div><div class="step-title">Quantum Circuit Builder</div></div>
+    <p class="step-desc">Apply Hadamard (H) gates to put qubits in superposition, then measure. Click a gate slot to toggle H. All qubits are measured to produce random bits.</p>
+    <div id="circuit"></div>
+    <div class="controls">
+      <button onclick="randomizeGates()">Randomize Gates</button>
+      <button onclick="runCircuit()">Measure All</button>
+      <button class="secondary" onclick="resetCircuit()">Reset</button>
+    </div>
+    <div class="output-box" id="step1-output" style="display:none"></div>
+  </div>
+
+  <div class="feed-arrow" id="feed1">&darr; Random bits feed into BB84 key exchange</div>
+
+  <!-- Step 2: BB84 -->
+  <div class="step" id="step2">
+    <div class="step-header"><div class="step-num">2</div><div class="step-title">BB84 Key Distribution</div></div>
+    <p class="step-desc">Alice uses the random bits from Step 1. She picks random bases to encode them. Bob picks random bases to measure. Where bases match, bits are kept as the shared key.</p>
+    <div id="bb84-content"></div>
+    <div class="controls">
+      <button onclick="runBB84()" id="btn-bb84" disabled>Run BB84</button>
+    </div>
+    <div class="output-box" id="step2-output" style="display:none"></div>
+  </div>
+
+  <div class="feed-arrow" id="feed2">&darr; Shared key feeds into encryption</div>
+
+  <!-- Step 3: Encryption -->
+  <div class="step" id="step3">
+    <div class="step-header"><div class="step-num">3</div><div class="step-title">XOR Cipher Encryption</div></div>
+    <p class="step-desc">Use the quantum-derived shared key to encrypt and decrypt a message with XOR cipher.</p>
+    <div class="encrypt-area">
+      <div><div class="result-label">Shared Key</div><div id="shared-key-display" class="key-display"></div></div>
+      <input type="text" id="plaintext" placeholder="Enter message to encrypt..." value="Quantum secrets!" />
+      <button onclick="runEncrypt()" id="btn-encrypt" disabled>Encrypt &amp; Decrypt</button>
+    </div>
+    <div class="output-box" id="step3-output" style="display:none"></div>
+  </div>
+</div>
+
+<button class="run-all" onclick="runPipeline()">Run Full Pipeline</button>
+
+<script>
+const NUM_QUBITS = 8;
+let gates = new Array(NUM_QUBITS).fill(false);
+let measuredBits = null;
+let sharedKey = null;
+
+function buildCircuit() {
+  const container = document.getElementById('circuit');
+  container.innerHTML = '';
+  for (let i = 0; i < NUM_QUBITS; i++) {
+    const row = document.createElement('div');
+    row.className = 'qubit-row';
+    row.innerHTML = `
+      <span class="qubit-label">q${i}</span>
+      <span style="color:#94a3b8">|0&rang;</span>
+      <span style="color:#2d2a3e">&mdash;</span>
+      <div class="gate-slot ${gates[i] ? 'h' : ''}" onclick="toggleGate(${i})" id="gate-${i}">${gates[i] ? 'H' : '&middot;'}</div>
+      <span style="color:#2d2a3e">&mdash;</span>
+      <div class="gate-slot m" id="meas-${i}">M</div>
+      <span style="color:#2d2a3e">&mdash;</span>
+      <span class="measure-out" id="out-${i}"></span>
+    `;
+    container.appendChild(row);
+  }
+}
+
+function toggleGate(i) {
+  gates[i] = !gates[i];
+  const slot = document.getElementById(`gate-${i}`);
+  slot.className = `gate-slot ${gates[i] ? 'h' : ''}`;
+  slot.innerHTML = gates[i] ? 'H' : '&middot;';
+}
+
+function randomizeGates() {
+  for (let i = 0; i < NUM_QUBITS; i++) {
+    gates[i] = Math.random() > 0.3;
+    const slot = document.getElementById(`gate-${i}`);
+    slot.className = `gate-slot ${gates[i] ? 'h' : ''}`;
+    slot.innerHTML = gates[i] ? 'H' : '&middot;';
+  }
+}
+
+function resetCircuit() {
+  gates.fill(false);
+  measuredBits = null;
+  buildCircuit();
+  document.getElementById('step1-output').style.display = 'none';
+  document.getElementById('step1').classList.remove('done');
+  document.getElementById('ps1').classList.remove('done');
+  document.getElementById('feed1').classList.remove('visible');
+  document.getElementById('btn-bb84').disabled = true;
+}
+
+function runCircuit() {
+  measuredBits = [];
+  for (let i = 0; i < NUM_QUBITS; i++) {
+    let bit;
+    if (gates[i]) {
+      bit = Math.random() < 0.5 ? 0 : 1;
+    } else {
+      bit = 0;
+    }
+    measuredBits.push(bit);
+    document.getElementById(`out-${i}`).textContent = bit;
+  }
+  const out = document.getElementById('step1-output');
+  out.style.display = 'block';
+  out.innerHTML = `<span style="color:#7c3aed">Random bits:</span> [${measuredBits.join(', ')}]\n<span style="color:#94a3b8">H-gates applied: ${gates.filter(g=>g).length}/${NUM_QUBITS} qubits in superposition</span>`;
+  document.getElementById('step1').classList.add('done');
+  document.getElementById('ps1').classList.add('done');
+  document.getElementById('feed1').classList.add('visible');
+  document.getElementById('btn-bb84').disabled = false;
+}
+
+function runBB84() {
+  if (!measuredBits) return;
+  const aliceBits = [...measuredBits];
+  const aliceBases = aliceBits.map(() => Math.random() < 0.5 ? '+' : 'x');
+  const bobBases = aliceBits.map(() => Math.random() < 0.5 ? '+' : 'x');
+  const bobMeasured = aliceBits.map((b, i) => {
+    if (aliceBases[i] === bobBases[i]) return b;
+    return Math.random() < 0.5 ? 0 : 1;
+  });
+  const matches = aliceBases.map((ab, i) => ab === bobBases[i]);
+  sharedKey = [];
+  matches.forEach((m, i) => { if (m) sharedKey.push(aliceBits[i]); });
+
+  let tableHTML = '<table class="bb84-table"><tr><th></th>';
+  for (let i = 0; i < NUM_QUBITS; i++) tableHTML += `<th>Bit ${i}</th>`;
+  tableHTML += '</tr>';
+  tableHTML += '<tr><td>Alice Bit</td>' + aliceBits.map(b => `<td>${b}</td>`).join('') + '</tr>';
+  tableHTML += '<tr><td>Alice Base</td>' + aliceBases.map(b => `<td>${b}</td>`).join('') + '</tr>';
+  tableHTML += '<tr><td>Bob Base</td>' + bobBases.map(b => `<td>${b}</td>`).join('') + '</tr>';
+  tableHTML += '<tr><td>Bob Meas.</td>' + bobMeasured.map(b => `<td>${b}</td>`).join('') + '</tr>';
+  tableHTML += '<tr><td>Match?</td>' + matches.map(m => `<td class="${m ? 'match' : 'mismatch'}">${m ? 'YES' : 'NO'}</td>`).join('') + '</tr>';
+  tableHTML += '</table>';
+
+  document.getElementById('bb84-content').innerHTML = tableHTML;
+
+  const out = document.getElementById('step2-output');
+  out.style.display = 'block';
+  out.innerHTML = `<span style="color:#7c3aed">Base matches:</span> ${matches.filter(m=>m).length}/${NUM_QUBITS}\n<span style="color:#22c55e">Shared key:</span> [${sharedKey.join(', ')}] (${sharedKey.length} bits)`;
+
+  const keyDisplay = document.getElementById('shared-key-display');
+  keyDisplay.innerHTML = sharedKey.map(b => `<div class="bit bit-${b}">${b}</div>`).join('');
+
+  document.getElementById('step2').classList.add('done');
+  document.getElementById('ps2').classList.add('done');
+  document.getElementById('feed2').classList.add('visible');
+  document.getElementById('btn-encrypt').disabled = false;
+}
+
+function runEncrypt() {
+  if (!sharedKey || sharedKey.length === 0) return;
+  const msg = document.getElementById('plaintext').value;
+  if (!msg) return;
+  const keyStr = sharedKey.join('');
+  let cipherBin = '';
+  let cipherHex = '';
+  const msgBin = msg.split('').map(c => c.charCodeAt(0).toString(2).padStart(8, '0')).join('');
+  for (let i = 0; i < msgBin.length; i++) {
+    const keyBit = parseInt(keyStr[i % keyStr.length]);
+    const msgBit = parseInt(msgBin[i]);
+    cipherBin += (msgBit ^ keyBit);
+  }
+  for (let i = 0; i < cipherBin.length; i += 4) {
+    cipherHex += parseInt(cipherBin.substr(i, 4), 2).toString(16);
+  }
+  let decrypted = '';
+  for (let i = 0; i < cipherBin.length; i += 8) {
+    const byte = cipherBin.substr(i, 8);
+    if (byte.length < 8) break;
+    let dec = '';
+    for (let j = 0; j < 8; j++) {
+      const cb = parseInt(byte[j]);
+      const kb = parseInt(keyStr[(i + j) % keyStr.length]);
+      dec += (cb ^ kb);
+    }
+    decrypted += String.fromCharCode(parseInt(dec, 2));
+  }
+
+  const out = document.getElementById('step3-output');
+  out.style.display = 'block';
+  out.innerHTML = `<span class="result-label">Plaintext:</span> ${msg}\n<span class="result-label">Key (repeating):</span> ${keyStr}\n<span class="result-label">Ciphertext (hex):</span> <span class="cipher-text">${cipherHex}</span>\n<span class="result-label">Decrypted:</span> <span class="decrypted-text">${decrypted}</span>\n\n<span style="color:#94a3b8">Key length: ${sharedKey.length} bits | Message: ${msg.length * 8} bits | Key reuse: ${Math.ceil(msg.length * 8 / sharedKey.length)}x</span>`;
+
+  document.getElementById('step3').classList.add('done');
+  document.getElementById('ps3').classList.add('done');
+}
+
+async function runPipeline() {
+  resetCircuit();
+  randomizeGates();
+  document.getElementById('ps1').classList.add('active');
+  document.getElementById('step1').classList.add('active');
+  await sleep(400);
+  runCircuit();
+  document.getElementById('step1').classList.remove('active');
+  document.getElementById('ps1').classList.remove('active');
+  await sleep(600);
+  document.getElementById('ps2').classList.add('active');
+  document.getElementById('step2').classList.add('active');
+  await sleep(400);
+  runBB84();
+  document.getElementById('step2').classList.remove('active');
+  document.getElementById('ps2').classList.remove('active');
+  await sleep(600);
+  document.getElementById('ps3').classList.add('active');
+  document.getElementById('step3').classList.add('active');
+  await sleep(400);
+  runEncrypt();
+  document.getElementById('step3').classList.remove('active');
+  document.getElementById('ps3').classList.remove('active');
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+buildCircuit();
+</script>
+</body>
+</html>
