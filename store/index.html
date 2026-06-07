@@ -117,20 +117,13 @@
   <header>
     <div class="container">
       <a href="/" class="brand">
-        <span class="brand-mark">🤖</span>
+        <span class="brand-mark">⚛️</span>
         <span style="display:flex;flex-direction:column">
-          <span class="brand-name">AgentStore</span>
+          <span class="brand-name">QuantumStore</span>
           <span class="brand-tag">Free AI Tools</span>
         </span>
       </a>
-      <nav>
-        <a href="/">Agents</a>
-        <a href="/about/">About</a>
-        <a href="/get-started/">Get Started</a>
-        <a href="/console/">Console</a>
-        <a href="/skills.md">Docs</a>
-        <a href="https://proagentstore.online" class="pro">Pro</a>
-      </nav>
+      <nav><a href="/">All</a><a href="/circuits/bloch-sphere/">Bloch Sphere</a><a href="/circuits/entanglement/">Entanglement</a><a href="/circuits/grovers/">Grover</a></nav>
       <div id="auth-ui" style="margin-left:0.5rem;display:flex;align-items:center">
         <a href="/v1/auth/github" id="auth-login" style="display:none;padding:0.35rem 0.85rem;border-radius:8px;border:1px solid var(--line);color:var(--muted);font-size:0.82rem;font-weight:600;text-decoration:none;transition:border-color 0.15s,color 0.15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--ink)'" onmouseout="this.style.borderColor='var(--line)';this.style.color='var(--muted)'">Sign in</a>
         <div id="auth-user" style="display:none;align-items:center;gap:0.5rem">
@@ -154,7 +147,7 @@
       </div>
       <div style="display:flex;gap:0.75rem;justify-content:center;margin-top:1.25rem;flex-wrap:wrap">
         <a href="/get-started/" style="padding:0.5rem 1.25rem;border-radius:10px;background:#7c3aed;color:white;font-weight:600;font-size:0.9rem;text-decoration:none">Get Started</a>
-        <a href="https://github.com/FreeQuantumStore" style="padding:0.5rem 1.25rem;border-radius:10px;border:1px solid #262626;color:#a3a3a3;font-weight:600;font-size:0.9rem;text-decoration:none">GitHub</a>
+        <a href="https://github.com/FreeQuantumStore</a>
       </div>
     </section>
 
@@ -172,7 +165,7 @@
         </div>
         <div style="background:#171717;border:1px solid #262626;border-radius:12px;padding:1.25rem">
           <div style="font-size:1.5rem;margin-bottom:0.5rem">&#x1f916;</div>
-          <h3 style="font-size:0.95rem;font-weight:600;margin-bottom:0.35rem">Agents</h3>
+          <h3 style="font-size:0.95rem;font-weight:600;margin-bottom:0.35rem">Circuits</h3>
           <p style="color:#a3a3a3;font-size:0.82rem;line-height:1.5;margin:0">Full AI assistants. Add your API key once — chat with documents, summarize, write, explain code. You pay your provider directly.</p>
         </div>
       </div>
@@ -200,7 +193,7 @@
       </div>
             <div class="agents-grid" id="agentsGrid">
         <div class="agent-card" data-category="visualization" data-store-type="behavior" data-name="bloch sphere" data-desc="interactive 3d qubit visualization — drag to rotate, apply x/y/z/h/s/t gates, see state vector in real time.">
-          <a href="/agents/bloch-sphere/" class="agent-card-body">
+          <a href="/circuits/bloch-sphere/" class="agent-card-body">
             <div class="agent-icon" style="background:#7c3aed">🔮</div>
             <div class="agent-body">
               <span class="agent-name">Bloch Sphere</span>
@@ -211,14 +204,14 @@
               </div>
             </div>
           </a>
-          <a href="/a/bloch-sphere/" class="agent-cta">
+          <a href="/circuits/bloch-sphere/" class="agent-cta">
             <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
             Open
           </a>
         </div>
 
         <div class="agent-card" data-category="education" data-store-type="behavior" data-name="quantum gates" data-desc="learn all quantum gates — interactive matrix visualization, before/after state, truth tables for each gate.">
-          <a href="/agents/quantum-gates/" class="agent-card-body">
+          <a href="/circuits/quantum-gates/" class="agent-card-body">
             <div class="agent-icon" style="background:#7c3aed">🚪</div>
             <div class="agent-body">
               <span class="agent-name">Quantum Gates</span>
@@ -229,14 +222,14 @@
               </div>
             </div>
           </a>
-          <a href="/a/quantum-gates/" class="agent-cta">
+          <a href="/circuits/quantum-gates/" class="agent-cta">
             <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
             Open
           </a>
         </div>
 
         <div class="agent-card" data-category="phenomena" data-store-type="behavior" data-name="entanglement" data-desc="create bell pairs, measure one qubit, watch the other collapse instantly. run 1000 experiments, see the statistics.">
-          <a href="/agents/entanglement/" class="agent-card-body">
+          <a href="/circuits/entanglement/" class="agent-card-body">
             <div class="agent-icon" style="background:#7c3aed">🔗</div>
             <div class="agent-body">
               <span class="agent-name">Entanglement</span>
@@ -247,14 +240,14 @@
               </div>
             </div>
           </a>
-          <a href="/a/entanglement/" class="agent-cta">
+          <a href="/circuits/entanglement/" class="agent-cta">
             <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
             Open
           </a>
         </div>
 
         <div class="agent-card" data-category="protocols" data-store-type="behavior" data-name="quantum teleportation" data-desc="step-by-step teleportation protocol — alice prepares, entangles, measures. bob corrects. see the state transfer.">
-          <a href="/agents/teleportation/" class="agent-card-body">
+          <a href="/circuits/teleportation/" class="agent-card-body">
             <div class="agent-icon" style="background:#7c3aed">✨</div>
             <div class="agent-body">
               <span class="agent-name">Quantum Teleportation</span>
@@ -265,14 +258,14 @@
               </div>
             </div>
           </a>
-          <a href="/a/teleportation/" class="agent-cta">
+          <a href="/circuits/teleportation/" class="agent-cta">
             <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
             Open
           </a>
         </div>
 
         <div class="agent-card" data-category="algorithms" data-store-type="behavior" data-name="grover's search" data-desc="quantum search algorithm — watch amplitude amplification find the needle in the haystack. compare with classical search.">
-          <a href="/agents/grovers/" class="agent-card-body">
+          <a href="/circuits/grovers/" class="agent-card-body">
             <div class="agent-icon" style="background:#7c3aed">🔍</div>
             <div class="agent-body">
               <span class="agent-name">Grover's Search</span>
@@ -283,14 +276,14 @@
               </div>
             </div>
           </a>
-          <a href="/a/grovers/" class="agent-cta">
+          <a href="/circuits/grovers/" class="agent-cta">
             <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
             Open
           </a>
         </div>
 
         <div class="agent-card" data-category="simulator" data-store-type="behavior" data-name="qubit simulator" data-desc="full state-vector simulator for 1-6 qubits. build circuits, measure, see probability distributions as bar charts.">
-          <a href="/agents/qubit-sim/" class="agent-card-body">
+          <a href="/circuits/qubit-sim/" class="agent-card-body">
             <div class="agent-icon" style="background:#3b82f6">💻</div>
             <div class="agent-body">
               <span class="agent-name">Qubit Simulator</span>
@@ -301,14 +294,14 @@
               </div>
             </div>
           </a>
-          <a href="/a/qubit-sim/" class="agent-cta">
+          <a href="/circuits/qubit-sim/" class="agent-cta">
             <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
             Open
           </a>
         </div>
 
         <div class="agent-card" data-category="circuits" data-store-type="behavior" data-name="circuit builder" data-desc="drag-and-drop quantum circuit editor. wire qubits, add gates, simulate step by step. export to qiskit/cirq code.">
-          <a href="/agents/quantum-circuit/" class="agent-card-body">
+          <a href="/circuits/quantum-circuit/" class="agent-card-body">
             <div class="agent-icon" style="background:#3b82f6">🔧</div>
             <div class="agent-body">
               <span class="agent-name">Circuit Builder</span>
@@ -319,7 +312,7 @@
               </div>
             </div>
           </a>
-          <a href="/a/quantum-circuit/" class="agent-cta">
+          <a href="/circuits/quantum-circuit/" class="agent-cta">
             <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
             Open
           </a>
@@ -368,7 +361,7 @@
       </div>
       <div>
         <strong style="color:var(--ink);display:block;margin-bottom:0.4rem">For developers</strong>
-        <a href="/console/" style="display:block;color:var(--muted)">console — creator dashboard</a>
+        <a href="" style="display:block;color:var(--muted)">console — creator dashboard</a>
         <a href="/skills.md" style="display:block;color:var(--muted)">/skills.md — platform guide</a>
         <a href="https://github.com/FreeQuantumStore/platform" style="display:block;color:var(--muted)">github.com/FreeQuantumStore — source</a>
       </div>
@@ -381,7 +374,7 @@
       <div>
         <strong style="color:var(--ink);display:block;margin-bottom:0.4rem">Pro tier</strong>
         <a href="https://proagentstore.online" style="display:block;color:#3b82f6">proagentstore.online — server agents</a>
-        <a href="https://github.com/ProAgentStore" style="display:block;color:var(--muted)">github.com/ProAgentStore — source</a>
+        <a href="https://github.com/ProQuantumStore" style="display:block;color:var(--muted)">github.com/ProQuantumStore — source</a>
       </div>
     </div>
   </section>
@@ -393,12 +386,11 @@
         <p>49 AI tools — libraries, models, and agents. Free forever, open source, runs on your device.</p>
       </div>
       <div class="footer-links">
-        <a href="/">Agents</a>
+        <a href="/">Circuits</a>
         <a href="/about/">About</a>
         <a href="/get-started/">Get Started</a>
-        <a href="/console/">Console</a>
-        <a href="/skills.md">Docs</a>
-        <a href="https://github.com/FreeQuantumStore">GitHub</a>
+        <a href=""/a>
+
         <a href="https://proagentstore.online" class="pro">Pro →</a>
       </div>
       <div class="footer-stores">

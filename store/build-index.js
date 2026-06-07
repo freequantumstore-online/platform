@@ -91,7 +91,7 @@ function generateCard(agent) {
     : '';
 
   return `        <div class="agent-card" data-category="${agent.category}" data-store-type="${agent.storeType || 'library'}" data-name="${agent.name.toLowerCase()}" data-desc="${(agent.description || '').toLowerCase()}">
-          <a href="/agents/${agent.id}/" class="agent-card-body">
+          <a href="/circuits/${agent.id}/" class="agent-card-body">
             <div class="agent-icon" style="background:${agent.iconBg}${fontStyle}">${iconContent}</div>
             <div class="agent-body">
               <span class="agent-name">${escapeHtml(agent.name)}</span>
@@ -102,7 +102,7 @@ function generateCard(agent) {
               </div>
             </div>
           </a>
-          <a href="/a/${agent.id}/" class="agent-cta">
+          <a href="/circuits/${agent.id}/" class="agent-cta">
             <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
             Open
           </a>

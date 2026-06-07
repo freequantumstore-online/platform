@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grover's Algorithm — FreeQuantumStore</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0a0a0a;color:#fafafa;font-family:'Manrope',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+    h1{font-size:1.3rem;font-weight:700;margin:1.25rem 0 .25rem} h1 span{color:#7c3aed}
+    .sub{color:#737373;font-size:.85rem;margin-bottom:.5rem;text-align:center;max-width:560px}
+    .tutorial{background:#171717;border:1px solid #262626;border-radius:10px;padding:.6rem 1rem;margin-bottom:.5rem;font-size:.82rem;color:#a3a3a3;max-width:650px;line-height:1.6;text-align:center}
+    .tutorial b{color:#7c3aed}
+    canvas{border:1px solid #262626;border-radius:12px}
+    .controls{display:flex;gap:.5rem;margin:.75rem 0;flex-wrap:wrap;justify-content:center;align-items:center}
+    button{padding:.45rem 1rem;border-radius:8px;border:1px solid #333;background:#171717;color:#fafafa;font-size:.82rem;font-weight:600;cursor:pointer;font-family:inherit}
+    button:hover{border-color:#7c3aed;color:#7c3aed}
+    button.primary{background:#7c3aed;border-color:#7c3aed;color:#fff}
+    label{font-size:.78rem;color:#a3a3a3;display:flex;align-items:center;gap:.3rem}
+    input[type=range]{width:70px;accent-color:#7c3aed}
+    .val{color:#7c3aed;font-weight:600;min-width:1.5rem;font-size:.75rem}
+    .stats{font-size:.75rem;color:#525252;margin:.35rem;display:flex;gap:1.25rem;flex-wrap:wrap;justify-content:center}
+    .stats span{color:#a3a3a3}
+    a{color:#525252;text-decoration:none}
+  </style>
+</head>
+<body>
+  <h1>Grover's <span>Search</span></h1>
+  <p class="sub">Quantum search finds a needle in a haystack quadratically faster than classical. Watch the target amplitude grow while others shrink.</p>
+  <div class="tutorial">
+    <b>How it works:</b> A database of N items. Classical search checks one at a time (N steps). Grover's checks all at once using superposition, then <b>amplifies</b> the correct answer in ~√N steps. Click <b>Step</b> to watch amplitude amplification happen.
+  </div>
+
+  <canvas id="sim" width="800" height="350"></canvas>
+
+  <div class="controls">
+    <label>Qubits <input type="range" id="qubits" min="2" max="6" value="3"><span class="val" id="q-v">3</span></label>
+    <label>Target <input type="range" id="target" min="0" max="7" value="5"><span class="val" id="t-v">5</span></label>
+    <button class="primary" id="btn-step">Step (1 iteration)</button>
+    <button id="btn-auto">Auto-run</button>
+    <button id="btn-reset">Reset</button>
+    <button id="btn-measure">Measure</button>
+  </div>
+  <div class="stats">
+    <div>Items: <span id="items">8</span></div>
+    <div>Iteration: <span id="iter">0</span></div>
+    <div>Optimal iterations: <span id="optimal">2</span></div>
+    <div>Target probability: <span id="prob">12.5</span>%</div>
+    <div><a href="https://freequantumstore.pages.dev">FreeQuantumStore</a></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('sim');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    let amplitudes = [], nQubits, target, iteration, autoRunning = false, measured = null;
+
+    const sl = id => document.getElementById(id);
+    sl('qubits').addEventListener('input', () => { sl('q-v').textContent = sl('qubits').value; init(); });
+    sl('target').addEventListener('input', () => {
+      const n = 1 << (+sl('qubits').value);
+      const t = Math.min(+sl('target').value, n-1);
+      sl('target').max = n-1;
+      sl('target').value = t;
+      sl('t-v').textContent = t;
+      target = t;
+      init();
+    });
+
+    function init() {
+      nQubits = +sl('qubits').value;
+      target = +sl('target').value;
+      const N = 1 << nQubits;
+      sl('target').max = N - 1;
+      if (target >= N) { target = N-1; sl('target').value = target; sl('t-v').textContent = target; }
+
+      // Initialize uniform superposition
+      amplitudes = new Array(N).fill(1 / Math.sqrt(N));
+      iteration = 0;
+      measured = null;
+      autoRunning = false;
+
+      sl('items').textContent = N;
+      sl('optimal').textContent = Math.round(Math.PI / 4 * Math.sqrt(N));
+      updateStats();
+    }
+
+    function groverStep() {
+      const N = amplitudes.length;
+
+      // Oracle: flip sign of target
+      amplitudes[target] = -amplitudes[target];
+
+      // Diffusion: reflect about mean
+      const mean = amplitudes.reduce((s, a) => s + a, 0) / N;
+      for (let i = 0; i < N; i++) {
+        amplitudes[i] = 2 * mean - amplitudes[i];
+      }
+
+      iteration++;
+      updateStats();
+    }
+
+    function updateStats() {
+      sl('iter').textContent = iteration;
+      const prob = amplitudes[target] * amplitudes[target] * 100;
+      sl('prob').textContent = prob.toFixed(1);
+    }
+
+    sl('btn-step').addEventListener('click', () => { if (!measured) groverStep(); });
+    sl('btn-reset').addEventListener('click', init);
+    sl('btn-auto').addEventListener('click', () => { autoRunning = !autoRunning; });
+    sl('btn-measure').addEventListener('click', () => {
+      // Collapse: pick random based on probabilities
+      let r = Math.random(), cumulative = 0;
+      for (let i = 0; i < amplitudes.length; i++) {
+        cumulative += amplitudes[i] * amplitudes[i];
+        if (r <= cumulative) { measured = i; break; }
+      }
+      if (measured === null) measured = amplitudes.length - 1;
+    });
+
+    let autoTimer = 0;
+    function draw() {
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, W, H);
+
+      const N = amplitudes.length;
+      const barW = Math.min(40, (W - 80) / N - 2);
+      const maxH = H - 80;
+      const baseY = H - 40;
+
+      // Grid lines
+      ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 0.5;
+      for (let y = baseY; y > 30; y -= 40) {
+        ctx.beginPath(); ctx.moveTo(30, y); ctx.lineTo(W - 10, y); ctx.stroke();
+      }
+
+      // Bars
+      for (let i = 0; i < N; i++) {
+        const x = 40 + i * ((W - 80) / N) + ((W - 80) / N - barW) / 2;
+        const prob = amplitudes[i] * amplitudes[i];
+        const h = prob * maxH * N; // scale so uniform = visible
+        const amp = amplitudes[i];
+
+        // Bar color
+        let color;
+        if (measured !== null) {
+          color = i === measured ? '#10b981' : '#1e1e1e';
+        } else if (i === target) {
+          color = '#7c3aed';
+        } else {
+          color = amp >= 0 ? '#3b82f6' : '#ef4444';
+        }
+
+        // Bar
+        ctx.fillStyle = color;
+        const barH = Math.abs(amp) * maxH * Math.sqrt(N);
+        if (amp >= 0) {
+          ctx.fillRect(x, baseY - barH, barW, barH);
+        } else {
+          ctx.fillRect(x, baseY, barW, barH);
+        }
+
+        // Probability text
+        ctx.fillStyle = '#525252'; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'center';
+        const probPct = (prob * 100).toFixed(1);
+        if (N <= 16) ctx.fillText(`${probPct}%`, x + barW/2, baseY - barH - 5);
+
+        // State label
+        ctx.fillStyle = i === target ? '#7c3aed' : '#404040';
+        ctx.font = N <= 16 ? '10px JetBrains Mono' : '8px JetBrains Mono';
+        const label = `|${i.toString(2).padStart(nQubits, '0')}⟩`;
+        ctx.fillText(label, x + barW/2, baseY + 15);
+
+        // Target marker
+        if (i === target && measured === null) {
+          ctx.fillStyle = '#7c3aed'; ctx.font = '10px Manrope';
+          ctx.fillText('TARGET', x + barW/2, baseY + 28);
+        }
+      }
+
+      // Measured result
+      if (measured !== null) {
+        ctx.fillStyle = measured === target ? '#10b981' : '#ef4444';
+        ctx.font = '700 20px Manrope'; ctx.textAlign = 'center';
+        ctx.fillText(
+          measured === target ? `FOUND! Measured |${measured.toString(2).padStart(nQubits,'0')}⟩ = ${measured}` :
+          `WRONG: Measured |${measured.toString(2).padStart(nQubits,'0')}⟩ = ${measured} (target was ${target})`,
+          W/2, 25
+        );
+      }
+
+      // Amplitude axis label
+      ctx.fillStyle = '#404040'; ctx.font = '10px Manrope'; ctx.textAlign = 'center';
+      ctx.save(); ctx.translate(15, H/2); ctx.rotate(-Math.PI/2);
+      ctx.fillText('Amplitude', 0, 0);
+      ctx.restore();
+
+      // Zero line
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(30, baseY); ctx.lineTo(W-10, baseY); ctx.stroke();
+
+      // Classical comparison
+      ctx.fillStyle = '#334155'; ctx.font = '10px Manrope'; ctx.textAlign = 'right';
+      ctx.fillText(`Classical: ${N} steps needed`, W - 15, 20);
+      ctx.fillStyle = '#7c3aed';
+      ctx.fillText(`Quantum: ~${Math.round(Math.PI/4*Math.sqrt(N))} steps (√${N})`, W - 15, 35);
+
+      ctx.textAlign = 'start';
+
+      // Auto-run
+      if (autoRunning && !measured) {
+        autoTimer++;
+        if (autoTimer % 20 === 0) groverStep();
+        const optimal = Math.round(Math.PI/4 * Math.sqrt(N));
+        if (iteration >= optimal) autoRunning = false;
+      }
+    }
+
+    function loop() { requestAnimationFrame(loop); draw(); }
+    init();
+    loop();
+  </script>
+</body>
+</html>
