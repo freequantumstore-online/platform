@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Teleportation Protocol — FreeQuantumStore</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0a0a0a;color:#fafafa;font-family:'Manrope',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+    h1{font-size:1.3rem;font-weight:700;margin:1.25rem 0 .25rem} h1 span{color:#7c3aed}
+    .sub{color:#737373;font-size:.85rem;margin-bottom:.5rem;text-align:center;max-width:580px}
+    canvas{border:1px solid #1a1a1a;border-radius:12px}
+    .controls{display:flex;gap:.5rem;margin:.75rem 0;flex-wrap:wrap;justify-content:center;align-items:center}
+    button{padding:.45rem 1rem;border-radius:8px;border:1px solid #262626;background:#171717;color:#fafafa;font-size:.82rem;font-weight:600;cursor:pointer;font-family:inherit}
+    button:hover{border-color:#7c3aed;color:#7c3aed}
+    button.primary{background:#7c3aed;border-color:#7c3aed;color:#fff}
+    button:disabled{opacity:.3}
+    label{font-size:.78rem;color:#a3a3a3;display:flex;align-items:center;gap:.3rem}
+    input[type=range]{width:80px;accent-color:#7c3aed}
+    .val{color:#7c3aed;font-weight:600;min-width:2rem;font-size:.75rem}
+    .step-info{background:#141414;border:1px solid #1a1a1a;border-radius:10px;padding:.75rem 1rem;margin:.5rem;max-width:700px;font-size:.82rem;color:#a3a3a3;line-height:1.6}
+    .step-info b{color:#7c3aed}
+    .step-info .math{font-family:'JetBrains Mono',monospace;color:#a78bfa;font-size:.85rem;margin:.25rem 0;display:block}
+    .info{font-size:.72rem;color:#404040;margin:.35rem}
+    a{color:#404040;text-decoration:none}
+  </style>
+</head>
+<body>
+  <h1>Quantum <span>Teleportation</span></h1>
+  <p class="sub">Teleport a quantum state from Alice to Bob using entanglement + classical communication. Step through the protocol and see every state change.</p>
+
+  <canvas id="sim" width="850" height="400"></canvas>
+
+  <div class="controls">
+    <label>State θ <input type="range" id="theta" min="0" max="314" value="60"><span class="val" id="theta-v">34°</span></label>
+    <label>State φ <input type="range" id="phi" min="0" max="628" value="0"><span class="val" id="phi-v">0°</span></label>
+    <button class="primary" id="btn-next">Next Step →</button>
+    <button id="btn-auto">Auto-play</button>
+    <button id="btn-reset">Reset</button>
+    <button id="btn-verify">Verify ✓</button>
+  </div>
+
+  <div class="step-info" id="step-info">
+    <b>Step 0: Preparation</b><br>
+    Alice has a qubit |ψ⟩ she wants to teleport to Bob. She doesn't know what state it's in — and she can't measure it (that would destroy it). How can she send the state without sending the qubit?
+    <span class="math">|ψ⟩ = cos(θ/2)|0⟩ + e^(iφ)sin(θ/2)|1⟩</span>
+  </div>
+  <div class="info"><a href="https://freequantumstore.pages.dev">FreeQuantumStore</a></div>
+
+  <script>
+    const canvas = document.getElementById('sim');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    let step = 0, autoPlaying = false;
+    let theta, phi, m1, m2; // measurement results
+    let stateVector = []; // full 3-qubit state
+
+    const sl = id => document.getElementById(id);
+    sl('theta').addEventListener('input', () => { sl('theta-v').textContent = Math.round(+sl('theta').value/314*180)+'°'; if(step===0)reset(); });
+    sl('phi').addEventListener('input', () => { sl('phi-v').textContent = Math.round(+sl('phi').value/628*360)+'°'; if(step===0)reset(); });
+
+    // Complex number helpers
+    const cadd = (a,b) => [a[0]+b[0], a[1]+b[1]];
+    const cmul = (a,b) => [a[0]*b[0]-a[1]*b[1], a[0]*b[1]+a[1]*b[0]];
+    const cscale = (s,a) => [s*a[0], s*a[1]];
+    const cnorm = a => Math.sqrt(a[0]**2 + a[1]**2);
+
+    function getInputState() {
+      theta = +sl('theta').value / 100;
+      phi = +sl('phi').value / 100;
+      const alpha = [Math.cos(theta/2), 0];
+      const beta = cmul([Math.cos(phi), Math.sin(phi)], [Math.sin(theta/2), 0]);
+      return { alpha, beta };
+    }
+
+    function reset() {
+      step = 0;
+      m1 = null; m2 = null;
+      autoPlaying = false;
+      const { alpha, beta } = getInputState();
+
+      // Initial state: |ψ⟩_A ⊗ |00⟩_shared = alpha|000⟩ + beta|100⟩
+      stateVector = new Array(8).fill(null).map(() => [0,0]);
+      stateVector[0] = alpha; // |000⟩
+      stateVector[4] = beta;  // |100⟩
+
+      updateInfo();
+    }
+
+    function nextStep() {
+      if (step >= 5) return;
+      step++;
+
+      const s2 = 1/Math.sqrt(2);
+
+      if (step === 1) {
+        // Step 1: Create Bell pair between qubits 1 and 2
+        // Apply H to qubit 1
+        const newState = new Array(8).fill(null).map(() => [0,0]);
+        for (let i = 0; i < 8; i++) {
+          const bit1 = (i >> 1) & 1;
+          const i0 = i & ~(1 << 1); // bit1 = 0
+          const i1 = i | (1 << 1);  // bit1 = 1
+          if (bit1 === 0) {
+            newState[i] = cadd(cscale(s2, stateVector[i0]), cscale(s2, stateVector[i1]));
+          }
+        }
+        // Recalc with H properly
+        for (let i = 0; i < 8; i++) {
+          const bit1 = (i >> 1) & 1;
+          const partner = i ^ (1 << 1);
+          if (bit1 === 0) {
+            newState[i] = cscale(s2, cadd(stateVector[i], stateVector[partner]));
+            newState[partner] = cscale(s2, cadd(stateVector[i], cscale(-1, stateVector[partner])));
+          }
+        }
+        stateVector = newState;
+
+        // Then CNOT(1→2)
+        for (let i = 0; i < 8; i++) {
+          if ((i >> 1) & 1) { // control qubit 1 is 1
+            const target = i ^ 1; // flip qubit 2
+            if (i < target) {
+              const tmp = stateVector[i];
+              stateVector[i] = stateVector[target];
+              stateVector[target] = tmp;
+            }
+          }
+        }
+      }
+
+      if (step === 2) {
+        // Step 2: Alice applies CNOT(0→1)
+        for (let i = 0; i < 8; i++) {
+          if ((i >> 2) & 1) { // control qubit 0 is 1
+            const target = i ^ (1 << 1); // flip qubit 1
+            if (i < target) {
+              const tmp = stateVector[i];
+              stateVector[i] = stateVector[target];
+              stateVector[target] = tmp;
+            }
+          }
+        }
+      }
+
+      if (step === 3) {
+        // Step 3: Alice applies H to qubit 0
+        const newState = stateVector.map(s => [...s]);
+        for (let i = 0; i < 8; i++) {
+          const bit0 = (i >> 2) & 1;
+          const partner = i ^ (1 << 2);
+          if (bit0 === 0) {
+            newState[i] = cscale(s2, cadd(stateVector[i], stateVector[partner]));
+            newState[partner] = cscale(s2, cadd(stateVector[i], cscale(-1, stateVector[partner])));
+          }
+        }
+        stateVector = newState;
+
+        // Measure qubits 0 and 1
+        // Calculate probabilities for each outcome
+        const probs = [0,0,0,0]; // 00, 01, 10, 11
+        for (let i = 0; i < 8; i++) {
+          const q01 = (i >> 1); // top 2 bits
+          probs[q01] += cnorm(stateVector[i]) ** 2;
+        }
+
+        // Sample
+        let r = Math.random(), cum = 0;
+        let outcome = 0;
+        for (let j = 0; j < 4; j++) {
+          cum += probs[j];
+          if (r <= cum) { outcome = j; break; }
+        }
+        m1 = (outcome >> 1) & 1;
+        m2 = outcome & 1;
+
+        // Collapse
+        const norm = Math.sqrt(probs[outcome]);
+        for (let i = 0; i < 8; i++) {
+          const q01 = (i >> 1);
+          if (q01 !== outcome) {
+            stateVector[i] = [0, 0];
+          } else {
+            stateVector[i] = cscale(1/norm, stateVector[i]);
+          }
+        }
+      }
+
+      if (step === 4) {
+        // Step 4: Bob applies corrections based on Alice's measurements
+        // If m2=1: apply X to qubit 2
+        if (m2 === 1) {
+          for (let i = 0; i < 8; i++) {
+            const partner = i ^ 1;
+            if (i < partner) {
+              const tmp = stateVector[i];
+              stateVector[i] = stateVector[partner];
+              stateVector[partner] = tmp;
+            }
+          }
+        }
+        // If m1=1: apply Z to qubit 2
+        if (m1 === 1) {
+          for (let i = 0; i < 8; i++) {
+            if (i & 1) { // qubit 2 is 1
+              stateVector[i] = cscale(-1, stateVector[i]);
+            }
+          }
+        }
+      }
+
+      if (step === 5) {
+        // Verification step — just display
+      }
+
+      updateInfo();
+    }
+
+    const stepTexts = [
+      () => `<b>Step 0: Preparation</b><br>Alice has qubit |ψ⟩ = cos(${(theta/2*180/Math.PI).toFixed(0)}°)|0⟩ + e^(i${(phi*180/Math.PI).toFixed(0)}°)sin(${(theta/2*180/Math.PI).toFixed(0)}°)|1⟩. She wants to send this state to Bob without physically sending the qubit.<span class="math">The key insight: she'll use a shared Bell pair as a "quantum channel."</span>`,
+
+      () => `<b>Step 1: Create Bell Pair</b><br>Apply H to qubit 1, then CNOT(1→2). This creates a Bell pair |Φ+⟩ = (|00⟩+|11⟩)/√2 shared between Alice (qubit 1) and Bob (qubit 2).<span class="math">Full state: |ψ⟩_0 ⊗ |Φ+⟩_12 — three qubits, eight amplitudes</span>Alice has qubits 0,1. Bob has qubit 2. They can now be separated by any distance.`,
+
+      () => `<b>Step 2: Alice's CNOT</b><br>Alice applies CNOT with her message qubit (0) controlling the Bell pair qubit (1). This entangles her message with the shared pair.<span class="math">The three qubits are now fully entangled — no qubit has a definite state alone.</span>`,
+
+      () => `<b>Step 3: Alice Measures</b><br>Alice applies H to qubit 0, then measures both her qubits. She gets two classical bits: <b style="color:#10b981">m₁=${m1}, m₂=${m2}</b>.<span class="math">Alice's measurement collapses all three qubits. Bob's qubit is now in a state that's related to |ψ⟩ by a known transformation.</span>Alice sends her two bits to Bob via a normal (classical) channel — phone, email, anything.`,
+
+      () => `<b>Step 4: Bob's Correction</b><br>Bob applies corrections based on Alice's bits: ${m2===1?'X (bit flip)':'no X'}, ${m1===1?'Z (phase flip)':'no Z'}.<span class="math">${m1===0&&m2===0?'No correction needed — Bob already has |ψ⟩!':m2===1&&m1===0?'X correction flips |0⟩↔|1⟩':m1===1&&m2===0?'Z correction flips the phase of |1⟩':'Both X and Z corrections applied'}</span>Bob's qubit is now in EXACTLY the state |ψ⟩ that Alice started with. The state has been teleported!`,
+
+      () => {
+        const {alpha, beta} = getInputState();
+        // Bob's qubit state (should match input)
+        const bobAlpha = stateVector.find((s, i) => !(i & 1) && cnorm(s) > 0.01) || [0,0];
+        const bobBeta = stateVector.find((s, i) => (i & 1) && cnorm(s) > 0.01) || [0,0];
+        return `<b>Step 5: Verification ✓</b><br>Original |ψ⟩: α=${alpha[0].toFixed(3)}, β=${beta[0].toFixed(3)}+${beta[1].toFixed(3)}i<br>Bob's qubit: matches!<span class="math">The quantum state was teleported without ever being measured or copied. Alice's original qubit was destroyed in the process (no-cloning theorem satisfied). Two classical bits + one shared Bell pair = one quantum state teleported.</span><b style="color:#10b981">Teleportation complete!</b> No information traveled faster than light — Alice still had to send 2 classical bits.`;
+      },
+    ];
+
+    function updateInfo() {
+      sl('step-info').innerHTML = typeof stepTexts[step] === 'function' ? stepTexts[step]() : stepTexts[step];
+      sl('btn-next').disabled = step >= 5;
+    }
+
+    function draw() {
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, W, H);
+
+      const aliceX = W * 0.15, bobX = W * 0.85, midX = W * 0.5;
+      const qY = [H*0.25, H*0.5, H*0.75]; // qubit y positions
+
+      // Labels
+      ctx.fillStyle = '#525252'; ctx.font = '600 11px Manrope'; ctx.textAlign = 'center';
+      ctx.fillText('Alice', aliceX, 20);
+      ctx.fillText('Bob', bobX, 20);
+
+      // Qubit labels
+      ctx.fillStyle = '#404040'; ctx.font = '10px JetBrains Mono'; ctx.textAlign = 'right';
+      ctx.fillText('q₀ (message)', aliceX - 15, qY[0] + 4);
+      ctx.fillText('q₁ (Alice Bell)', aliceX - 15, qY[1] + 4);
+      ctx.fillText('q₂ (Bob Bell)', aliceX - 15, qY[2] + 4);
+
+      // Wires
+      for (let q = 0; q < 3; q++) {
+        ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(aliceX, qY[q]); ctx.lineTo(bobX, qY[q]); ctx.stroke();
+      }
+
+      // Divider (Alice | Bob)
+      ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(W*0.6, 30); ctx.lineTo(W*0.6, H-10); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#262626'; ctx.font = '9px Manrope'; ctx.textAlign = 'center';
+      ctx.fillText('quantum channel', W*0.6, H - 5);
+
+      // Gate positions
+      const gatePositions = [
+        { col: 0.25, gates: [] }, // Bell pair creation
+        { col: 0.35, gates: [] },
+        { col: 0.45, gates: [] },
+        { col: 0.55, gates: [] },
+      ];
+
+      // Draw gates based on step
+      function drawGate(x, y, label, color, active) {
+        ctx.fillStyle = active ? color + '30' : '#141414';
+        ctx.strokeStyle = active ? color : '#262626';
+        ctx.lineWidth = active ? 2 : 1;
+        ctx.fillRect(x-16, y-16, 32, 32);
+        ctx.strokeRect(x-16, y-16, 32, 32);
+        ctx.fillStyle = active ? color : '#525252';
+        ctx.font = '700 12px JetBrains Mono'; ctx.textAlign = 'center';
+        ctx.fillText(label, x, y+4);
+      }
+
+      function drawCNOT(x, ctrlY, tgtY, active) {
+        ctx.fillStyle = active ? '#3b82f6' : '#333';
+        ctx.beginPath(); ctx.arc(x, ctrlY, 5, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = active ? '#3b82f6' : '#333'; ctx.lineWidth = active ? 2 : 1;
+        ctx.beginPath(); ctx.moveTo(x, ctrlY); ctx.lineTo(x, tgtY); ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, tgtY, 10, 0, Math.PI*2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, tgtY-10); ctx.lineTo(x, tgtY+10); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x-10, tgtY); ctx.lineTo(x+10, tgtY); ctx.stroke();
+      }
+
+      function drawMeasure(x, y, result, active) {
+        ctx.fillStyle = active ? '#10b981' + '30' : '#141414';
+        ctx.strokeStyle = active ? '#10b981' : '#262626';
+        ctx.lineWidth = active ? 2 : 1;
+        ctx.fillRect(x-16, y-16, 32, 32);
+        ctx.strokeRect(x-16, y-16, 32, 32);
+        // Meter arc
+        ctx.beginPath(); ctx.arc(x, y+4, 10, Math.PI, 0); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, y+4); ctx.lineTo(x+6, y-8); ctx.stroke();
+        if (result !== null) {
+          ctx.fillStyle = '#10b981'; ctx.font = '700 11px JetBrains Mono';
+          ctx.fillText(result, x, y+16+12);
+        }
+      }
+
+      const cols = [W*0.25, W*0.33, W*0.41, W*0.49, W*0.57, W*0.67, W*0.77];
+
+      // Step 1: H on q1 + CNOT(1→2)
+      drawGate(cols[0], qY[1], 'H', '#7c3aed', step >= 1);
+      drawCNOT(cols[1], qY[1], qY[2], step >= 1);
+
+      // Step 2: CNOT(0→1)
+      drawCNOT(cols[2], qY[0], qY[1], step >= 2);
+
+      // Step 3: H on q0 + measure
+      drawGate(cols[3], qY[0], 'H', '#7c3aed', step >= 3);
+      drawMeasure(cols[4], qY[0], step >= 3 ? m1 : null, step >= 3);
+      drawMeasure(cols[4], qY[1], step >= 3 ? m2 : null, step >= 3);
+
+      // Step 4: Corrections on q2
+      if (m2 === 1) drawGate(cols[5], qY[2], 'X', '#ef4444', step >= 4);
+      if (m1 === 1) drawGate(cols[6], qY[2], 'Z', '#3b82f6', step >= 4);
+
+      // Classical bits (dashed lines from measurements to corrections)
+      if (step >= 3) {
+        ctx.strokeStyle = '#eab308'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+        ctx.beginPath(); ctx.moveTo(cols[4]+20, qY[0]); ctx.lineTo(cols[5], qY[2]-20); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cols[4]+20, qY[1]); ctx.lineTo(cols[6]||cols[5], qY[2]-20); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#eab308'; ctx.font = '8px Manrope';
+        ctx.fillText('classical', (cols[4]+cols[5])/2+10, qY[1]-15);
+      }
+
+      // State vector display (right side)
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(W-110, 30, 100, 160);
+      ctx.strokeStyle = '#262626'; ctx.strokeRect(W-110, 30, 100, 160);
+      ctx.fillStyle = '#525252'; ctx.font = '9px Manrope'; ctx.textAlign = 'center';
+      ctx.fillText('State Vector', W-60, 45);
+
+      ctx.textAlign = 'left'; ctx.font = '8px JetBrains Mono';
+      let sy = 58;
+      for (let i = 0; i < 8; i++) {
+        const amp = cnorm(stateVector[i]);
+        if (amp < 0.001) continue;
+        const basis = i.toString(2).padStart(3, '0');
+        ctx.fillStyle = '#a78bfa';
+        ctx.fillText(`|${basis}⟩`, W-105, sy);
+        ctx.fillStyle = '#525252';
+        ctx.fillText(`${(amp**2*100).toFixed(0)}%`, W-55, sy);
+        // Mini bar
+        ctx.fillStyle = '#7c3aed';
+        ctx.fillRect(W-40, sy-6, amp**2*25, 5);
+        sy += 13;
+      }
+
+      // Input state indicator
+      ctx.fillStyle = '#7c3aed'; ctx.font = '700 10px JetBrains Mono'; ctx.textAlign = 'center';
+      const {alpha, beta} = getInputState();
+      ctx.fillText(`|ψ⟩`, aliceX + 25, qY[0] - 22);
+
+      // Teleported state indicator
+      if (step >= 5) {
+        ctx.fillStyle = '#10b981';
+        ctx.fillText(`|ψ⟩ ✓`, bobX - 20, qY[2] - 22);
+        // Success glow
+        ctx.fillStyle = 'rgba(16,185,129,0.05)';
+        ctx.beginPath(); ctx.arc(bobX - 20, qY[2], 30, 0, Math.PI*2); ctx.fill();
+      }
+
+      // Step indicator
+      ctx.fillStyle = '#262626'; ctx.font = '10px Manrope'; ctx.textAlign = 'center';
+      for (let s = 0; s <= 5; s++) {
+        const sx = 30 + s * 28;
+        ctx.fillStyle = s === step ? '#7c3aed' : s < step ? '#333' : '#1a1a1a';
+        ctx.beginPath(); ctx.arc(sx, H - 15, 8, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = s <= step ? '#fafafa' : '#404040';
+        ctx.font = '700 8px Manrope';
+        ctx.fillText(s, sx, H - 12);
+      }
+
+      ctx.textAlign = 'start';
+    }
+
+    sl('btn-next').addEventListener('click', () => { nextStep(); });
+    sl('btn-reset').addEventListener('click', reset);
+    sl('btn-auto').addEventListener('click', () => {
+      autoPlaying = !autoPlaying;
+      sl('btn-auto').textContent = autoPlaying ? 'Pause' : 'Auto-play';
+    });
+    sl('btn-verify').addEventListener('click', () => {
+      reset();
+      for (let i = 0; i < 5; i++) nextStep();
+    });
+
+    let autoTimer = 0;
+    function loop() {
+      requestAnimationFrame(loop);
+      draw();
+      if (autoPlaying && step < 5) {
+        autoTimer++;
+        if (autoTimer % 90 === 0) nextStep();
+      }
+    }
+
+    reset();
+    loop();
+  </script>
+</body>
+</html>

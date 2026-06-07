@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Hardware — Quantum Computing Institute</title>
+  <meta name="description" content="Complete guide to quantum computing hardware: superconducting, trapped ion, photonic, neutral atom, and topological approaches. Access and pricing.">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--accent:#7c3aed;--paper:#0a0a0a;--ink:#fafafa;--muted:#737373;--panel:#141414;--line:#262626}
+    body{font-family:'Manrope',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
+    .container{max-width:900px;margin:0 auto;padding:0 1.5rem}
+    a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+    header{border-bottom:1px solid var(--line);padding:.75rem 0}
+    header .container{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--ink)}
+    .brand-emoji{font-size:1.5rem}
+    .brand-text{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:700}
+    .brand-tag{font-size:.68rem;color:var(--muted)}
+    nav{display:flex;gap:1rem;font-size:.82rem;font-weight:600;margin-left:auto;flex-wrap:wrap}
+    nav a{color:var(--muted)}nav a:hover{color:var(--ink)}nav a.active{color:var(--accent)}
+    .hero{text-align:center;padding:2.5rem 0 1.5rem;border-bottom:1px solid var(--line)}
+    .hero h1{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:700;margin-bottom:.5rem}
+    .hero h1 em{color:var(--accent);font-style:normal}
+    .hero p{color:var(--muted);max-width:600px;margin:0 auto;font-size:.95rem}
+    .toc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:1rem 1.25rem;margin:1.5rem 0}
+    .toc h3{font-size:.85rem;font-weight:700;margin-bottom:.5rem;color:var(--accent)}
+    .toc ul{list-style:none;padding:0;columns:2}
+    .toc li{margin:.2rem 0}.toc a{color:#a3a3a3;font-size:.82rem}.toc a:hover{color:var(--ink)}
+    .section{margin-bottom:2rem;padding-top:1rem}
+    .section h2{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:700;margin-bottom:.5rem;padding-bottom:.35rem;border-bottom:1px solid var(--line)}
+    .section h3{font-size:.95rem;font-weight:700;margin:1rem 0 .35rem;color:#e5e5e5}
+    .section p,.section li{color:#a3a3a3;font-size:.88rem}
+    ul{padding-left:1.25rem;margin:.35rem 0}
+    li{margin-bottom:.3rem}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.6rem;margin:.5rem 0}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:.85rem;transition:border-color .15s}
+    .card:hover{border-color:var(--accent)}
+    .card h4{font-size:.85rem;font-weight:700;margin-bottom:.2rem}
+    .card h4 a{color:var(--ink)}.card p{font-size:.75rem;color:var(--muted);margin:0;line-height:1.5}
+    .card .meta{font-size:.65rem;color:#525252;margin-top:.25rem}
+    footer{border-top:1px solid var(--line);padding:1.5rem 0;text-align:center;font-size:.75rem;color:#525252}
+    .math{font-family:'Courier New',monospace;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:.75rem 1rem;margin:.5rem 0;font-size:.85rem;color:#e5e5e5;overflow-x:auto;white-space:pre-wrap}
+    .math-inline{font-family:'Courier New',monospace;color:#e5e5e5;background:var(--panel);padding:.1rem .35rem;border-radius:3px;font-size:.84rem}
+    table{width:100%;border-collapse:collapse;margin:.5rem 0;font-size:.82rem}
+    th{text-align:left;padding:.5rem .6rem;background:var(--panel);border:1px solid var(--line);color:var(--accent);font-weight:700;font-size:.78rem}
+    td{padding:.5rem .6rem;border:1px solid var(--line);color:#a3a3a3}
+    tr:hover td{background:var(--panel)}
+    .note{background:#1a1625;border-left:3px solid var(--accent);padding:.6rem .85rem;margin:.5rem 0;border-radius:0 6px 6px 0;font-size:.82rem;color:#c4b5fd}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="/institute/" class="brand">
+        <span class="brand-emoji">&#9883;&#65039;</span>
+        <span><span class="brand-text">Quantum Institute</span><br><span class="brand-tag"></span></span>
+      </a>
+      <nav>
+        <a href="/institute/">Overview</a>
+        <a href="/institute/qubits.html">Qubits</a>
+        <a href="/institute/gates.html">Gates</a>
+        <a href="/institute/algorithms.html">Algorithms</a>
+        <a href="/institute/hardware.html" class="active">Hardware</a>
+        <a href="/institute/error-correction.html">QEC</a>
+        <a href="/">Simulations</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="hero">
+      <h1>Quantum <em>Hardware</em> Guide</h1>
+      <p>How quantum computers actually work. Every major platform, their trade-offs, how to access real hardware, and what it costs.</p>
+    </section>
+
+    <nav class="toc">
+      <h3>Contents</h3>
+      <ul>
+        <li><a href="#superconducting">Superconducting Qubits</a></li>
+        <li><a href="#trapped-ion">Trapped Ions</a></li>
+        <li><a href="#photonic">Photonic</a></li>
+        <li><a href="#neutral-atom">Neutral Atoms</a></li>
+        <li><a href="#topological">Topological</a></li>
+        <li><a href="#comparison">Platform Comparison</a></li>
+        <li><a href="#access">Accessing Real Hardware</a></li>
+        <li><a href="#pricing">Pricing Comparison</a></li>
+      </ul>
+    </nav>
+
+    <!-- SUPERCONDUCTING -->
+    <section class="section" id="superconducting">
+      <h2>Superconducting Qubits</h2>
+      <p>The most mature quantum computing technology. Superconducting qubits use tiny circuits made of superconducting materials (aluminum on silicon) cooled to near absolute zero (~15 millikelvin). The key component is the <strong>Josephson junction</strong> — a thin insulating barrier between two superconductors that creates a non-linear oscillator whose lowest two energy levels encode |0&#10217; and |1&#10217;.</p>
+
+      <h3>How the transmon works</h3>
+      <p>The <strong>transmon</strong> (transmission-line shunted plasma oscillation qubit) is the dominant superconducting qubit design, introduced by Koch et al. at Yale in 2007. It is a charge qubit with a large shunting capacitor that exponentially suppresses charge noise sensitivity while maintaining sufficient anharmonicity to distinguish the 0&#8594;1 transition from the 1&#8594;2 transition.</p>
+      <div class="math">Energy levels: E_n &#8776; &#8463;&#969;_r(n + 1/2) - (E_C/12)(6n&#178; + 6n + 3)
+
+Qubit frequency: &#969;_01 &#8776; &#8730;(8E_J E_C) - E_C    (~4-6 GHz)
+Anharmonicity:   &#945; = &#969;_12 - &#969;_01 &#8776; -E_C     (~200-300 MHz)
+
+E_J = Josephson energy (set by junction area and critical current)
+E_C = charging energy (set by total capacitance)
+Transmon regime: E_J/E_C >> 1 (typically 50-100)</div>
+
+      <h3>Gate implementation</h3>
+      <ul>
+        <li><strong>Single-qubit gates:</strong> Resonant microwave pulses at the qubit frequency (~5 GHz). X and Y rotations from in-phase and quadrature drives. Z rotations are "virtual" (frame change, zero time). Gate time: ~20-30 ns.</li>
+        <li><strong>Two-qubit gates (cross-resonance):</strong> Drive one qubit at the frequency of its neighbor. The ZX interaction naturally produces a CNOT-like gate. Used by IBM. Gate time: ~300-500 ns.</li>
+        <li><strong>Two-qubit gates (tunable coupler):</strong> A third transmon between two data qubits mediates the interaction. Turning the coupler on/off gives fast CZ gates. Used by Google. Gate time: ~30 ns.</li>
+        <li><strong>Readout:</strong> Dispersive measurement — couple the qubit to a readout resonator. The qubit state shifts the resonator frequency, detected via microwave reflection. Time: ~500-1000 ns.</li>
+      </ul>
+
+      <h3>IBM Quantum roadmap</h3>
+      <table>
+        <tr><th>Processor</th><th>Year</th><th>Qubits</th><th>Architecture</th><th>Key advance</th></tr>
+        <tr><td>Falcon</td><td>2020</td><td>27</td><td>Heavy-hex</td><td>Error mitigation demonstrations</td></tr>
+        <tr><td>Eagle</td><td>2021</td><td>127</td><td>Heavy-hex</td><td>First >100 qubit processor</td></tr>
+        <tr><td>Osprey</td><td>2022</td><td>433</td><td>Heavy-hex</td><td>3-layer wiring, scalable packaging</td></tr>
+        <tr><td>Condor</td><td>2023</td><td>1,121</td><td>Heavy-hex</td><td>First >1000 qubit processor</td></tr>
+        <tr><td>Heron</td><td>2024</td><td>133</td><td>Heavy-hex</td><td>Tunable couplers, 2x better 2Q gates</td></tr>
+        <tr><td>Flamingo</td><td>2025</td><td>156+</td><td>Modular</td><td>Chip-to-chip quantum links</td></tr>
+        <tr><td>Starling</td><td>2025</td><td>200+</td><td>Modular</td><td>Error-corrected circuits</td></tr>
+      </table>
+
+      <h3>Google Quantum AI</h3>
+      <table>
+        <tr><th>Processor</th><th>Year</th><th>Qubits</th><th>Key achievement</th></tr>
+        <tr><td>Sycamore</td><td>2019</td><td>53 (of 54)</td><td>Quantum supremacy (random circuit sampling)</td></tr>
+        <tr><td>Sycamore+</td><td>2021-2023</td><td>53-72</td><td>QEC experiments, time crystals</td></tr>
+        <tr><td>Willow</td><td>2024</td><td>105</td><td>Below-threshold QEC: error rate decreases as code size grows</td></tr>
+      </table>
+
+      <h3>Strengths and weaknesses</h3>
+      <ul>
+        <li><strong>Strengths:</strong> Fast gates (ns), mature fabrication (semiconductor fabs), large qubit counts, strong industrial investment.</li>
+        <li><strong>Weaknesses:</strong> Short coherence times (&#956;s), requires dilution refrigerator (~$1-2M), fixed connectivity (nearest neighbor), frequency crowding at scale, leakage to non-computational levels.</li>
+      </ul>
+    </section>
+
+    <!-- TRAPPED IONS -->
+    <section class="section" id="trapped-ion">
+      <h2>Trapped Ion Qubits</h2>
+      <p>Trapped ions use individual atoms, stripped of one electron, confined in electromagnetic traps and manipulated with laser beams. This approach leverages decades of atomic physics and achieves the highest gate fidelities of any platform.</p>
+
+      <h3>How it works</h3>
+      <div class="math">Ion species:  Yb-171 (IonQ), Ba-137 (Quantinuum), Ca-40 (academic)
+
+Trapping: Radio-frequency Paul trap creates a 3D potential well.
+Ions form a linear crystal, spaced ~5 &#956;m apart, levitating in vacuum.
+Typical trap: 10-50 ions in a chain.
+
+Qubit encoding (Yb-171):
+  |0&#10217; = |F=0, m_F=0&#10217;   (hyperfine ground state)
+  |1&#10217; = |F=1, m_F=0&#10217;   (hyperfine ground state)
+  Splitting: 12.642812 GHz (microwave transition)
+  Both states are ground states &#8594; T1 is essentially infinite</div>
+
+      <h3>Gate implementation</h3>
+      <ul>
+        <li><strong>Single-qubit gates:</strong> Focused laser beams or microwave pulses drive rotations between |0&#10217; and |1&#10217;. Individual addressing via tightly focused beams or acousto-optic deflectors. Fidelity: 99.99% (Quantinuum). Gate time: ~1-10 &#956;s.</li>
+        <li><strong>Two-qubit gates (Molmer-Sorensen):</strong> Two laser beams with slightly different frequencies create a spin-dependent force that entangles ions via their shared motional modes (phonons). This naturally produces an XX interaction. All-to-all connectivity: any pair of ions can be entangled directly. Fidelity: 99.5-99.8%. Gate time: ~100-600 &#956;s.</li>
+        <li><strong>Readout:</strong> State-dependent fluorescence. Shine a laser resonant with a cycling transition from |1&#10217;. If the ion is in |1&#10217;, it scatters thousands of photons (bright). If in |0&#10217;, it stays dark. Detected with a CCD camera or PMT. Fidelity: 99.7%. Time: ~50-100 &#956;s.</li>
+      </ul>
+
+      <h3>IonQ approach</h3>
+      <ul>
+        <li><strong>Ytterbium-171 ions</strong> in a linear Paul trap.</li>
+        <li><strong>Raman gates:</strong> Two-photon stimulated Raman transitions for single-qubit gates, Molmer-Sorensen for two-qubit.</li>
+        <li><strong>Algorithmic qubits (AQ):</strong> IonQ's metric for useful qubits. AQ = log2(largest circuit that runs successfully). Aria: AQ 25. Forte: AQ 35.</li>
+        <li><strong>Scaling strategy:</strong> Photonic interconnects between trap modules. Each module: ~30-50 ions. Modules linked via entanglement swapping through optical fibers.</li>
+      </ul>
+
+      <h3>Quantinuum (Honeywell) approach</h3>
+      <ul>
+        <li><strong>Barium-137 ions</strong> in a QCCD (quantum charge-coupled device) architecture.</li>
+        <li><strong>Ion shuttling:</strong> Instead of all ions in one chain, ions are physically moved through a 2D trap network to interaction zones. This enables all-to-all connectivity with minimal crosstalk.</li>
+        <li><strong>H-Series processors:</strong> H1 (20 qubits), H2 (56 qubits). Highest quantum volume ever measured: 2&#185;&#8310; = 65,536 on H2 (2024).</li>
+        <li><strong>Advantage:</strong> Mid-circuit measurement and classical feed-forward. Ions can be measured and reused within a single circuit. Essential for quantum error correction.</li>
+      </ul>
+
+      <h3>Strengths and weaknesses</h3>
+      <ul>
+        <li><strong>Strengths:</strong> Highest gate fidelities, longest coherence times (seconds to minutes), all-to-all connectivity, identical qubits (nature provides them), mid-circuit measurement.</li>
+        <li><strong>Weaknesses:</strong> Slow gate speeds (&#956;s vs ns), complex laser systems, scaling beyond ~50-100 ions per trap requires modular architectures (still developing), heating from stray electric fields.</li>
+      </ul>
+    </section>
+
+    <!-- PHOTONIC -->
+    <section class="section" id="photonic">
+      <h2>Photonic Quantum Computing</h2>
+      <p>Photonic quantum computers encode information in properties of light — polarization, path, time-bin, or photon number. They operate at room temperature and naturally interface with fiber-optic networks.</p>
+
+      <h3>Encoding schemes</h3>
+      <table>
+        <tr><th>Encoding</th><th>|0&#10217;</th><th>|1&#10217;</th><th>Gates via</th><th>Used by</th></tr>
+        <tr><td>Polarization</td><td>Horizontal (H)</td><td>Vertical (V)</td><td>Wave plates, PBS</td><td>Academic labs</td></tr>
+        <tr><td>Dual-rail</td><td>Photon in mode A</td><td>Photon in mode B</td><td>Beam splitters, phase shifters</td><td>PsiQuantum</td></tr>
+        <tr><td>Time-bin</td><td>Early pulse</td><td>Late pulse</td><td>Interferometers</td><td>Time-bin QKD</td></tr>
+        <tr><td>Continuous variable</td><td>Squeezed vacuum</td><td>Displaced squeezed</td><td>Squeezing, displacement</td><td>Xanadu</td></tr>
+      </table>
+
+      <h3>Xanadu (continuous variable / photonic)</h3>
+      <ul>
+        <li><strong>Borealis processor:</strong> 216 squeezed-state modes in a time-multiplexed loop architecture. Demonstrated quantum advantage for Gaussian boson sampling (Nature, 2022).</li>
+        <li><strong>Architecture:</strong> Squeezed light sources + programmable interferometers + photon-number-resolving detectors.</li>
+        <li><strong>PennyLane:</strong> Xanadu's open-source quantum ML framework. Hardware-agnostic, supports all major backends.</li>
+        <li><strong>Strawberry Fields:</strong> Photonic quantum computing library for continuous-variable circuits.</li>
+      </ul>
+
+      <h3>PsiQuantum</h3>
+      <ul>
+        <li><strong>Strategy:</strong> Build a fault-tolerant, million-qubit photonic quantum computer from the start. No NISQ-era intermediate products.</li>
+        <li><strong>Manufacturing:</strong> Partnered with GlobalFoundries to fabricate photonic chips using standard CMOS processes. Silicon photonics enables mass production.</li>
+        <li><strong>Architecture:</strong> Fusion-based quantum computing (FBQC). Generate small entangled resource states, then "fuse" them together using linear optics and measurement.</li>
+        <li><strong>Funding:</strong> Over $700M raised. Multiple government contracts (US, Australia).</li>
+        <li><strong>Timeline:</strong> Targeting first fault-tolerant machine by ~2027-2029.</li>
+      </ul>
+
+      <h3>Challenges unique to photonic</h3>
+      <ul>
+        <li><strong>Photon loss:</strong> Photons get absorbed or scattered in waveguides, fibers, and detectors. Loss rates of 1-3% per component add up rapidly.</li>
+        <li><strong>Deterministic gates:</strong> Linear optics alone cannot create deterministic two-qubit gates (KLM theorem). Solutions: measurement-based / cluster-state approaches, or using non-linear optical effects (hard).</li>
+        <li><strong>Single-photon sources:</strong> On-demand, indistinguishable single-photon sources are still being perfected. Quantum dots in micropillar cavities achieve ~90-95% indistinguishability.</li>
+        <li><strong>Photon-number-resolving detectors:</strong> Required for many protocols. Transition-edge sensors (TES) work but are slow (~&#956;s) and require cryogenics.</li>
+      </ul>
+    </section>
+
+    <!-- NEUTRAL ATOMS -->
+    <section class="section" id="neutral-atom">
+      <h2>Neutral Atom Qubits</h2>
+      <p>Neutral atom quantum computers trap individual atoms (typically rubidium-87 or cesium-133) in arrays of tightly focused laser beams called <strong>optical tweezers</strong>. Two-qubit interactions use <strong>Rydberg excitation</strong>: briefly promoting an atom to a highly excited state where it has an enormous electron orbit, creating strong interactions with neighbors.</p>
+
+      <h3>How it works</h3>
+      <div class="math">Trapping: Individual atoms held in optical tweezer arrays.
+  Each tweezer: focused laser beam (~1 &#956;m waist)
+  Trap depth: ~1 mK
+  Array: reconfigurable 2D or 3D geometry (move atoms with AODs)
+
+Qubit encoding (Rb-87):
+  |0&#10217; = |5S_{1/2}, F=1, m_F=0&#10217;
+  |1&#10217; = |5S_{1/2}, F=2, m_F=0&#10217;
+  "Clock states" — first-order insensitive to magnetic field
+
+Rydberg interaction:
+  Excite to |r&#10217; = |nS&#10217; or |nD&#10217;, n ~ 60-100
+  Atom radius ~ n&#178; a_0 ~ 0.5 &#956;m (huge!)
+  Van der Waals interaction: V(R) = C_6/R&#8310;
+  Blockade radius: R_b ~ 5-10 &#956;m</div>
+
+      <h3>Rydberg blockade gates</h3>
+      <ul>
+        <li><strong>Mechanism:</strong> When two atoms are within the blockade radius, at most one can be excited to the Rydberg state. This conditional dynamics creates a controlled-phase (CZ) gate.</li>
+        <li><strong>Gate protocol:</strong> Three laser pulses — (1) &#960; pulse on control, (2) 2&#960; pulse on target (blocked if control is in |r&#10217;), (3) &#960; pulse on control. Net effect: CZ gate in ~1 &#956;s.</li>
+        <li><strong>Gate fidelity:</strong> 99.0-99.5% demonstrated (2024). Improving rapidly with better laser control and atom cooling.</li>
+      </ul>
+
+      <h3>Key players</h3>
+      <table>
+        <tr><th>Company</th><th>Atoms</th><th>Max qubits</th><th>Approach</th><th>Access</th></tr>
+        <tr><td>QuEra</td><td>Rb-87</td><td>256 (Aquila)</td><td>Analog + digital</td><td>AWS Braket</td></tr>
+        <tr><td>Pasqal</td><td>Rb-87</td><td>200+</td><td>Analog simulation</td><td>Azure Quantum</td></tr>
+        <tr><td>Atom Computing</td><td>Sr-88</td><td>1,225</td><td>Nuclear spin qubit (long T2)</td><td>Private beta</td></tr>
+        <tr><td>Harvard/MIT (Lukin group)</td><td>Rb-87</td><td>280</td><td>Research (error correction)</td><td>Academic</td></tr>
+      </table>
+
+      <h3>Major milestone: 48 logical qubits (Harvard/MIT, 2023)</h3>
+      <p>In December 2023, the Lukin group at Harvard demonstrated quantum error correction with 48 logical qubits on a 280-atom system (<a href="https://www.nature.com/articles/s41586-023-06927-3">Nature, 2023</a>). This was the first demonstration of entangled logical qubits performing error-corrected operations. They used a transversal CNOT gate between logical qubits encoded in color codes and surface codes.</p>
+
+      <h3>Strengths and weaknesses</h3>
+      <ul>
+        <li><strong>Strengths:</strong> Reconfigurable geometry (move atoms to create any graph), scalable to 1000+ qubits, long coherence (seconds), identical qubits, naturally suited to quantum simulation.</li>
+        <li><strong>Weaknesses:</strong> Atom loss during computation (~0.5% per gate), slower gates than superconducting, Rydberg state lifetime limits gate count, loading traps is probabilistic (need sorting).</li>
+      </ul>
+    </section>
+
+    <!-- TOPOLOGICAL -->
+    <section class="section" id="topological">
+      <h2>Topological Qubits</h2>
+      <p>The topological approach, pursued primarily by Microsoft, encodes quantum information in the global topological properties of exotic quasiparticles. The promise: qubits that are inherently protected from local noise, dramatically reducing the overhead for error correction.</p>
+
+      <h3>The idea</h3>
+      <div class="math">Classical bit: stored in a local property (voltage, charge, spin)
+  &#8594; vulnerable to local noise
+
+Topological qubit: stored in non-local topological properties
+  &#8594; local perturbations cannot change the stored information
+  &#8594; error protection is built into the physics
+
+Analogy: A knot in a rope. You can shake the rope, heat it,
+stretch it — the knot doesn't change unless you cut the rope.
+Topology is robust to continuous deformations.</div>
+
+      <h3>Majorana zero modes</h3>
+      <p>Microsoft's approach uses <strong>Majorana zero modes (MZMs)</strong> — exotic quasiparticles that are their own antiparticles. They appear at the ends of one-dimensional topological superconductors.</p>
+      <ul>
+        <li><strong>Material system:</strong> Semiconductor nanowire (InAs or InSb) coupled to a superconductor (Al), in a magnetic field. The combination creates a 1D topological superconductor with Majorana modes at each end.</li>
+        <li><strong>Qubit encoding:</strong> A pair of Majorana modes encodes one qubit. The quantum information is stored non-locally between the two endpoints — no single measurement at one end can determine the qubit state.</li>
+        <li><strong>Gates:</strong> "Braiding" — physically exchanging Majorana modes around each other. The qubit state changes depending on the topological class of the exchange path, not its details.</li>
+      </ul>
+
+      <h3>Microsoft's progress</h3>
+      <table>
+        <tr><th>Year</th><th>Milestone</th></tr>
+        <tr><td>2012</td><td>First signatures of Majorana modes in nanowires (Delft, with Microsoft support)</td></tr>
+        <tr><td>2018</td><td>Retracted Nature paper on quantized conductance (data quality issues)</td></tr>
+        <tr><td>2022</td><td>Published new experimental protocol with "topological gap protocol" for verifying MZMs</td></tr>
+        <tr><td>2025 (Feb)</td><td>Announced first "topoconductor" device demonstrating a topological qubit. Peer-reviewed in Physical Review B. Showed topological gap and stability.</td></tr>
+        <tr><td>2025+</td><td>Roadmap to multi-qubit topological processor and integration with Azure Quantum</td></tr>
+      </table>
+
+      <h3>Strengths and weaknesses</h3>
+      <ul>
+        <li><strong>Strengths:</strong> Hardware-level error protection (could reduce QEC overhead by 1000x), potentially very high-fidelity gates, scalable manufacturing (semiconductor fab).</li>
+        <li><strong>Weaknesses:</strong> Least mature technology (no multi-qubit processor yet), existence of usable Majorana qubits only recently demonstrated, braiding alone gives only Clifford gates (need "magic state injection" for universality), requires cryogenic temperatures.</li>
+      </ul>
+    </section>
+
+    <!-- COMPARISON TABLE -->
+    <section class="section" id="comparison">
+      <h2>Platform Comparison</h2>
+      <table>
+        <tr>
+          <th>Property</th>
+          <th>Superconducting</th>
+          <th>Trapped ion</th>
+          <th>Photonic</th>
+          <th>Neutral atom</th>
+          <th>Topological</th>
+        </tr>
+        <tr>
+          <td><strong>1Q gate fidelity</strong></td>
+          <td>99.9%</td>
+          <td>99.99%</td>
+          <td>99%+</td>
+          <td>99.5%</td>
+          <td>TBD</td>
+        </tr>
+        <tr>
+          <td><strong>2Q gate fidelity</strong></td>
+          <td>99.0-99.5%</td>
+          <td>99.5-99.8%</td>
+          <td>~95% (prob.)</td>
+          <td>99.0-99.5%</td>
+          <td>TBD</td>
+        </tr>
+        <tr>
+          <td><strong>1Q gate time</strong></td>
+          <td>~25 ns</td>
+          <td>~5 &#956;s</td>
+          <td>~ps (passive)</td>
+          <td>~1 &#956;s</td>
+          <td>TBD</td>
+        </tr>
+        <tr>
+          <td><strong>2Q gate time</strong></td>
+          <td>~30-500 ns</td>
+          <td>~200-600 &#956;s</td>
+          <td>~ns (prob.)</td>
+          <td>~1 &#956;s</td>
+          <td>TBD</td>
+        </tr>
+        <tr>
+          <td><strong>T1</strong></td>
+          <td>100-300 &#956;s</td>
+          <td>~10 s</td>
+          <td>N/A</td>
+          <td>~1 s</td>
+          <td>TBD (topological)</td>
+        </tr>
+        <tr>
+          <td><strong>T2</strong></td>
+          <td>50-200 &#956;s</td>
+          <td>~1 s</td>
+          <td>N/A</td>
+          <td>~1 s</td>
+          <td>TBD (topological)</td>
+        </tr>
+        <tr>
+          <td><strong>Max qubits (2024)</strong></td>
+          <td>1,121 (IBM)</td>
+          <td>56 (Quantinuum)</td>
+          <td>216 modes (Xanadu)</td>
+          <td>1,225 (Atom Computing)</td>
+          <td>1 (Microsoft)</td>
+        </tr>
+        <tr>
+          <td><strong>Connectivity</strong></td>
+          <td>Nearest neighbor</td>
+          <td>All-to-all</td>
+          <td>Programmable</td>
+          <td>Reconfigurable</td>
+          <td>TBD</td>
+        </tr>
+        <tr>
+          <td><strong>Operating temp</strong></td>
+          <td>~15 mK</td>
+          <td>Room temp (UHV)</td>
+          <td>Room temp</td>
+          <td>~10 &#956;K atoms</td>
+          <td>~20 mK</td>
+        </tr>
+        <tr>
+          <td><strong>Key player</strong></td>
+          <td>IBM, Google</td>
+          <td>Quantinuum, IonQ</td>
+          <td>Xanadu, PsiQuantum</td>
+          <td>QuEra, Pasqal</td>
+          <td>Microsoft</td>
+        </tr>
+      </table>
+    </section>
+
+    <!-- ACCESSING REAL HARDWARE -->
+    <section class="section" id="access">
+      <h2>How to Access Real Quantum Hardware</h2>
+
+      <h3>IBM Quantum</h3>
+      <div class="card" style="margin:.5rem 0">
+        <h4><a href="https://quantum.ibm.com">quantum.ibm.com</a></h4>
+        <p>Free tier includes access to 127-qubit Eagle and 133-qubit Heron processors. Sign up with IBMid. Use Qiskit Runtime for optimized job execution. Premium plans for priority queue and dedicated systems.</p>
+        <div class="meta">Superconducting | Free tier | Qiskit SDK (Python)</div>
+      </div>
+
+      <h3>AWS Braket</h3>
+      <div class="card" style="margin:.5rem 0">
+        <h4><a href="https://aws.amazon.com/braket/">aws.amazon.com/braket</a></h4>
+        <p>Unified access to IonQ (trapped ion), Rigetti (superconducting), and QuEra (neutral atom) hardware. Also includes state vector and density matrix simulators. Pay per task/shot.</p>
+        <div class="meta">Multi-platform | Pay-per-use | Python SDK</div>
+      </div>
+
+      <h3>Azure Quantum</h3>
+      <div class="card" style="margin:.5rem 0">
+        <h4><a href="https://azure.microsoft.com/en-us/products/quantum">azure.microsoft.com/quantum</a></h4>
+        <p>Access to Quantinuum (trapped ion), IonQ (trapped ion), Pasqal (neutral atom), and Rigetti (superconducting). Free Azure Quantum credits for new accounts ($500). Q# language support.</p>
+        <div class="meta">Multi-platform | Free credits | Q# / Python</div>
+      </div>
+
+      <h3>Google Quantum AI</h3>
+      <div class="card" style="margin:.5rem 0">
+        <h4><a href="https://quantumai.google">quantumai.google</a></h4>
+        <p>Access to Google's processors via research partnerships. Not generally available to the public. Use Cirq framework. Some experiments available through Google Colab notebooks.</p>
+        <div class="meta">Superconducting | Research access | Cirq (Python)</div>
+      </div>
+
+      <h3>Xanadu Cloud</h3>
+      <div class="card" style="margin:.5rem 0">
+        <h4><a href="https://cloud.xanadu.ai">cloud.xanadu.ai</a></h4>
+        <p>Access to Borealis photonic processor. Free tier available. Use Strawberry Fields (photonic) or PennyLane (general) frameworks.</p>
+        <div class="meta">Photonic | Free tier | Python (PennyLane)</div>
+      </div>
+
+      <h3>Quick-start comparison</h3>
+      <table>
+        <tr><th>Provider</th><th>Free tier</th><th>Easiest to start</th><th>Best hardware</th></tr>
+        <tr><td>IBM Quantum</td><td>Yes (10 min/month on Heron)</td><td>Yes (browser IDE + Jupyter)</td><td>127-1121 qubit superconducting</td></tr>
+        <tr><td>AWS Braket</td><td>$1 free sim credit</td><td>Moderate (need AWS account)</td><td>IonQ, Rigetti, QuEra</td></tr>
+        <tr><td>Azure Quantum</td><td>$500 credit (new accounts)</td><td>Moderate (Azure account)</td><td>Quantinuum H2 (highest QV)</td></tr>
+        <tr><td>Xanadu Cloud</td><td>Yes</td><td>Yes (PennyLane)</td><td>Borealis (photonic)</td></tr>
+      </table>
+    </section>
+
+    <!-- PRICING -->
+    <section class="section" id="pricing">
+      <h2>Pricing Comparison</h2>
+      <p>Quantum hardware pricing is typically per-shot (one circuit execution) or per-task (one job submission). Prices vary dramatically between providers and hardware types.</p>
+
+      <h3>IBM Quantum</h3>
+      <table>
+        <tr><th>Plan</th><th>Price</th><th>Includes</th></tr>
+        <tr><td>Open (free)</td><td>$0</td><td>10 min/month on Heron, unlimited simulator</td></tr>
+        <tr><td>Pay-as-you-go</td><td>$1.60/second</td><td>Runtime seconds on Heron/Eagle</td></tr>
+        <tr><td>Premium</td><td>Custom (enterprise)</td><td>Dedicated systems, priority queue, SLA</td></tr>
+      </table>
+
+      <h3>AWS Braket</h3>
+      <table>
+        <tr><th>Hardware</th><th>Per-task fee</th><th>Per-shot fee</th><th>Example: 1000 shots</th></tr>
+        <tr><td>IonQ Aria</td><td>$0.30</td><td>$0.03</td><td>$30.30</td></tr>
+        <tr><td>IonQ Forte</td><td>$0.30</td><td>$0.045</td><td>$45.30</td></tr>
+        <tr><td>Rigetti Ankaa-2</td><td>$0.30</td><td>$0.00035</td><td>$0.65</td></tr>
+        <tr><td>QuEra Aquila</td><td>$0.30</td><td>$0.01</td><td>$10.30</td></tr>
+        <tr><td>SV1 simulator</td><td>$0.00</td><td>$0.075/min</td><td>~$0.15</td></tr>
+      </table>
+
+      <h3>Azure Quantum</h3>
+      <table>
+        <tr><th>Hardware</th><th>Pricing model</th><th>Approximate cost</th></tr>
+        <tr><td>Quantinuum H1 (20q)</td><td>Per H1 Quantum Credit (HQC)</td><td>~$50-100 per simple circuit</td></tr>
+        <tr><td>Quantinuum H2 (56q)</td><td>Per HQC</td><td>~$75-200 per simple circuit</td></tr>
+        <tr><td>IonQ Aria</td><td>Per single- and multi-qubit gate</td><td>~$20-50 per circuit</td></tr>
+        <tr><td>Rigetti</td><td>Per shot</td><td>~$0.50-1 per 1000 shots</td></tr>
+      </table>
+
+      <div class="note">Trapped ion hardware is 50-100x more expensive per circuit than superconducting, reflecting the higher gate fidelity and all-to-all connectivity. For learning and prototyping, use simulators (free) or IBM's free tier. For production experiments, superconducting hardware (Rigetti, IBM) offers the best price-per-shot. For highest-quality results on small circuits, Quantinuum H2 is unmatched.</div>
+
+      <h3>Cost optimization tips</h3>
+      <ul>
+        <li><strong>Simulate first:</strong> Use Qiskit Aer, Cirq simulator, or PennyLane default.qubit before running on real hardware. Simulators are free or very cheap.</li>
+        <li><strong>Minimize shots:</strong> Use shot-adaptive methods. For VQE, you often need fewer shots than you think in early optimization iterations.</li>
+        <li><strong>Batch circuits:</strong> AWS Braket per-task fee means it is cheaper to submit many circuits in one batch rather than one at a time.</li>
+        <li><strong>Use Qiskit Runtime:</strong> IBM's runtime sessions keep your job near the QPU, reducing queue time and enabling iterative algorithms without re-queuing.</li>
+        <li><strong>Academic programs:</strong> IBM Quantum Network, AWS Quantum Research Credits, and Microsoft Azure credits all offer substantial free allocations for academic research.</li>
+      </ul>
+    </section>
+  </div>
+
+  <footer>
+    <div class="container">
+      <a href="/">FreeQuantumStore</a> · <a href="/institute/">Institute</a> · Built with <a href="https://zensical.org">Zensical</a>
+    </div>
+  </footer>
+</body>
+</html>

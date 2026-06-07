@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Error Correction — Quantum Computing Institute</title>
+  <meta name="description" content="Quantum error correction: why it's needed, stabilizer codes, surface codes, logical qubits, and the path to fault-tolerant quantum computing.">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--accent:#7c3aed;--paper:#0a0a0a;--ink:#fafafa;--muted:#737373;--panel:#141414;--line:#262626}
+    body{font-family:'Manrope',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
+    .container{max-width:900px;margin:0 auto;padding:0 1.5rem}
+    a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+    header{border-bottom:1px solid var(--line);padding:.75rem 0}
+    header .container{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--ink)}
+    .brand-emoji{font-size:1.5rem}
+    .brand-text{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:700}
+    .brand-tag{font-size:.68rem;color:var(--muted)}
+    nav{display:flex;gap:1rem;font-size:.82rem;font-weight:600;margin-left:auto;flex-wrap:wrap}
+    nav a{color:var(--muted)}nav a:hover{color:var(--ink)}nav a.active{color:var(--accent)}
+    .hero{text-align:center;padding:2.5rem 0 1.5rem;border-bottom:1px solid var(--line)}
+    .hero h1{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:700;margin-bottom:.5rem}
+    .hero h1 em{color:var(--accent);font-style:normal}
+    .hero p{color:var(--muted);max-width:600px;margin:0 auto;font-size:.95rem}
+    .toc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:1rem 1.25rem;margin:1.5rem 0}
+    .toc h3{font-size:.85rem;font-weight:700;margin-bottom:.5rem;color:var(--accent)}
+    .toc ul{list-style:none;padding:0;columns:2}
+    .toc li{margin:.2rem 0}.toc a{color:#a3a3a3;font-size:.82rem}.toc a:hover{color:var(--ink)}
+    .section{margin-bottom:2rem;padding-top:1rem}
+    .section h2{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:700;margin-bottom:.5rem;padding-bottom:.35rem;border-bottom:1px solid var(--line)}
+    .section h3{font-size:.95rem;font-weight:700;margin:1rem 0 .35rem;color:#e5e5e5}
+    .section p,.section li{color:#a3a3a3;font-size:.88rem}
+    ul{padding-left:1.25rem;margin:.35rem 0}
+    li{margin-bottom:.3rem}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.6rem;margin:.5rem 0}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:.85rem;transition:border-color .15s}
+    .card:hover{border-color:var(--accent)}
+    .card h4{font-size:.85rem;font-weight:700;margin-bottom:.2rem}
+    .card h4 a{color:var(--ink)}.card p{font-size:.75rem;color:var(--muted);margin:0;line-height:1.5}
+    .card .meta{font-size:.65rem;color:#525252;margin-top:.25rem}
+    footer{border-top:1px solid var(--line);padding:1.5rem 0;text-align:center;font-size:.75rem;color:#525252}
+    .math{font-family:'Courier New',monospace;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:.75rem 1rem;margin:.5rem 0;font-size:.85rem;color:#e5e5e5;overflow-x:auto;white-space:pre-wrap}
+    .math-inline{font-family:'Courier New',monospace;color:#e5e5e5;background:var(--panel);padding:.1rem .35rem;border-radius:3px;font-size:.84rem}
+    table{width:100%;border-collapse:collapse;margin:.5rem 0;font-size:.82rem}
+    th{text-align:left;padding:.5rem .6rem;background:var(--panel);border:1px solid var(--line);color:var(--accent);font-weight:700;font-size:.78rem}
+    td{padding:.5rem .6rem;border:1px solid var(--line);color:#a3a3a3}
+    tr:hover td{background:var(--panel)}
+    .note{background:#1a1625;border-left:3px solid var(--accent);padding:.6rem .85rem;margin:.5rem 0;border-radius:0 6px 6px 0;font-size:.82rem;color:#c4b5fd}
+    .grid-diagram{display:grid;gap:2px;margin:1rem auto;width:fit-content}
+    .grid-cell{width:28px;height:28px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700}
+    .grid-cell.data{background:#1a1625;color:var(--accent);border-color:var(--accent)}
+    .grid-cell.ancilla-x{background:#162516;color:#4ade80;border-color:#4ade80}
+    .grid-cell.ancilla-z{background:#251616;color:#f87171;border-color:#f87171}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="/institute/" class="brand">
+        <span class="brand-emoji">&#9883;&#65039;</span>
+        <span><span class="brand-text">Quantum Institute</span><br><span class="brand-tag"></span></span>
+      </a>
+      <nav>
+        <a href="/institute/">Overview</a>
+        <a href="/institute/qubits.html">Qubits</a>
+        <a href="/institute/gates.html">Gates</a>
+        <a href="/institute/algorithms.html">Algorithms</a>
+        <a href="/institute/hardware.html">Hardware</a>
+        <a href="/institute/error-correction.html" class="active">QEC</a>
+        <a href="/">Simulations</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="hero">
+      <h1>Quantum <em>Error Correction</em></h1>
+      <p>The bridge between today's noisy qubits and tomorrow's fault-tolerant quantum computers. From bit-flip codes to surface codes and the path to useful quantum computing.</p>
+    </section>
+
+    <nav class="toc">
+      <h3>Contents</h3>
+      <ul>
+        <li><a href="#why">Why QEC Is Needed</a></li>
+        <li><a href="#classical-vs-quantum">Classical vs Quantum EC</a></li>
+        <li><a href="#bit-flip">Bit-Flip Code</a></li>
+        <li><a href="#phase-flip">Phase-Flip Code</a></li>
+        <li><a href="#shor-code">Shor 9-Qubit Code</a></li>
+        <li><a href="#stabilizer">Stabilizer Formalism</a></li>
+        <li><a href="#surface-codes">Surface Codes</a></li>
+        <li><a href="#logical-vs-physical">Logical vs Physical Qubits</a></li>
+        <li><a href="#current-state">Current State of QEC</a></li>
+        <li><a href="#timeline">Timeline to Fault Tolerance</a></li>
+      </ul>
+    </nav>
+
+    <!-- WHY QEC IS NEEDED -->
+    <section class="section" id="why">
+      <h2>Why Quantum Error Correction Is Needed</h2>
+      <p>Quantum computers are inherently noisy. Every gate, every measurement, every idle moment introduces errors. Without error correction, errors accumulate exponentially with circuit depth, limiting quantum computers to shallow, simple computations.</p>
+
+      <h3>The error budget problem</h3>
+      <div class="math">Typical error rates (2024):
+  Single-qubit gate: ~0.1% (1 in 1,000)
+  Two-qubit gate:    ~0.5% (1 in 200)
+  Measurement:       ~1%   (1 in 100)
+  Idle (per &#956;s):     ~0.01%
+
+For a useful algorithm like Shor's (RSA-2048):
+  ~10&#8312;-10&#185;&#8304; two-qubit gates needed
+  At 0.5% error rate: P(no errors) = (0.995)^(10&#8312;) &#8776; 0
+  The circuit would produce pure noise.
+
+Required logical error rate: &lt; 10&#8315;&#185;&#8304; per gate
+  &#8594; must reduce errors by factor of 10&#8312; from raw hardware
+  &#8594; this is what quantum error correction does</div>
+
+      <h3>Sources of error</h3>
+      <ul>
+        <li><strong>Decoherence (T1):</strong> Energy relaxation — the qubit spontaneously decays from |1&#10217; to |0&#10217; by emitting energy to the environment. Rate: 1/T1.</li>
+        <li><strong>Dephasing (T2):</strong> The relative phase between |0&#10217; and |1&#10217; randomizes due to fluctuating fields. Destroys superposition without changing populations.</li>
+        <li><strong>Gate errors:</strong> Imprecise control pulses cause over/under-rotation. Two-qubit gates suffer from residual coupling and crosstalk.</li>
+        <li><strong>Leakage:</strong> Population escapes the computational subspace (|0&#10217;, |1&#10217;) into higher energy levels (|2&#10217;, |3&#10217;). Particularly problematic for transmon qubits.</li>
+        <li><strong>Measurement errors:</strong> Misidentification of |0&#10217; as |1&#10217; or vice versa. Assignment errors of 0.5-3%.</li>
+        <li><strong>Crosstalk:</strong> Operations on one qubit unintentionally affect neighboring qubits. Grows worse with qubit density.</li>
+        <li><strong>Cosmic rays / TLS:</strong> High-energy particles and two-level system defects cause sporadic, correlated errors across multiple qubits.</li>
+      </ul>
+    </section>
+
+    <!-- CLASSICAL VS QUANTUM ERROR CORRECTION -->
+    <section class="section" id="classical-vs-quantum">
+      <h2>Classical vs Quantum Error Correction</h2>
+      <p>Classical error correction is well-understood and underlies all digital communication (DRAM, SSDs, fiber optics, 5G). Quantum error correction is fundamentally harder due to three constraints unique to quantum mechanics.</p>
+
+      <h3>Three quantum obstacles</h3>
+      <table>
+        <tr><th>Obstacle</th><th>Classical</th><th>Quantum</th></tr>
+        <tr><td><strong>No-cloning</strong></td><td>Copy bits freely for redundancy</td><td>Cannot copy unknown quantum states (no-cloning theorem). Must use entanglement instead of copying.</td></tr>
+        <tr><td><strong>Measurement destroys</strong></td><td>Read data non-destructively to detect errors</td><td>Measuring a qubit collapses its superposition. Must extract error information without learning the encoded data.</td></tr>
+        <tr><td><strong>Continuous errors</strong></td><td>Bit either flips or doesn't (discrete)</td><td>Errors are continuous rotations in Hilbert space. An infinite variety of errors can occur.</td></tr>
+      </table>
+
+      <h3>Key insight: syndrome measurement</h3>
+      <p>The solution to all three obstacles is <strong>syndrome measurement</strong>: measure <em>correlations between qubits</em> (parity checks) rather than individual qubits. This reveals error information (the "syndrome") without disturbing the encoded quantum information.</p>
+      <div class="math">Example: 3-qubit bit-flip code
+  Encode: |0&#10217; &#8594; |000&#10217;, |1&#10217; &#8594; |111&#10217;
+
+  Syndrome operators: Z&#8321;Z&#8322; and Z&#8322;Z&#8323;
+  These measure PARITY between adjacent qubits:
+    Z&#8321;Z&#8322; = +1 if qubits 1,2 agree, -1 if they differ
+    Z&#8322;Z&#8323; = +1 if qubits 2,3 agree, -1 if they differ
+
+  No error:    Z&#8321;Z&#8322; = +1, Z&#8322;Z&#8323; = +1  &#8594; syndrome (0,0)
+  Qubit 1 flip: Z&#8321;Z&#8322; = -1, Z&#8322;Z&#8323; = +1  &#8594; syndrome (1,0) &#8594; fix qubit 1
+  Qubit 2 flip: Z&#8321;Z&#8322; = -1, Z&#8322;Z&#8323; = -1  &#8594; syndrome (1,1) &#8594; fix qubit 2
+  Qubit 3 flip: Z&#8321;Z&#8322; = +1, Z&#8322;Z&#8323; = -1  &#8594; syndrome (0,1) &#8594; fix qubit 3
+
+  The syndrome tells us WHICH qubit flipped without revealing
+  WHETHER the encoded state is |000&#10217; or |111&#10217; (i.e., |0&#10217;_L or |1&#10217;_L).</div>
+
+      <h3>Digitization of errors</h3>
+      <p>A seemingly fatal problem: quantum errors are continuous. A qubit can be slightly rotated by any angle, not just flipped. The remarkable solution: <strong>any error can be decomposed into Pauli errors (I, X, Y, Z)</strong>, and syndrome measurement projects the error onto one of these discrete types. This "digitizes" continuous errors, making quantum error correction possible with finite resources.</p>
+      <div class="math">General single-qubit error: E = aI + bX + cY + dZ
+
+After syndrome measurement, the state collapses to
+one of: no error (I), bit-flip (X), phase-flip (Z), or both (Y).
+Each has a known correction. The continuous coefficients
+a, b, c, d determine the PROBABILITY of each discrete error,
+not an intermediate error that we can't fix.</div>
+    </section>
+
+    <!-- BIT-FLIP CODE -->
+    <section class="section" id="bit-flip">
+      <h2>Bit-Flip Code [[3,1,1]]</h2>
+      <p>The simplest quantum error-correcting code. It protects against single X (bit-flip) errors by encoding one logical qubit into three physical qubits using repetition.</p>
+
+      <h3>Encoding</h3>
+      <div class="math">|0&#10217;_L = |000&#10217;     |1&#10217;_L = |111&#10217;
+
+General state: &#945;|0&#10217;_L + &#946;|1&#10217;_L = &#945;|000&#10217; + &#946;|111&#10217;
+
+Encoding circuit: |&#968;&#10217;|00&#10217; &#8594; CNOT(1,2) &#8594; CNOT(1,3)
+  |&#968;&#10217; = &#945;|0&#10217; + &#946;|1&#10217;
+  After CNOT(1,2): &#945;|00&#10217; + &#946;|11&#10217; (on qubits 1,2)
+  After CNOT(1,3): &#945;|000&#10217; + &#946;|111&#10217; &#10003;</div>
+
+      <h3>Error detection and correction</h3>
+      <div class="math">Stabilizer generators: S&#8321; = Z&#8321;Z&#8322;, S&#8322; = Z&#8322;Z&#8323;
+
+Syndrome table:
+  Error | S&#8321;  S&#8322; | Correction
+  ------+--------+-----------
+  None  | +1  +1 | None
+  X&#8321;    | -1  +1 | Apply X&#8321;
+  X&#8322;    | -1  -1 | Apply X&#8322;
+  X&#8323;    | +1  -1 | Apply X&#8323;</div>
+
+      <h3>Limitations</h3>
+      <ul>
+        <li>Corrects only single bit-flip (X) errors. Cannot correct phase-flip (Z) errors.</li>
+        <li>Cannot correct two simultaneous bit-flips (distance d=1).</li>
+        <li>Not a practical code, but foundational for understanding QEC.</li>
+      </ul>
+    </section>
+
+    <!-- PHASE-FLIP CODE -->
+    <section class="section" id="phase-flip">
+      <h2>Phase-Flip Code [[3,1,1]]</h2>
+      <p>The phase-flip code protects against Z (phase-flip) errors. It is the Hadamard-conjugate of the bit-flip code: apply H to every qubit in the bit-flip code to get the phase-flip code.</p>
+
+      <h3>Encoding</h3>
+      <div class="math">|0&#10217;_L = |+++&#10217; = (|0&#10217;+|1&#10217;)&#8855;&#179;/2&#8730;2
+|1&#10217;_L = |---&#10217; = (|0&#10217;-|1&#10217;)&#8855;&#179;/2&#8730;2
+
+Stabilizer generators: S&#8321; = X&#8321;X&#8322;, S&#8322; = X&#8322;X&#8323;
+
+Syndrome measurement in the X basis:
+  Phase-flip on qubit k changes |+&#10217; &#8594; |-&#10217; on that qubit
+  X&#8321;X&#8322; and X&#8322;X&#8323; detect which qubit was affected</div>
+
+      <h3>Relationship to bit-flip code</h3>
+      <div class="math">Phase-flip code = H&#8855;&#179; (Bit-flip code) H&#8855;&#179;
+
+This duality is fundamental:
+  Bit-flip (X) errors in the Z-basis
+  = Phase-flip (Z) errors in the X-basis
+
+The Hadamard gate swaps the two error types.</div>
+    </section>
+
+    <!-- SHOR CODE -->
+    <section class="section" id="shor-code">
+      <h2>Shor's 9-Qubit Code [[9,1,3]]</h2>
+      <p>The first quantum error-correcting code, discovered by Peter Shor in 1995. It corrects any single-qubit error (X, Z, or Y) by concatenating the bit-flip and phase-flip codes.</p>
+
+      <h3>Construction: concatenation</h3>
+      <div class="math">Step 1: Encode against phase-flips (outer code)
+  |0&#10217;_L = (|000&#10217; + |111&#10217;)(|000&#10217; + |111&#10217;)(|000&#10217; + |111&#10217;) / 2&#8730;2
+  |1&#10217;_L = (|000&#10217; - |111&#10217;)(|000&#10217; - |111&#10217;)(|000&#10217; - |111&#10217;) / 2&#8730;2
+
+Each of the three "blocks" of 3 qubits is a phase-flip codeword.
+Within each block, the bit-flip code protects against X errors.
+
+Total: 9 physical qubits encode 1 logical qubit.
+
+Stabilizer generators (8 generators for 9 qubits):
+  Block 1: Z&#8321;Z&#8322;, Z&#8322;Z&#8323;           (bit-flip detection)
+  Block 2: Z&#8324;Z&#8325;, Z&#8325;Z&#8326;
+  Block 3: Z&#8327;Z&#8328;, Z&#8328;Z&#8329;
+  Between blocks: X&#8321;X&#8322;X&#8323;X&#8324;X&#8325;X&#8326;   (phase-flip detection)
+                   X&#8324;X&#8325;X&#8326;X&#8327;X&#8328;X&#8329;</div>
+
+      <h3>What it corrects</h3>
+      <ul>
+        <li>Any single X error (bit-flip on any one qubit)</li>
+        <li>Any single Z error (phase-flip on any one qubit)</li>
+        <li>Any single Y = iXZ error (combined bit-and-phase flip)</li>
+        <li>Any single arbitrary error (by the digitization principle: E = aI + bX + cY + dZ)</li>
+      </ul>
+
+      <h3>Code parameters: [[n, k, d]]</h3>
+      <div class="math">[[9, 1, 3]] means:
+  n = 9 physical qubits
+  k = 1 logical qubit
+  d = 3 distance (can correct &#8970;(d-1)/2&#8971; = 1 error)
+
+Encoding rate: k/n = 1/9 &#8776; 11%
+  (89% overhead for error correction)</div>
+
+      <div class="note">Shor's code is historically important but not practical. Its encoding rate is low (1:9) and it doesn't scale well. Modern codes like the surface code achieve much better performance with comparable or lower overhead per logical operation.</div>
+    </section>
+
+    <!-- STABILIZER FORMALISM -->
+    <section class="section" id="stabilizer">
+      <h2>Stabilizer Formalism</h2>
+      <p>The <strong>stabilizer formalism</strong> (Gottesman, 1997) is the mathematical framework underlying nearly all practical quantum error-correcting codes. It provides a compact way to describe code states, error detection, and correction using the Pauli group.</p>
+
+      <h3>Key concepts</h3>
+      <div class="math">Pauli group on n qubits: G_n = {&#177;1, &#177;i} &#215; {I, X, Y, Z}&#8855;n
+  Example (2 qubits): XI, IX, XY, ZZ, -YX, iXZ, ...
+
+Stabilizer group S: An abelian subgroup of G_n with -I &#8713; S
+  Generated by independent stabilizer generators g&#8321;, ..., g_r
+  where r = n - k (n physical qubits, k logical qubits)
+
+Code space C(S): The simultaneous +1 eigenspace of all generators
+  g_i |&#968;&#10217; = +1 |&#968;&#10217;  for all i, for all |&#968;&#10217; &#8712; C(S)</div>
+
+      <h3>Error detection</h3>
+      <div class="math">Given error E &#8712; G_n:
+
+Case 1: E &#8712; S  (error is itself a stabilizer)
+  &#8594; E has no effect on code space. No correction needed.
+
+Case 2: E anticommutes with some generator g_i
+  &#8594; g_i|E|&#968;&#10217; = -E|g_i|&#968;&#10217; = -E|&#968;&#10217;
+  &#8594; Syndrome bit = -1 for generator g_i
+  &#8594; Error detected! Syndrome identifies the error.
+
+Case 3: E commutes with all generators but E &#8713; S
+  &#8594; E is a logical operator (acts on encoded information)
+  &#8594; Undetectable! This is the worst case.
+
+The code distance d is the minimum weight of any
+undetectable error (logical operator outside S).</div>
+
+      <h3>Important stabilizer codes</h3>
+      <table>
+        <tr><th>Code</th><th>[[n,k,d]]</th><th>Stabilizer generators</th><th>Notes</th></tr>
+        <tr><td>3-qubit bit-flip</td><td>[[3,1,1]]</td><td>ZZI, IZZ</td><td>Corrects 1 X error only</td></tr>
+        <tr><td>Steane code</td><td>[[7,1,3]]</td><td>6 generators (CSS)</td><td>Transversal CNOT and H</td></tr>
+        <tr><td>Shor code</td><td>[[9,1,3]]</td><td>8 generators</td><td>First QEC code (1995)</td></tr>
+        <tr><td>5-qubit perfect</td><td>[[5,1,3]]</td><td>4 generators</td><td>Smallest code correcting 1 error</td></tr>
+        <tr><td>Surface code (d)</td><td>[[2d&#178;-1, 1, d]]</td><td>~2d&#178; generators</td><td>Most practical code (see below)</td></tr>
+        <tr><td>Color code</td><td>varies</td><td>Face operators</td><td>Transversal Clifford gates</td></tr>
+        <tr><td>Bacon-Shor</td><td>[[d&#178;,1,d]]</td><td>Gauge operators</td><td>Subsystem code, simpler syndromes</td></tr>
+      </table>
+
+      <h3>CSS codes</h3>
+      <p><strong>Calderbank-Shor-Steane (CSS) codes</strong> are a major subclass where X and Z stabilizers are independent. This simplifies syndrome extraction and allows transversal CNOT gates between logical qubits. The surface code is a CSS code.</p>
+    </section>
+
+    <!-- SURFACE CODES -->
+    <section class="section" id="surface-codes">
+      <h2>Surface Codes</h2>
+      <p>The <strong>surface code</strong> is the most promising quantum error-correcting code for near-term hardware. It requires only nearest-neighbor interactions on a 2D grid, has the highest known error threshold (~1%), and is compatible with superconducting and other planar architectures.</p>
+
+      <h3>Layout</h3>
+      <p>Data qubits sit on the vertices of a square lattice. Ancilla qubits (for syndrome measurement) sit on the faces. Two types of checks:</p>
+
+      <div style="display:flex;justify-content:center;margin:1rem 0">
+        <div class="grid-diagram" style="grid-template-columns:repeat(5,28px)">
+          <div class="grid-cell data">D</div>
+          <div class="grid-cell ancilla-z">Z</div>
+          <div class="grid-cell data">D</div>
+          <div class="grid-cell ancilla-z">Z</div>
+          <div class="grid-cell data">D</div>
+          <div class="grid-cell ancilla-x">X</div>
+          <div class="grid-cell data">D</div>
+          <div class="grid-cell ancilla-x">X</div>
+          <div class="grid-cell data">D</div>
+          <div class="grid-cell ancilla-x">X</div>
+          <div class="grid-cell data">D</div>
+          <div class="grid-cell ancilla-z">Z</div>
+          <div class="grid-cell data">D</div>
+          <div class="grid-cell ancilla-z">Z</div>
+          <div class="grid-cell data">D</div>
+          <div class="grid-cell ancilla-x">X</div>
+          <div class="grid-cell data">D</div>
+          <div class="grid-cell ancilla-x">X</div>
+          <div class="grid-cell data">D</div>
+          <div class="grid-cell ancilla-x">X</div>
+          <div class="grid-cell data">D</div>
+          <div class="grid-cell ancilla-z">Z</div>
+          <div class="grid-cell data">D</div>
+          <div class="grid-cell ancilla-z">Z</div>
+          <div class="grid-cell data">D</div>
+        </div>
+      </div>
+      <p style="text-align:center;font-size:.75rem;color:var(--muted)">Distance-3 surface code. D = data qubit, X = X-stabilizer (detects Z errors), Z = Z-stabilizer (detects X errors).</p>
+
+      <h3>How it works</h3>
+      <div class="math">Z-stabilizers: Z&#8855;&#8308; on four data qubits around each Z-face
+  Detect X (bit-flip) errors on data qubits
+
+X-stabilizers: X&#8855;&#8308; on four data qubits around each X-face
+  Detect Z (phase-flip) errors on data qubits
+
+Distance d surface code:
+  Grid size: d &#215; d data qubits (roughly)
+  Total qubits: ~2d&#178; (data + ancilla)
+  Corrects &#8970;(d-1)/2&#8971; errors
+
+Logical operators:
+  X_L: chain of X operators spanning left &#8594; right
+  Z_L: chain of Z operators spanning top &#8594; bottom
+  Minimum chain length = d (the distance)</div>
+
+      <h3>Syndrome decoding</h3>
+      <p>When errors occur, some stabilizer measurements flip from +1 to -1. These flipped stabilizers are called <strong>defects</strong>. The decoder must pair up defects and infer the most likely error chain connecting each pair. The standard algorithm is <strong>minimum-weight perfect matching (MWPM)</strong>, which runs in polynomial time.</p>
+
+      <h3>The threshold theorem</h3>
+      <div class="math">Threshold theorem (Aharonov, Ben-Or, 1997; Knill, Laflamme, 1996):
+
+If the physical error rate p is below a threshold p_th,
+then the logical error rate decreases EXPONENTIALLY with
+the code distance d:
+
+  p_L &#8776; A &#183; (p/p_th)^(&#8970;d/2&#8971;+1)
+
+where A is a constant ~0.1.
+
+Surface code threshold: p_th &#8776; 1% for depolarizing noise
+  (approximately matched by current hardware!)
+
+Example with p = 0.1% and p_th = 1%:
+  d=3:  p_L &#8776; 0.1 &#215; (0.1)&#178; = 10&#8315;&#179;
+  d=5:  p_L &#8776; 0.1 &#215; (0.1)&#179; = 10&#8315;&#8308;
+  d=7:  p_L &#8776; 0.1 &#215; (0.1)&#8308; = 10&#8315;&#8309;
+  d=17: p_L &#8776;                     10&#8315;&#185;&#8304;
+
+To reach p_L = 10&#8315;&#185;&#8304; (needed for Shor's algorithm):
+  d &#8776; 17, needing ~580 physical qubits per logical qubit</div>
+
+      <h3>Logical operations on surface codes</h3>
+      <table>
+        <tr><th>Operation</th><th>How</th><th>Cost</th></tr>
+        <tr><td>Logical X, Z</td><td>Apply X or Z along a boundary-spanning chain</td><td>d physical gates</td></tr>
+        <tr><td>Logical CNOT</td><td>Lattice surgery (merge and split patches)</td><td>d rounds of syndrome measurement</td></tr>
+        <tr><td>Logical H</td><td>Fold/rotate the code patch</td><td>Code deformation</td></tr>
+        <tr><td>Logical S</td><td>Inject S from magic state</td><td>Magic state distillation</td></tr>
+        <tr><td>Logical T</td><td>Inject T from magic state</td><td>~15:1 distillation ratio</td></tr>
+      </table>
+
+      <div class="note">The T gate is the expensive operation. Surface codes cannot implement T transversally (Eastin-Knill theorem). Instead, "magic states" |T&#10217; are prepared, distilled (error-corrected separately), and injected. Each logical T gate costs ~15 physical magic states after one round of distillation, or ~225 after two rounds. This is the primary bottleneck for fault-tolerant quantum computing.</div>
+    </section>
+
+    <!-- LOGICAL VS PHYSICAL -->
+    <section class="section" id="logical-vs-physical">
+      <h2>Logical Qubits vs Physical Qubits</h2>
+      <p>A <strong>physical qubit</strong> is a single hardware qubit (one transmon, one trapped ion, etc.). A <strong>logical qubit</strong> is an error-corrected qubit encoded across many physical qubits. The ratio determines the overhead of quantum error correction.</p>
+
+      <h3>Overhead scaling</h3>
+      <table>
+        <tr><th>Target p_L</th><th>Distance d</th><th>Physical qubits per logical qubit</th><th>Use case</th></tr>
+        <tr><td>10&#8315;&#179;</td><td>3</td><td>~17</td><td>Proof of concept</td></tr>
+        <tr><td>10&#8315;&#8310;</td><td>9</td><td>~160</td><td>Early fault-tolerant</td></tr>
+        <tr><td>10&#8315;&#185;&#8304;</td><td>17</td><td>~580</td><td>Shor's algorithm</td></tr>
+        <tr><td>10&#8315;&#185;&#8309;</td><td>27</td><td>~1,460</td><td>Deep circuits with margin</td></tr>
+      </table>
+      <p>Note: these assume physical error rate of 0.1%. At 0.01% (10x better hardware), the distances roughly halve.</p>
+
+      <h3>The overhead problem</h3>
+      <div class="math">Shor's algorithm for RSA-2048:
+  ~4,000 logical qubits needed
+  At d=17: 4,000 &#215; 580 = 2.3 million physical qubits
+  Plus magic state factories: ~10 million more
+  Total: ~10-20 million physical qubits
+
+Current state (2025):
+  Largest processor: 1,121 qubits (IBM Condor)
+  Needed: 10,000,000+ qubits
+  Gap: ~10,000x
+
+This is why fault-tolerant quantum computing
+is a decade-plus engineering challenge.</div>
+
+      <h3>Improving the ratio</h3>
+      <ul>
+        <li><strong>Better hardware:</strong> Lower physical error rates mean smaller codes (lower d). Going from 0.1% to 0.01% error rate reduces overhead by ~4x.</li>
+        <li><strong>Better codes:</strong> LDPC codes (low-density parity check) can encode more logical qubits per physical qubit than surface codes, potentially reducing overhead by 10-100x. Active research area.</li>
+        <li><strong>Better magic state distillation:</strong> More efficient protocols reduce the factory overhead. Recent protocols achieve 10x improvement over standard distillation.</li>
+        <li><strong>Topological qubits:</strong> If Microsoft's approach works, the hardware-level error protection could eliminate much of the overhead entirely.</li>
+      </ul>
+    </section>
+
+    <!-- CURRENT STATE -->
+    <section class="section" id="current-state">
+      <h2>Current State of QEC (2024-2025)</h2>
+      <p>Quantum error correction has made remarkable experimental progress in the past two years, crossing several critical milestones.</p>
+
+      <h3>Google Willow: below-threshold QEC</h3>
+      <div class="card" style="margin:.5rem 0">
+        <h4><a href="https://www.nature.com/articles/s41586-024-08449-y">Google (December 2024): "Quantum error correction below the surface code threshold"</a></h4>
+        <p>Using the 105-qubit Willow processor, Google demonstrated that increasing the surface code distance from d=3 to d=5 to d=7 <strong>reduced</strong> the logical error rate at each step — the first time this exponential suppression has been observed. Logical error rate: 10&#8315;&#178;&#183;&#8312; per round at d=7. This proves that surface code error correction works as the theory predicts, and that Google's hardware is below the threshold.</p>
+        <div class="meta">Nature | 105 qubits | Surface code d=3,5,7 | Below threshold</div>
+      </div>
+
+      <h3>Harvard/MIT: 48 logical qubits on neutral atoms</h3>
+      <div class="card" style="margin:.5rem 0">
+        <h4><a href="https://www.nature.com/articles/s41586-023-06927-3">Bluvstein et al. (December 2023): "Logical quantum processor"</a></h4>
+        <p>Demonstrated 48 logical qubits on a 280-atom neutral-atom system. Ran entangling gates between logical qubits using transversal CNOT. Used both surface codes and color codes. First demonstration of error-corrected two-logical-qubit operations at scale.</p>
+        <div class="meta">Nature | 280 atoms | 48 logical qubits | Color + surface codes</div>
+      </div>
+
+      <h3>Quantinuum: real-time QEC with trapped ions</h3>
+      <div class="card" style="margin:.5rem 0">
+        <h4><a href="https://www.quantinuum.com">Quantinuum H2 (2024): Steane code and color code experiments</a></h4>
+        <p>Demonstrated repeated rounds of real-time error correction on the H2 trapped-ion processor with mid-circuit measurement and feed-forward. Achieved logical error rates below physical error rates for the Steane [[7,1,3]] code. The high gate fidelity (99.8% two-qubit) and all-to-all connectivity make trapped ions particularly suited to QEC.</p>
+        <div class="meta">56 qubits | Trapped ion | Mid-circuit measurement | Real-time decoding</div>
+      </div>
+
+      <h3>IBM: error-mitigated computation at scale</h3>
+      <div class="card" style="margin:.5rem 0">
+        <h4><a href="https://www.nature.com/articles/s41586-023-06096-3">Kim et al. (June 2023): "Evidence for the utility of quantum computing before fault tolerance"</a></h4>
+        <p>Used a 127-qubit Eagle processor to simulate an Ising model at a depth that exceeded classical exact simulation capabilities. Used error mitigation (not correction) — zero-noise extrapolation and probabilistic error cancellation. Showed that NISQ hardware with error mitigation can produce useful results for some problems, even without full QEC.</p>
+        <div class="meta">Nature | 127 qubits | Error mitigation | Ising model simulation</div>
+      </div>
+    </section>
+
+    <!-- TIMELINE -->
+    <section class="section" id="timeline">
+      <h2>Timeline to Fault-Tolerant Quantum Computing</h2>
+      <p>The path from today's noisy qubits to a fault-tolerant quantum computer capable of running Shor's algorithm spans multiple stages. Here is a realistic timeline based on published roadmaps and current progress.</p>
+
+      <h3>The stages</h3>
+      <table>
+        <tr><th>Stage</th><th>Timeline</th><th>Qubits</th><th>What's possible</th></tr>
+        <tr><td><strong>NISQ era</strong></td><td>2019-2025 (now)</td><td>50-1,000</td><td>Quantum advantage for specific sampling tasks. VQE/QAOA on small molecules. Error mitigation, not correction.</td></tr>
+        <tr><td><strong>Early fault-tolerant</strong></td><td>2026-2029</td><td>1,000-10,000</td><td>~10-50 logical qubits at d=3-5. Simple error-corrected circuits. Small quantum chemistry simulations beyond classical reach.</td></tr>
+        <tr><td><strong>Fault-tolerant</strong></td><td>2029-2035</td><td>10,000-100,000</td><td>~100-1,000 logical qubits. Practical quantum advantage for optimization, chemistry, materials. Not yet breaking RSA.</td></tr>
+        <tr><td><strong>Large-scale fault-tolerant</strong></td><td>2033-2040+</td><td>1M+</td><td>~4,000+ logical qubits at d=17+. Shor's algorithm on RSA-2048. Arbitrary quantum computations.</td></tr>
+      </table>
+
+      <h3>Company roadmaps</h3>
+      <table>
+        <tr><th>Company</th><th>2025</th><th>2026-2027</th><th>2029-2030</th><th>2033+</th></tr>
+        <tr><td>IBM</td><td>Flamingo (modular 156q)</td><td>Starling (error-corrected)</td><td>Blue Jay (2,000 logical)</td><td>100K+ qubits</td></tr>
+        <tr><td>Google</td><td>Willow improvements</td><td>Below-threshold at higher d</td><td>Useful error-corrected computation</td><td>1M+ qubits</td></tr>
+        <tr><td>Microsoft</td><td>First topological qubit</td><td>Multi-qubit topological</td><td>Hybrid topo+surface code</td><td>Topological advantage</td></tr>
+        <tr><td>Quantinuum</td><td>H2 improvements</td><td>Helios (multi-trap modular)</td><td>~1000 physical qubits</td><td>Fault-tolerant at scale</td></tr>
+        <tr><td>PsiQuantum</td><td>Chip fabrication</td><td>First photonic QC</td><td>Fault-tolerant photonic</td><td>1M+ photonic qubits</td></tr>
+      </table>
+
+      <h3>What must happen</h3>
+      <ul>
+        <li><strong>Hardware:</strong> Physical error rates must reach and sustain &lt;0.1% for two-qubit gates at scale (not just on cherry-picked qubits). Currently achieved on small systems; the challenge is maintaining quality as qubit count grows.</li>
+        <li><strong>Decoding:</strong> Real-time classical decoders must process syndrome data faster than errors accumulate (the "backlog problem"). MWPM decoders are fast but not optimal; machine learning decoders show promise.</li>
+        <li><strong>Magic states:</strong> Efficient magic state distillation factories must be built and integrated. Each logical T gate currently requires ~1000 physical qubits worth of factory. New protocols (e.g., "catalyzed" distillation) may reduce this.</li>
+        <li><strong>Scale:</strong> Manufacturing, wiring, and control for millions of qubits. IBM's modular approach (chip-to-chip quantum links) and PsiQuantum's photonic manufacturing are two paths. Neither is proven at target scale.</li>
+        <li><strong>Software:</strong> Compilers that efficiently map logical circuits to error-corrected physical operations, minimizing T-count and respecting lattice surgery constraints.</li>
+      </ul>
+
+      <div class="note">Post-quantum cryptography (PQC) is already being deployed in anticipation of fault-tolerant quantum computers. NIST finalized PQC standards in 2024 (CRYSTALS-Kyber, CRYSTALS-Dilithium, SPHINCS+). The transition from RSA/ECC to PQC should be completed well before large-scale quantum computers arrive. "Harvest now, decrypt later" attacks make this urgent even though breaking RSA is still 10+ years away.</div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="container">
+      <a href="/">FreeQuantumStore</a> · <a href="/institute/">Institute</a> · Built with <a href="https://zensical.org">Zensical</a>
+    </div>
+  </footer>
+</body>
+</html>

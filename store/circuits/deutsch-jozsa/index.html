@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deutsch-Jozsa Algorithm — FreeQuantumStore</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0a0a0a;color:#fafafa;font-family:'Manrope',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+    h1{font-size:1.3rem;font-weight:700;margin:1.25rem 0 .25rem} h1 span{color:#7c3aed}
+    .sub{color:#737373;font-size:.85rem;margin-bottom:.5rem;text-align:center;max-width:580px}
+    canvas{border:1px solid #1a1a1a;border-radius:12px}
+    .controls{display:flex;gap:.5rem;margin:.75rem 0;flex-wrap:wrap;justify-content:center}
+    button{padding:.45rem 1rem;border-radius:8px;border:1px solid #262626;background:#171717;color:#fafafa;font-size:.82rem;font-weight:600;cursor:pointer;font-family:inherit}
+    button:hover{border-color:#7c3aed;color:#7c3aed}
+    button.primary{background:#7c3aed;border-color:#7c3aed;color:#fff}
+    select{padding:.4rem .6rem;border-radius:6px;border:1px solid #262626;background:#171717;color:#fafafa;font-size:.82rem;font-family:inherit}
+    .result{background:#141414;border:1px solid #1a1a1a;border-radius:10px;padding:.75rem 1rem;margin:.5rem;max-width:700px;font-size:.82rem;color:#a3a3a3;line-height:1.7;text-align:center}
+    .result b{color:#7c3aed}
+    .result .verdict{font-size:1.2rem;font-weight:700;margin:.25rem}
+    .result .verdict.const{color:#10b981}
+    .result .verdict.balanced{color:#f97316}
+    .compare{display:flex;gap:1rem;justify-content:center;margin:.5rem;flex-wrap:wrap}
+    .compare-box{background:#141414;border:1px solid #1a1a1a;border-radius:8px;padding:.6rem 1rem;min-width:150px;text-align:center}
+    .compare-box h4{font-size:.78rem;font-weight:700;margin-bottom:.2rem}
+    .compare-box .big{font-size:1.5rem;font-weight:700}
+    .compare-box .label{font-size:.68rem;color:#525252}
+    .info{font-size:.72rem;color:#404040;margin:.35rem}
+    a{color:#404040;text-decoration:none}
+  </style>
+</head>
+<body>
+  <h1>Deutsch-Jozsa <span>Algorithm</span></h1>
+  <p class="sub">The first quantum algorithm to prove exponential speedup over classical. Given a black-box function f(x), determine if it's constant (same output for all inputs) or balanced (different output for half the inputs) — in ONE query instead of 2^(n-1)+1.</p>
+
+  <canvas id="sim" width="800" height="320"></canvas>
+
+  <div class="controls">
+    <select id="qubits">
+      <option value="2">2 qubits (4 inputs)</option>
+      <option value="3" selected>3 qubits (8 inputs)</option>
+      <option value="4">4 qubits (16 inputs)</option>
+      <option value="5">5 qubits (32 inputs)</option>
+    </select>
+    <select id="oracle">
+      <option value="constant-0">Constant f(x)=0</option>
+      <option value="constant-1">Constant f(x)=1</option>
+      <option value="balanced-1" selected>Balanced (parity)</option>
+      <option value="balanced-2">Balanced (MSB)</option>
+      <option value="balanced-3">Balanced (random)</option>
+      <option value="random">Random (unknown)</option>
+    </select>
+    <button class="primary" id="btn-run">Run Algorithm</button>
+    <button id="btn-classical">Classical (brute force)</button>
+    <button id="btn-reset">Reset</button>
+  </div>
+
+  <div id="result" class="result" style="display:none"></div>
+
+  <div class="compare">
+    <div class="compare-box">
+      <h4>Quantum</h4>
+      <div class="big" style="color:#7c3aed" id="q-queries">1</div>
+      <div class="label">oracle query</div>
+    </div>
+    <div class="compare-box">
+      <h4>Classical (worst case)</h4>
+      <div class="big" style="color:#ef4444" id="c-queries">-</div>
+      <div class="label" id="c-label">queries needed</div>
+    </div>
+    <div class="compare-box">
+      <h4>Speedup</h4>
+      <div class="big" style="color:#10b981" id="speedup">-</div>
+      <div class="label">quantum advantage</div>
+    </div>
+  </div>
+
+  <div class="info">The simplest proof that quantum computers can be exponentially faster than classical. | <a href="https://freequantumstore.pages.dev">FreeQuantumStore</a></div>
+
+  <script>
+    const canvas = document.getElementById('sim');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    const sl = id => document.getElementById(id);
+
+    let nQubits = 3, oracleType = 'balanced-1';
+    let state = 'ready'; // ready, running, done
+    let animStep = 0, animTimer = 0;
+    let oracleFunction = [];
+    let measurementResult = null;
+    let classicalQueries = 0;
+
+    sl('qubits').addEventListener('change', e => { nQubits = +e.target.value; reset(); });
+    sl('oracle').addEventListener('change', e => { oracleType = e.target.value; reset(); });
+
+    function generateOracle() {
+      const N = 1 << nQubits;
+      if (oracleType === 'constant-0') return new Array(N).fill(0);
+      if (oracleType === 'constant-1') return new Array(N).fill(1);
+      if (oracleType === 'balanced-1') return Array.from({length:N}, (_, i) => i % 2); // parity of LSB
+      if (oracleType === 'balanced-2') return Array.from({length:N}, (_, i) => (i >> (nQubits-1)) & 1); // MSB
+      if (oracleType === 'balanced-3') {
+        // Random balanced
+        const half = N / 2;
+        const arr = [...Array(half).fill(0), ...Array(half).fill(1)];
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+      // Random: 50% chance constant, 50% balanced
+      if (Math.random() < 0.5) return new Array(N).fill(Math.random() < 0.5 ? 0 : 1);
+      return generateOracle.call({ oracleType: 'balanced-3' });
+    }
+
+    function reset() {
+      oracleFunction = generateOracle();
+      state = 'ready';
+      animStep = 0;
+      measurementResult = null;
+      classicalQueries = 0;
+      sl('result').style.display = 'none';
+      const N = 1 << nQubits;
+      sl('c-queries').textContent = (N/2 + 1);
+      sl('c-label').textContent = `of ${N} queries (worst case)`;
+      sl('speedup').textContent = `${N/2 + 1}x`;
+    }
+
+    function runQuantum() {
+      const N = 1 << nQubits;
+
+      // Deutsch-Jozsa: apply H to all qubits, query oracle, apply H, measure
+      // Simplified: the result is |0...0⟩ iff f is constant
+
+      // Check oracle
+      const sum = oracleFunction.reduce((a, b) => a + b, 0);
+      const isConstant = sum === 0 || sum === N;
+
+      measurementResult = isConstant ? 0 : 1; // 0 = all zeros (constant), 1 = non-zero (balanced)
+
+      state = 'done';
+      animStep = 4;
+
+      const verdict = isConstant ? 'CONSTANT' : 'BALANCED';
+      const vClass = isConstant ? 'const' : 'balanced';
+      sl('result').style.display = 'block';
+      sl('result').innerHTML = `
+        <div class="verdict ${vClass}">${verdict}</div>
+        <b>Quantum result:</b> Measured ${isConstant ? '|' + '0'.repeat(nQubits) + '⟩ → CONSTANT' : 'non-zero state → BALANCED'}<br>
+        <b>Oracle queries used: 1</b> (quantum parallelism evaluates ALL ${N} inputs simultaneously)<br>
+        Classical would need up to <b>${N/2+1}</b> queries to be certain.
+        ${oracleType === 'random' ? '<br>The oracle was randomly chosen — you didn\'t know the answer in advance!' : ''}
+      `;
+
+      sl('q-queries').textContent = '1';
+    }
+
+    function runClassical() {
+      const N = 1 << nQubits;
+      classicalQueries = 0;
+      let firstValue = oracleFunction[0];
+      classicalQueries = 1;
+
+      let found = false;
+      for (let i = 1; i < N; i++) {
+        classicalQueries++;
+        if (oracleFunction[i] !== firstValue) {
+          // Found a different value — balanced!
+          found = true;
+          break;
+        }
+        if (classicalQueries > N/2) break; // need >half to be sure it's constant
+      }
+
+      const isConstant = !found;
+      const verdict = isConstant ? 'CONSTANT' : 'BALANCED';
+      const vClass = isConstant ? 'const' : 'balanced';
+      sl('result').style.display = 'block';
+      sl('result').innerHTML = `
+        <div class="verdict ${vClass}">${verdict}</div>
+        <b>Classical result:</b> Checked ${classicalQueries} of ${N} inputs.<br>
+        ${found ? `Found f(${classicalQueries-1})≠f(0) after ${classicalQueries} queries → BALANCED` : `All ${classicalQueries} values identical → CONSTANT (but needed ${N/2+1} queries to be sure!)`}
+      `;
+    }
+
+    sl('btn-run').addEventListener('click', runQuantum);
+    sl('btn-classical').addEventListener('click', runClassical);
+    sl('btn-reset').addEventListener('click', reset);
+
+    function draw() {
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, W, H);
+
+      const N = 1 << nQubits;
+
+      // Draw oracle truth table
+      const tableX = 30, tableY = 30;
+      ctx.fillStyle = '#525252'; ctx.font = '10px Manrope'; ctx.textAlign = 'center';
+      ctx.fillText('Oracle f(x)', tableX + 40, tableY - 8);
+
+      const cellW = Math.min(25, (W * 0.35) / N);
+      for (let i = 0; i < N && i < 32; i++) {
+        const x = tableX + i * cellW;
+        // Input
+        ctx.fillStyle = '#333'; ctx.font = '7px JetBrains Mono';
+        ctx.fillText(i.toString(2).padStart(nQubits, '0'), x + cellW/2, tableY + 10);
+        // Output
+        ctx.fillStyle = oracleFunction[i] ? '#f97316' : '#10b981';
+        ctx.fillRect(x + 2, tableY + 15, cellW - 4, 14);
+        ctx.fillStyle = '#fafafa'; ctx.font = '700 9px JetBrains Mono';
+        ctx.fillText(oracleFunction[i], x + cellW/2, tableY + 25);
+      }
+
+      // Circuit diagram
+      const circY = 100, wireSpacing = 30;
+      const stages = [
+        { x: W*0.25, label: '|0⟩^n', desc: 'Init' },
+        { x: W*0.35, label: 'H^⊗n', desc: 'Superpose' },
+        { x: W*0.5, label: 'Uf', desc: 'Oracle' },
+        { x: W*0.65, label: 'H^⊗n', desc: 'Interfere' },
+        { x: W*0.8, label: 'M', desc: 'Measure' },
+      ];
+
+      // Wires
+      for (let q = 0; q < Math.min(nQubits, 5); q++) {
+        const y = circY + q * wireSpacing;
+        ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(W*0.2, y); ctx.lineTo(W*0.85, y); ctx.stroke();
+
+        ctx.fillStyle = '#404040'; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'right';
+        ctx.fillText(`q${q}`, W*0.18, y + 3);
+      }
+      if (nQubits > 5) {
+        ctx.fillStyle = '#333'; ctx.font = '9px Manrope'; ctx.textAlign = 'center';
+        ctx.fillText(`... +${nQubits-5} more`, W*0.15, circY + 5*wireSpacing);
+      }
+
+      // Ancilla wire
+      const ancY = circY + Math.min(nQubits, 5) * wireSpacing + 15;
+      ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(W*0.2, ancY); ctx.lineTo(W*0.85, ancY); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#404040'; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'right';
+      ctx.fillText('anc', W*0.18, ancY + 3);
+
+      // Gates
+      for (let s = 0; s < stages.length; s++) {
+        const stage = stages[s];
+        const active = state === 'done' || s <= animStep;
+
+        if (s === 2) {
+          // Oracle box (spans all qubits)
+          const topY = circY - 20;
+          const botY = ancY + 20;
+          ctx.fillStyle = active ? '#1e1b4b' : '#0f0f0f';
+          ctx.strokeStyle = active ? '#7c3aed' : '#262626';
+          ctx.lineWidth = active ? 2 : 1;
+          ctx.fillRect(stage.x - 25, topY, 50, botY - topY);
+          ctx.strokeRect(stage.x - 25, topY, 50, botY - topY);
+          ctx.fillStyle = active ? '#a78bfa' : '#525252';
+          ctx.font = '700 14px JetBrains Mono'; ctx.textAlign = 'center';
+          ctx.fillText('Uf', stage.x, (topY + botY)/2 + 5);
+          ctx.fillStyle = '#525252'; ctx.font = '8px Manrope';
+          ctx.fillText('Oracle', stage.x, botY + 12);
+        } else if (s === 4) {
+          // Measurement
+          for (let q = 0; q < Math.min(nQubits, 5); q++) {
+            const y = circY + q * wireSpacing;
+            ctx.fillStyle = active ? '#0f2a0f' : '#0f0f0f';
+            ctx.strokeStyle = active ? '#10b981' : '#262626';
+            ctx.lineWidth = active ? 2 : 1;
+            ctx.fillRect(stage.x - 14, y - 14, 28, 28);
+            ctx.strokeRect(stage.x - 14, y - 14, 28, 28);
+            // Meter symbol
+            ctx.beginPath(); ctx.arc(stage.x, y + 2, 8, Math.PI, 0); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(stage.x, y + 2); ctx.lineTo(stage.x + 5, y - 8); ctx.stroke();
+
+            if (state === 'done' && measurementResult !== null) {
+              const bit = measurementResult === 0 ? 0 : (q === 0 ? 1 : Math.random() < 0.5 ? 1 : 0);
+              ctx.fillStyle = '#10b981'; ctx.font = '700 9px JetBrains Mono';
+              ctx.fillText(measurementResult === 0 ? '0' : '?', stage.x, y + 24);
+            }
+          }
+          ctx.fillStyle = '#525252'; ctx.font = '8px Manrope'; ctx.textAlign = 'center';
+          ctx.fillText(stage.desc, stage.x, ancY + 30);
+        } else {
+          // H gates
+          for (let q = 0; q < Math.min(nQubits, 5); q++) {
+            const y = circY + q * wireSpacing;
+            ctx.fillStyle = active ? '#1e1b4b' : '#0f0f0f';
+            ctx.strokeStyle = active ? '#7c3aed' : '#262626';
+            ctx.lineWidth = active ? 2 : 1;
+            ctx.fillRect(stage.x - 12, y - 12, 24, 24);
+            ctx.strokeRect(stage.x - 12, y - 12, 24, 24);
+            ctx.fillStyle = active ? '#a78bfa' : '#404040';
+            ctx.font = '700 10px JetBrains Mono'; ctx.textAlign = 'center';
+            ctx.fillText(s === 0 ? '|0⟩' : 'H', stage.x, y + 4);
+          }
+          ctx.fillStyle = '#525252'; ctx.font = '8px Manrope';
+          ctx.fillText(stage.desc, stage.x, ancY + 30);
+        }
+      }
+
+      // Result banner
+      if (state === 'done') {
+        const isConst = measurementResult === 0;
+        ctx.fillStyle = isConst ? 'rgba(16,185,129,0.1)' : 'rgba(249,115,22,0.1)';
+        ctx.fillRect(W*0.7, 10, W*0.28, 35);
+        ctx.fillStyle = isConst ? '#10b981' : '#f97316';
+        ctx.font = '700 14px Manrope'; ctx.textAlign = 'center';
+        ctx.fillText(isConst ? 'CONSTANT' : 'BALANCED', W*0.84, 33);
+      }
+
+      ctx.textAlign = 'start';
+    }
+
+    function loop() { requestAnimationFrame(loop); draw(); }
+    reset();
+    loop();
+  </script>
+</body>
+</html>
