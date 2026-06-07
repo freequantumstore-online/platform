@@ -65,3 +65,6 @@ export type {
   OllamaStatus,
 } from './types.js';
 export { WorkerBridge } from './worker-bridge.js';
+// Quantum circuit simulator
+export { QuantumCircuit } from './circuit.js';
+export type { Complex, StateEntry } from './circuit.js';

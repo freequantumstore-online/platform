@@ -1,7 +1,7 @@
 {
   "name": "@freequantumstore/sdk",
-  "version": "0.1.0",
-  "description": "Browser SDK for AI tools on freequantumstore.online — model loading, Web Worker inference, Ollama bridge, auth, per-user KV, rooms, React hooks, and UI components.",
+  "version": "0.2.0",
+  "description": "Quantum circuit simulator and browser SDK for freequantumstore.online — build, simulate, and export quantum circuits plus model loading, inference, auth, KV, rooms, and UI components.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -26,6 +26,10 @@
     "./langchain": {
       "types": "./dist/langchain.d.ts",
       "import": "./dist/langchain.js"
+    },
+    "./circuit": {
+      "types": "./dist/circuit.d.ts",
+      "import": "./dist/circuit.js"
     }
   },
   "homepage": "https://github.com/FreeQuantumStore/platform#readme",
