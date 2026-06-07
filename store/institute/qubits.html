@@ -117,6 +117,25 @@ where &#945;, &#946; &#8712; &#8450; and |&#945;|&#178; + |&#946;|&#178; = 1</di
 
       <p>The complex numbers &#945; and &#946; are called <strong>probability amplitudes</strong>. When you measure a qubit, the probability of getting outcome 0 is |&#945;|&#178; and the probability of getting outcome 1 is |&#946;|&#178;. The constraint |&#945;|&#178; + |&#946;|&#178; = 1 is called the <strong>normalization condition</strong> and ensures the probabilities sum to 1.</p>
 
+      <!-- Diagram: Classical bit vs Qubit -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:2rem;margin:1.5rem 0;flex-wrap:wrap">
+        <div style="text-align:center">
+          <div style="width:80px;height:80px;border:2px solid #404040;border-radius:8px;display:flex;align-items:center;justify-content:center;margin:0 auto .5rem;background:#141414">
+            <span style="font-size:1.8rem;font-weight:700;color:#737373">0<span style="color:#404040;margin:0 .15rem">/</span>1</span>
+          </div>
+          <div style="font-size:.78rem;font-weight:700;color:#a3a3a3">Classical Bit</div>
+          <div style="font-size:.68rem;color:#525252">Definite state</div>
+        </div>
+        <span style="color:#404040;font-size:1.5rem">vs</span>
+        <div style="text-align:center">
+          <div style="width:80px;height:80px;border:2px solid #7c3aed;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto .5rem;background:#1e1b4b">
+            <span style="font-size:1rem;font-weight:700;color:#a78bfa">&alpha;|0&rang;+&beta;|1&rang;</span>
+          </div>
+          <div style="font-size:.78rem;font-weight:700;color:#a78bfa">Qubit</div>
+          <div style="font-size:.68rem;color:#525252">Superposition</div>
+        </div>
+      </div>
+
       <h3>Key differences from classical bits</h3>
       <ul>
         <li><strong>Superposition:</strong> A qubit can be in a linear combination of |0&#10217; and |1&#10217;. A classical bit is always exactly one or the other.</li>
@@ -330,6 +349,34 @@ All four: apply {I, X, Z, XZ} to the first qubit of |&#934;&#8314;&#10217;</div>
       <h2>Physical Implementations</h2>
       <p>A qubit needs a controllable two-level quantum system. Several physical platforms compete, each with different strengths. No single technology has emerged as the definitive winner.</p>
 
+      <!-- Diagram: Qubit implementations comparison grid -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin:1.5rem 0;text-align:center">
+        <div style="background:#141414;border:1px solid #262626;border-radius:8px;padding:.75rem .5rem">
+          <div style="font-size:1.3rem;margin-bottom:.25rem">&#9889;</div>
+          <div style="font-size:.78rem;font-weight:700;color:#fafafa">Superconducting</div>
+          <div style="font-size:.68rem;color:#737373">~25 ns gates</div>
+          <div style="font-size:.68rem;color:#737373">15 mK</div>
+        </div>
+        <div style="background:#141414;border:1px solid #262626;border-radius:8px;padding:.75rem .5rem">
+          <div style="font-size:1.3rem;margin-bottom:.25rem">&#9883;</div>
+          <div style="font-size:.78rem;font-weight:700;color:#fafafa">Trapped Ion</div>
+          <div style="font-size:.68rem;color:#737373">99.99% fidelity</div>
+          <div style="font-size:.68rem;color:#737373">All-to-all</div>
+        </div>
+        <div style="background:#141414;border:1px solid #262626;border-radius:8px;padding:.75rem .5rem">
+          <div style="font-size:1.3rem;margin-bottom:.25rem">&#128161;</div>
+          <div style="font-size:.78rem;font-weight:700;color:#fafafa">Photonic</div>
+          <div style="font-size:.68rem;color:#737373">Room temp</div>
+          <div style="font-size:.68rem;color:#737373">Fiber-optic</div>
+        </div>
+        <div style="background:#141414;border:1px solid #262626;border-radius:8px;padding:.75rem .5rem">
+          <div style="font-size:1.3rem;margin-bottom:.25rem">&#9898;</div>
+          <div style="font-size:.78rem;font-weight:700;color:#fafafa">Neutral Atom</div>
+          <div style="font-size:.68rem;color:#737373">1000+ qubits</div>
+          <div style="font-size:.68rem;color:#737373">Reconfigurable</div>
+        </div>
+      </div>
+
       <h3>Superconducting qubits</h3>
       <p>Used by IBM, Google, Rigetti, and others. A superconducting circuit containing a Josephson junction creates an anharmonic oscillator whose lowest two energy levels serve as |0&#10217; and |1&#10217;.</p>
       <ul>
@@ -429,6 +476,21 @@ Unlike projective measurement:
     <section class="section" id="decoherence">
       <h2>Decoherence</h2>
       <p>Decoherence is the loss of quantum information due to unwanted interaction with the environment. It is the primary enemy of quantum computing and the reason we need quantum error correction.</p>
+
+      <!-- Diagram: Decoherence timeline -->
+      <div style="max-width:500px;margin:1.5rem auto">
+        <div style="display:flex;align-items:stretch;gap:0;height:40px">
+          <div style="flex:3;background:linear-gradient(90deg,#7c3aed,#5b21b6);border-radius:8px 0 0 8px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:white">T2* (Ramsey)</div>
+          <div style="flex:5;background:linear-gradient(90deg,#5b21b6,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:white">T2 (Echo)</div>
+          <div style="flex:8;background:linear-gradient(90deg,#3b82f6,#1e3a5f);border-radius:0 8px 8px 0;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:white">T1 (Relaxation)</div>
+        </div>
+        <div style="display:flex;gap:0;margin-top:.25rem">
+          <div style="flex:3;text-align:center;font-size:.65rem;color:#737373">Phase lost<br>(w/ static noise)</div>
+          <div style="flex:5;text-align:center;font-size:.65rem;color:#737373">Phase lost<br>(refocused)</div>
+          <div style="flex:8;text-align:center;font-size:.65rem;color:#737373">Energy lost<br>(|1&rang; &rarr; |0&rang;)</div>
+        </div>
+        <div style="text-align:center;margin-top:.4rem;font-size:.7rem;color:#525252">T2* &le; T2 &le; 2&times;T1 (always)</div>
+      </div>
 
       <h3>T1: energy relaxation time</h3>
       <p><strong>T1</strong> measures how long a qubit stays in the excited state |1&#10217; before decaying to |0&#10217;. This is analogous to the spontaneous emission lifetime of an atom.</p>

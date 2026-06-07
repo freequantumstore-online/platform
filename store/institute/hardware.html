@@ -94,6 +94,15 @@
       <h2>Superconducting Qubits</h2>
       <p>The most mature quantum computing technology. Superconducting qubits use tiny circuits made of superconducting materials (aluminum on silicon) cooled to near absolute zero (~15 millikelvin). The key component is the <strong>Josephson junction</strong> — a thin insulating barrier between two superconductors that creates a non-linear oscillator whose lowest two energy levels encode |0&#10217; and |1&#10217;.</p>
 
+      <!-- Diagram: Quantum computing hardware stack -->
+      <div style="max-width:420px;margin:1.5rem auto">
+        <div style="background:#7c3aed;color:white;padding:.5rem;text-align:center;border-radius:8px 8px 0 0;font-size:.82rem;font-weight:600">Application Layer &mdash; Qiskit / Cirq / PennyLane</div>
+        <div style="background:#6d28d9;color:white;padding:.5rem;text-align:center;font-size:.82rem;font-weight:600">Compiler &mdash; Gate decomposition + mapping</div>
+        <div style="background:#5b21b6;color:white;padding:.5rem;text-align:center;font-size:.82rem;font-weight:600">Control Electronics &mdash; Microwave pulses / lasers</div>
+        <div style="background:#4c1d95;color:white;padding:.5rem;text-align:center;font-size:.82rem;font-weight:600">Cryogenics / Vacuum &mdash; 15 mK / UHV</div>
+        <div style="background:#3b0764;color:white;padding:.5rem;text-align:center;border-radius:0 0 8px 8px;font-size:.82rem;font-weight:600">Physical Qubits &mdash; Transmon / Ion / Photon / Atom</div>
+      </div>
+
       <h3>How the transmon works</h3>
       <p>The <strong>transmon</strong> (transmission-line shunted plasma oscillation qubit) is the dominant superconducting qubit design, introduced by Koch et al. at Yale in 2007. It is a charge qubit with a large shunting capacitor that exponentially suppresses charge noise sensitivity while maintaining sufficient anharmonicity to distinguish the 0&#8594;1 transition from the 1&#8594;2 transition.</p>
       <div class="math">Energy levels: E_n &#8776; &#8463;&#969;_r(n + 1/2) - (E_C/12)(6n&#178; + 6n + 3)
@@ -450,6 +459,19 @@ Topology is robust to continuous deformations.</div>
         <h4><a href="https://cloud.xanadu.ai">cloud.xanadu.ai</a></h4>
         <p>Access to Borealis photonic processor. Free tier available. Use Strawberry Fields (photonic) or PennyLane (general) frameworks.</p>
         <div class="meta">Photonic | Free tier | Python (PennyLane)</div>
+      </div>
+
+      <!-- Diagram: Hardware access flow -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:.5rem;margin:1.5rem 0;flex-wrap:wrap">
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.5rem 1rem;color:#a78bfa;font-size:.82rem;font-weight:600">Write Circuit</div>
+        <span style="color:#404040;font-size:1.2rem">&rarr;</span>
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.5rem 1rem;color:#a78bfa;font-size:.82rem;font-weight:600">Transpile</div>
+        <span style="color:#404040;font-size:1.2rem">&rarr;</span>
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.5rem 1rem;color:#a78bfa;font-size:.82rem;font-weight:600">Submit Job</div>
+        <span style="color:#404040;font-size:1.2rem">&rarr;</span>
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.5rem 1rem;color:#a78bfa;font-size:.82rem;font-weight:600">Queue</div>
+        <span style="color:#404040;font-size:1.2rem">&rarr;</span>
+        <div style="background:#0f3d0f;border:1px solid #4ade80;border-radius:8px;padding:.5rem 1rem;color:#4ade80;font-size:.82rem;font-weight:600">Results</div>
       </div>
 
       <h3>Quick-start comparison</h3>

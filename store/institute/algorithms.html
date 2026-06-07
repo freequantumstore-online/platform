@@ -224,6 +224,19 @@ After n-1 linearly independent y values:
       <h3>The problem</h3>
       <p>Given an integer N, find its prime factors. The best known classical algorithm (general number field sieve) runs in sub-exponential time exp(O(n&#185;&#8725;&#179;(log n)&#178;&#8725;&#179;)) where n = log N. Shor's algorithm runs in O(n&#178; log n log log n) — polynomial.</p>
 
+      <!-- Diagram: Shor's algorithm flow -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin:1.5rem 0;flex-wrap:wrap">
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.4rem .7rem;color:#a78bfa;font-size:.75rem;font-weight:600">Pick random a</div>
+        <span style="color:#404040;font-size:1rem">&rarr;</span>
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.4rem .7rem;color:#a78bfa;font-size:.75rem;font-weight:600">QPE: find period r</div>
+        <span style="color:#404040;font-size:1rem">&rarr;</span>
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.4rem .7rem;color:#a78bfa;font-size:.75rem;font-weight:600">Continued fractions</div>
+        <span style="color:#404040;font-size:1rem">&rarr;</span>
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.4rem .7rem;color:#a78bfa;font-size:.75rem;font-weight:600">gcd(a<sup>r/2</sup>&plusmn;1, N)</div>
+        <span style="color:#404040;font-size:1rem">&rarr;</span>
+        <div style="background:#0f3d0f;border:1px solid #4ade80;border-radius:8px;padding:.4rem .7rem;color:#4ade80;font-size:.75rem;font-weight:600">Factors!</div>
+      </div>
+
       <h3>Key insight: factoring reduces to period finding</h3>
       <div class="math">To factor N:
 1. Pick random a where 1 &lt; a &lt; N, gcd(a, N) = 1
@@ -307,6 +320,61 @@ Factors: 3 &#215; 5 = 15 &#10003;</div>
           <p><strong>Measure.</strong> Get w with probability close to 1.</p>
         </div>
       </div>
+
+      <!-- Diagram: Grover's amplitude amplification -->
+      <div style="display:flex;align-items:flex-end;justify-content:center;gap:.3rem;margin:1.5rem 0;padding:1rem;background:#141414;border:1px solid #262626;border-radius:8px">
+        <div style="text-align:center">
+          <div style="width:28px;background:#3b82f6;border-radius:3px 3px 0 0;height:12px"></div>
+          <div style="font-size:.6rem;color:#525252;margin-top:.2rem">|0&rang;</div>
+        </div>
+        <div style="text-align:center">
+          <div style="width:28px;background:#3b82f6;border-radius:3px 3px 0 0;height:12px"></div>
+          <div style="font-size:.6rem;color:#525252;margin-top:.2rem">|1&rang;</div>
+        </div>
+        <div style="text-align:center">
+          <div style="width:28px;background:#7c3aed;border-radius:3px 3px 0 0;height:12px"></div>
+          <div style="font-size:.6rem;color:#a78bfa;margin-top:.2rem">|w&rang;</div>
+        </div>
+        <div style="text-align:center">
+          <div style="width:28px;background:#3b82f6;border-radius:3px 3px 0 0;height:12px"></div>
+          <div style="font-size:.6rem;color:#525252;margin-top:.2rem">|3&rang;</div>
+        </div>
+        <div style="margin:0 .5rem;color:#404040;font-size:1rem;padding-bottom:.8rem">&rarr;</div>
+        <div style="text-align:center">
+          <div style="width:28px;background:#3b82f6;border-radius:3px 3px 0 0;height:8px"></div>
+          <div style="font-size:.6rem;color:#525252;margin-top:.2rem">|0&rang;</div>
+        </div>
+        <div style="text-align:center">
+          <div style="width:28px;background:#3b82f6;border-radius:3px 3px 0 0;height:8px"></div>
+          <div style="font-size:.6rem;color:#525252;margin-top:.2rem">|1&rang;</div>
+        </div>
+        <div style="text-align:center">
+          <div style="width:28px;background:#7c3aed;border-radius:3px 3px 0 0;height:45px"></div>
+          <div style="font-size:.6rem;color:#a78bfa;margin-top:.2rem">|w&rang;</div>
+        </div>
+        <div style="text-align:center">
+          <div style="width:28px;background:#3b82f6;border-radius:3px 3px 0 0;height:8px"></div>
+          <div style="font-size:.6rem;color:#525252;margin-top:.2rem">|3&rang;</div>
+        </div>
+        <div style="margin:0 .5rem;color:#404040;font-size:1rem;padding-bottom:.8rem">&rarr;</div>
+        <div style="text-align:center">
+          <div style="width:28px;background:#3b82f6;border-radius:3px 3px 0 0;height:3px"></div>
+          <div style="font-size:.6rem;color:#525252;margin-top:.2rem">|0&rang;</div>
+        </div>
+        <div style="text-align:center">
+          <div style="width:28px;background:#3b82f6;border-radius:3px 3px 0 0;height:3px"></div>
+          <div style="font-size:.6rem;color:#525252;margin-top:.2rem">|1&rang;</div>
+        </div>
+        <div style="text-align:center">
+          <div style="width:28px;background:#7c3aed;border-radius:3px 3px 0 0;height:70px"></div>
+          <div style="font-size:.6rem;color:#a78bfa;margin-top:.2rem">|w&rang;</div>
+        </div>
+        <div style="text-align:center">
+          <div style="width:28px;background:#3b82f6;border-radius:3px 3px 0 0;height:3px"></div>
+          <div style="font-size:.6rem;color:#525252;margin-top:.2rem">|3&rang;</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:.72rem;color:#525252;margin-bottom:.5rem">Uniform &rarr; 1 iteration &rarr; 2 iterations: target amplitude grows, others shrink</div>
 
       <h3>Amplitude amplification: the math</h3>
       <div class="math">Define the 2D subspace spanned by |w&#10217; (target) and |s'&#10217; (uniform
@@ -468,6 +536,27 @@ where:
 
 Each U_C layer: one Rzz(-&#947;) gate per edge
 Each U_B layer: one Rx(-2&#946;) gate per vertex</div>
+
+      <!-- Diagram: VQE hybrid loop -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:.5rem;margin:1.5rem 0;flex-wrap:wrap">
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.5rem .8rem;text-align:center">
+          <div style="font-size:.72rem;font-weight:700;color:#a78bfa">Quantum</div>
+          <div style="font-size:.65rem;color:#737373">Prepare |&psi;(&theta;)&rang;</div>
+          <div style="font-size:.65rem;color:#737373">Measure &lang;H&rang;</div>
+        </div>
+        <span style="color:#404040;font-size:1rem">&rarr;</span>
+        <div style="background:#141414;border:1px solid #3b82f6;border-radius:8px;padding:.5rem .8rem;text-align:center">
+          <div style="font-size:.72rem;font-weight:700;color:#60a5fa">Classical</div>
+          <div style="font-size:.65rem;color:#737373">Optimizer</div>
+          <div style="font-size:.65rem;color:#737373">Update &theta;</div>
+        </div>
+        <span style="color:#404040;font-size:1rem">&rarr;</span>
+        <div style="background:#0f3d0f;border:1px solid #4ade80;border-radius:8px;padding:.5rem .8rem;text-align:center">
+          <div style="font-size:.72rem;font-weight:700;color:#4ade80">Converged?</div>
+          <div style="font-size:.65rem;color:#737373">E(&theta;) &asymp; E&#8320;</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:.7rem;color:#525252;margin-bottom:.5rem">&larr; repeat until energy converges &rarr;</div>
 
       <h3>Algorithm flow</h3>
       <div class="steps">

@@ -107,6 +107,52 @@
         <li><strong>Universality:</strong> A small set of gates can approximate any unitary operation to arbitrary precision. {H, T, CNOT} is universal.</li>
       </ul>
 
+      <!-- Diagram: Gate circuit symbols -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:1.5rem;margin:1.5rem 0;flex-wrap:wrap">
+        <div style="text-align:center">
+          <div style="display:flex;align-items:center;gap:0">
+            <div style="width:20px;height:2px;background:#737373"></div>
+            <div style="width:32px;height:32px;border:2px solid #7c3aed;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#a78bfa">H</div>
+            <div style="width:20px;height:2px;background:#737373"></div>
+          </div>
+          <div style="font-size:.68rem;color:#525252;margin-top:.25rem">Hadamard</div>
+        </div>
+        <div style="text-align:center">
+          <div style="display:flex;align-items:center;gap:0">
+            <div style="width:20px;height:2px;background:#737373"></div>
+            <div style="width:32px;height:32px;border:2px solid #7c3aed;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#a78bfa">X</div>
+            <div style="width:20px;height:2px;background:#737373"></div>
+          </div>
+          <div style="font-size:.68rem;color:#525252;margin-top:.25rem">Pauli-X</div>
+        </div>
+        <div style="text-align:center">
+          <div style="display:flex;align-items:center;gap:0">
+            <div style="width:20px;height:2px;background:#737373"></div>
+            <div style="width:32px;height:32px;border:2px solid #7c3aed;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#a78bfa">T</div>
+            <div style="width:20px;height:2px;background:#737373"></div>
+          </div>
+          <div style="font-size:.68rem;color:#525252;margin-top:.25rem">T gate</div>
+        </div>
+        <div style="text-align:center">
+          <div style="position:relative;height:56px;width:72px">
+            <div style="position:absolute;top:8px;left:0;right:0;height:2px;background:#737373"></div>
+            <div style="position:absolute;top:40px;left:0;right:0;height:2px;background:#737373"></div>
+            <div style="position:absolute;top:3px;left:34px;width:8px;height:8px;background:#a78bfa;border-radius:50%"></div>
+            <div style="position:absolute;top:11px;left:37px;width:2px;height:29px;background:#a78bfa"></div>
+            <div style="position:absolute;top:33px;left:28px;width:18px;height:18px;border:2px solid #a78bfa;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:#a78bfa">+</div>
+          </div>
+          <div style="font-size:.68rem;color:#525252">CNOT</div>
+        </div>
+        <div style="text-align:center">
+          <div style="display:flex;align-items:center;gap:0">
+            <div style="width:20px;height:2px;background:#737373"></div>
+            <div style="width:32px;height:32px;border:2px solid #7c3aed;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#a78bfa">M</div>
+            <div style="width:20px;height:2px;background:#737373"></div>
+          </div>
+          <div style="font-size:.68rem;color:#525252;margin-top:.25rem">Measure</div>
+        </div>
+      </div>
+
       <h3>Circuit notation</h3>
       <p>In circuit diagrams, qubits are horizontal lines (wires) and gates are boxes or symbols on those lines. Time flows left to right. Multi-qubit gates connect wires with vertical lines.</p>
       <div class="math">Single-qubit: &#9473;&#9473;[H]&#9473;&#9473;     (wire through a box labeled H)
@@ -452,6 +498,18 @@ Modern approach: Use the Ross-Selinger algorithm (2014)
 which achieves optimal T-count for single-qubit synthesis
 with O(log(1/&#949;)) T gates.</div>
 
+      <!-- Diagram: Gate decomposition flow -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:.5rem;margin:1.5rem 0;flex-wrap:wrap">
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.5rem 1rem;color:#a78bfa;font-size:.82rem;font-weight:600">Any Unitary U</div>
+        <span style="color:#404040;font-size:1.2rem">&rarr;</span>
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.5rem 1rem;color:#a78bfa;font-size:.82rem;font-weight:600">Rz(&beta;)</div>
+        <span style="color:#404040;font-size:1.2rem">&rarr;</span>
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.5rem 1rem;color:#a78bfa;font-size:.82rem;font-weight:600">Ry(&gamma;)</div>
+        <span style="color:#404040;font-size:1.2rem">&rarr;</span>
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.5rem 1rem;color:#a78bfa;font-size:.82rem;font-weight:600">Rz(&delta;)</div>
+      </div>
+      <div style="text-align:center;font-size:.72rem;color:#525252;margin-bottom:.5rem">Any single-qubit gate = 3 rotations (ZYZ decomposition) + global phase</div>
+
       <h3>Common decompositions</h3>
       <div class="math">S = T&#178;
 Z = S&#178; = T&#8308;
@@ -501,6 +559,15 @@ Any 1Q gate = Rz(&#945;) Ry(&#946;) Rz(&#947;) &#183; e^(i&#948;)</div>
         <tr><td>Two-qubit (ZZ)</td><td>99.5-99.8%</td><td>~200 &#956;s</td><td>All-to-all via shuttling</td></tr>
         <tr><td>Readout</td><td>99.7%</td><td>~50 &#956;s</td><td>State-dependent fluorescence</td></tr>
       </table>
+
+      <!-- Diagram: Quantum computing stack layers -->
+      <div style="max-width:400px;margin:1.5rem auto">
+        <div style="background:#7c3aed;color:white;padding:.5rem;text-align:center;border-radius:8px 8px 0 0;font-size:.82rem;font-weight:600">Quantum Algorithm</div>
+        <div style="background:#6d28d9;color:white;padding:.5rem;text-align:center;font-size:.82rem;font-weight:600">Gate Decomposition</div>
+        <div style="background:#5b21b6;color:white;padding:.5rem;text-align:center;font-size:.82rem;font-weight:600">Error Correction</div>
+        <div style="background:#4c1d95;color:white;padding:.5rem;text-align:center;font-size:.82rem;font-weight:600">Control Pulses</div>
+        <div style="background:#3b0764;color:white;padding:.5rem;text-align:center;border-radius:0 0 8px 8px;font-size:.82rem;font-weight:600">Physical Qubits</div>
+      </div>
 
       <h3>What fidelity means in practice</h3>
       <div class="math">For a circuit with N two-qubit gates:

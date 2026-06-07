@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quantum Fourier Transform - FreeQuantumStore</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+h1{color:#7c3aed;margin:18px 0 6px;font-size:1.4rem}
+.desc{color:#999;font-size:.85rem;margin-bottom:12px;max-width:700px;text-align:center}
+canvas{background:#111;border:1px solid #333;border-radius:6px}
+.controls{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap;justify-content:center}
+.controls label{font-size:.8rem;color:#aaa}
+.controls select,.controls button{background:#222;color:#e0e0e0;border:1px solid #444;padding:4px 10px;border-radius:4px;font-size:.8rem;cursor:pointer}
+.controls button{background:#7c3aed;color:#fff;border:none;font-weight:600}
+footer{margin-top:auto;padding:12px;font-size:.7rem;color:#555}
+footer a{color:#7c3aed;text-decoration:none}
+</style>
+</head>
+<body>
+<h1>Quantum Fourier Transform</h1>
+<p class="desc">Apply QFT to an input state and see frequency-domain representation. Compare with classical DFT.</p>
+<canvas id="c" width="740" height="420"></canvas>
+<div class="controls">
+<label>Qubits: <select id="qb"><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option></select></label>
+<label>Input: <select id="input"></select></label>
+<button id="apply">Apply QFT</button>
+<button id="preset1">Uniform</button>
+<button id="preset2">Single State</button>
+<button id="preset3">Periodic</button>
+</div>
+<footer><a href="/circuits/">FreeQuantumStore</a></footer>
+<script>
+const C=document.getElementById('c'),ctx=C.getContext('2d');
+const W=740,H=420;
+let nQubits=4,N=16,inputState=[],outputState=[];
+let animProgress=0,animating=false;
+
+function initInputSelect(){
+  const sel=document.getElementById('input');
+  sel.innerHTML='';
+  N=1<<nQubits;
+  for(let i=0;i<N;i++){
+    const o=document.createElement('option');
+    o.value=i;o.textContent='|'+i.toString(2).padStart(nQubits,'0')+'>';
+    sel.appendChild(o);
+  }
+}
+
+function setInput(type){
+  N=1<<nQubits;
+  inputState=new Array(N).fill(null).map(()=>({re:0,im:0}));
+  if(type==='single'){
+    const v=+document.getElementById('input').value;
+    inputState[v]={re:1,im:0};
+  } else if(type==='uniform'){
+    const a=1/Math.sqrt(N);
+    for(let i=0;i<N;i++) inputState[i]={re:a,im:0};
+  } else if(type==='periodic'){
+    const period=Math.max(2,Math.floor(N/4));
+    let count=0;
+    for(let i=0;i<N;i+=period) count++;
+    const a=1/Math.sqrt(count);
+    for(let i=0;i<N;i++) inputState[i]={re:i%period===0?a:0,im:0};
+  }
+  outputState=[];animProgress=0;animating=false;
+}
+
+function qft(input){
+  const out=new Array(N).fill(null).map(()=>({re:0,im:0}));
+  const factor=1/Math.sqrt(N);
+  for(let k=0;k<N;k++){
+    let re=0,im=0;
+    for(let j=0;j<N;j++){
+      const angle=2*Math.PI*j*k/N;
+      const cos=Math.cos(angle),sin=Math.sin(angle);
+      re+=input[j].re*cos-input[j].im*sin;
+      im+=input[j].re*sin+input[j].im*cos;
+    }
+    out[k]={re:re*factor,im:im*factor};
+  }
+  return out;
+}
+
+document.getElementById('qb').addEventListener('change',e=>{nQubits=+e.value;initInputSelect();setInput('single');});
+document.getElementById('input').addEventListener('change',()=>setInput('single'));
+document.getElementById('apply').addEventListener('click',()=>{
+  outputState=qft(inputState);animProgress=0;animating=true;
+});
+document.getElementById('preset1').addEventListener('click',()=>{setInput('uniform');outputState=qft(inputState);animating=false;animProgress=1;});
+document.getElementById('preset2').addEventListener('click',()=>setInput('single'));
+document.getElementById('preset3').addEventListener('click',()=>{setInput('periodic');outputState=qft(inputState);animating=false;animProgress=1;});
+
+function mag(c){return Math.sqrt(c.re*c.re+c.im*c.im);}
+function phase(c){return Math.atan2(c.im,c.re);}
+
+function drawBars(state,x,y,w,h,label,color){
+  ctx.fillStyle='#888';ctx.font='bold 11px system-ui';ctx.fillText(label,x,y-6);
+  if(!state.length) return;
+  const bw=Math.max(2,Math.floor((w-N)/N));
+  const gap=Math.max(1,(w-bw*N)/(N+1));
+  let maxM=0;for(const s of state) maxM=Math.max(maxM,mag(s));
+  if(maxM<0.001) maxM=1;
+  for(let i=0;i<N;i++){
+    const m=mag(state[i])/maxM;
+    const bx=x+gap+(bw+gap)*i;
+    const bh=m*h*0.85;
+    // phase as hue
+    const p=phase(state[i]);
+    const hue=((p+Math.PI)/(2*Math.PI))*270;
+    ctx.fillStyle=m>0.01?`hsl(${hue},70%,55%)`:color+'33';
+    ctx.fillRect(bx,y+h-bh,bw,bh);
+    // probability text
+    if(bw>10){
+      ctx.fillStyle='#666';ctx.font='8px monospace';
+      ctx.save();ctx.translate(bx+bw/2,y+h+10);ctx.rotate(-Math.PI/4);
+      ctx.fillText('|'+i.toString(2).padStart(nQubits,'0')+'>',0,0);
+      ctx.restore();
+    }
+  }
+  // prob labels
+  ctx.fillStyle='#555';ctx.font='9px system-ui';
+  ctx.fillText('|0>',x,y+h+10);
+  ctx.fillText('|'+(N-1).toString(2).padStart(nQubits,'0')+'>',x+w-30,y+h+10);
+}
+
+function draw(){
+  ctx.fillStyle='#111';ctx.fillRect(0,0,W,H);
+  if(animating){
+    animProgress=Math.min(1,animProgress+0.03);
+    if(animProgress>=1) animating=false;
+  }
+  // input state
+  drawBars(inputState,20,40,340,130,'Input State |psi>','#7c3aed');
+  // arrow
+  ctx.fillStyle='#7c3aed';ctx.font='20px system-ui';
+  ctx.fillText('QFT',345,110);
+  ctx.beginPath();ctx.moveTo(370,115);ctx.lineTo(390,110);ctx.lineTo(370,105);ctx.fill();
+  // output state (animated)
+  if(outputState.length){
+    const interpState=outputState.map((s,i)=>({
+      re:s.re*animProgress,
+      im:s.im*animProgress
+    }));
+    drawBars(interpState,390,40,330,130,'Output State QFT|psi>','#7c3aed');
+  } else {
+    ctx.fillStyle='#333';ctx.font='12px system-ui';ctx.fillText('Click "Apply QFT" to transform',440,110);
+  }
+  // probability distribution
+  ctx.fillStyle='#666';ctx.font='bold 11px system-ui';ctx.fillText('Measurement Probabilities',20,230);
+  if(outputState.length){
+    const bw=Math.max(4,Math.floor(680/N));
+    const gap=(700-bw*N)/(N+1);
+    for(let i=0;i<N;i++){
+      const p=mag(outputState[i]);
+      const prob=p*p*animProgress;
+      const bx=20+gap+(bw+gap)*i;
+      const bh=prob*120;
+      ctx.fillStyle='#7c3aed';
+      ctx.fillRect(bx,370-bh,bw,bh);
+      if(bw>14){
+        ctx.fillStyle='#aaa';ctx.font='8px monospace';
+        ctx.fillText((prob*100).toFixed(0)+'%',bx,365-bh);
+      }
+    }
+  }
+  // grid
+  ctx.strokeStyle='#222';ctx.lineWidth=0.5;
+  ctx.beginPath();ctx.moveTo(20,370);ctx.lineTo(720,370);ctx.stroke();
+  requestAnimationFrame(draw);
+}
+initInputSelect();setInput('single');draw();
+</script>
+</body>
+</html>

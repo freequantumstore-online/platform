@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quantum Walk - FreeQuantumStore</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+h1{color:#7c3aed;margin:18px 0 6px;font-size:1.4rem}
+.desc{color:#999;font-size:.85rem;margin-bottom:12px;max-width:700px;text-align:center}
+canvas{background:#111;border:1px solid #333;border-radius:6px}
+.controls{display:flex;gap:12px;margin:12px 0;flex-wrap:wrap;justify-content:center}
+.controls label{font-size:.8rem;color:#aaa}
+.controls input[type=range]{width:80px;accent-color:#7c3aed}
+.controls button{background:#7c3aed;color:#fff;border:none;padding:5px 14px;border-radius:4px;font-size:.8rem;cursor:pointer;font-weight:600}
+.legend{display:flex;gap:16px;font-size:.75rem;margin:4px}
+.legend span{display:flex;align-items:center;gap:4px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+footer{margin-top:auto;padding:12px;font-size:.7rem;color:#555}
+footer a{color:#7c3aed;text-decoration:none}
+</style>
+</head>
+<body>
+<h1>Quantum Walk</h1>
+<p class="desc">1D discrete quantum walk vs classical random walk. Quantum spreads ballistically (linear), classical diffuses (sqrt).</p>
+<canvas id="c" width="740" height="380"></canvas>
+<div class="controls">
+<label>Steps: <input type="range" id="steps" min="5" max="100" value="40"><span id="stepsV">40</span></label>
+<label>Coin bias: <input type="range" id="bias" min="0" max="100" value="50"><span id="biasV">50</span>%</label>
+<button id="run">Walk</button>
+<button id="reset">Reset</button>
+</div>
+<div class="legend">
+<span><span class="dot" style="background:#7c3aed"></span> Quantum</span>
+<span><span class="dot" style="background:#ef4444"></span> Classical</span>
+<span><span class="dot" style="background:#666"></span> Position axis</span>
+</div>
+<footer><a href="/circuits/">FreeQuantumStore</a></footer>
+<script>
+const C=document.getElementById('c'),ctx=C.getContext('2d');
+const W=740,H=380;
+let nSteps=40,coinBias=0.5;
+let qProbs=[],cProbs=[],animStep=0,animating=false;
+
+document.getElementById('steps').addEventListener('input',e=>{nSteps=+e.value;document.getElementById('stepsV').textContent=nSteps;});
+document.getElementById('bias').addEventListener('input',e=>{coinBias=e.value/100;document.getElementById('biasV').textContent=e.value;});
+
+function quantumWalk(T,theta){
+  const N=2*T+1,mid=T;
+  // state: [left, right] amplitudes at each position
+  let state=new Array(N).fill(null).map(()=>({l:{re:0,im:0},r:{re:0,im:0}}));
+  // initial: start at center, spin up
+  state[mid].r={re:1,im:0};
+  const cos=Math.cos(theta),sin=Math.sin(theta);
+  for(let t=0;t<T;t++){
+    const next=new Array(N).fill(null).map(()=>({l:{re:0,im:0},r:{re:0,im:0}}));
+    for(let x=0;x<N;x++){
+      // Hadamard-like coin
+      const cl={re:state[x].l.re*cos+state[x].r.re*sin,im:state[x].l.im*cos+state[x].r.im*sin};
+      const cr={re:state[x].l.re*sin-state[x].r.re*cos,im:state[x].l.im*sin-state[x].r.im*cos};
+      // shift: left component moves left, right moves right
+      if(x>0){next[x-1].l.re+=cl.re;next[x-1].l.im+=cl.im;}
+      if(x<N-1){next[x+1].r.re+=cr.re;next[x+1].r.im+=cr.im;}
+    }
+    state=next;
+  }
+  return state.map(s=>s.l.re*s.l.re+s.l.im*s.l.im+s.r.re*s.r.re+s.r.im*s.r.im);
+}
+
+function classicalWalk(T,p){
+  const N=2*T+1,mid=T;
+  let prob=new Float64Array(N);prob[mid]=1;
+  for(let t=0;t<T;t++){
+    const next=new Float64Array(N);
+    for(let x=0;x<N;x++){
+      if(prob[x]>0){
+        if(x>0) next[x-1]+=prob[x]*p;
+        if(x<N-1) next[x+1]+=prob[x]*(1-p);
+      }
+    }
+    prob=next;
+  }
+  return Array.from(prob);
+}
+
+document.getElementById('run').addEventListener('click',()=>{
+  const theta=Math.acos(2*coinBias-1)||Math.PI/4;
+  qProbs=quantumWalk(nSteps,Math.PI/4);
+  cProbs=classicalWalk(nSteps,coinBias);
+  animStep=0;animating=true;
+});
+document.getElementById('reset').addEventListener('click',()=>{qProbs=[];cProbs=[];animating=false;animStep=0;});
+
+function draw(){
+  ctx.fillStyle='#111';ctx.fillRect(0,0,W,H);
+  if(animating&&animStep<qProbs.length){animStep=Math.min(qProbs.length,animStep+2);}
+  else animating=false;
+  const N=qProbs.length||2*nSteps+1;
+  const mid=Math.floor(N/2);
+  // axis
+  ctx.strokeStyle='#333';ctx.lineWidth=1;
+  const baseY=H-40,topY=30;
+  ctx.beginPath();ctx.moveTo(20,baseY);ctx.lineTo(W-20,baseY);ctx.stroke();
+  // center marker
+  const cx=W/2;
+  ctx.strokeStyle='#444';ctx.setLineDash([2,4]);
+  ctx.beginPath();ctx.moveTo(cx,topY);ctx.lineTo(cx,baseY);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#666';ctx.font='10px system-ui';ctx.fillText('0',cx-3,baseY+14);
+  ctx.fillText(`-${nSteps}`,22,baseY+14);ctx.fillText(`+${nSteps}`,W-40,baseY+14);
+  if(!qProbs.length){
+    ctx.fillStyle='#444';ctx.font='14px system-ui';ctx.fillText('Click "Walk" to simulate',W/2-80,H/2);
+    requestAnimationFrame(draw);return;
+  }
+  const dx=(W-40)/N;
+  let maxQ=0,maxC=0;
+  for(let i=0;i<animStep;i++){maxQ=Math.max(maxQ,qProbs[i]);maxC=Math.max(maxC,cProbs[i]);}
+  const maxP=Math.max(maxQ,maxC,0.001);
+  const plotH=baseY-topY-20;
+  // classical (filled)
+  ctx.fillStyle='rgba(239,68,68,0.2)';ctx.strokeStyle='#ef4444';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(20,baseY);
+  for(let i=0;i<animStep;i++){
+    const x=20+i*dx;const y=baseY-cProbs[i]/maxP*plotH;
+    ctx.lineTo(x,y);
+  }
+  ctx.lineTo(20+(animStep-1)*dx,baseY);ctx.closePath();ctx.fill();
+  ctx.beginPath();
+  for(let i=0;i<animStep;i++){
+    const x=20+i*dx;const y=baseY-cProbs[i]/maxP*plotH;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  // quantum (filled)
+  ctx.fillStyle='rgba(124,58,237,0.15)';ctx.strokeStyle='#7c3aed';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(20,baseY);
+  for(let i=0;i<animStep;i++){
+    const x=20+i*dx;const y=baseY-qProbs[i]/maxP*plotH;
+    ctx.lineTo(x,y);
+  }
+  ctx.lineTo(20+(animStep-1)*dx,baseY);ctx.closePath();ctx.fill();
+  ctx.beginPath();
+  for(let i=0;i<animStep;i++){
+    const x=20+i*dx;const y=baseY-qProbs[i]/maxP*plotH;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  // stats
+  let qVar=0,cVar=0;
+  for(let i=0;i<N;i++){
+    const pos=i-mid;
+    qVar+=pos*pos*qProbs[i];cVar+=pos*pos*cProbs[i];
+  }
+  ctx.fillStyle='#888';ctx.font='11px system-ui';
+  ctx.fillText(`Steps: ${nSteps}`,20,20);
+  ctx.fillStyle='#7c3aed';ctx.fillText(`Quantum std: ${Math.sqrt(qVar).toFixed(1)} (linear in T)`,150,20);
+  ctx.fillStyle='#ef4444';ctx.fillText(`Classical std: ${Math.sqrt(cVar).toFixed(1)} (sqrt of T = ${Math.sqrt(nSteps).toFixed(1)})`,420,20);
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

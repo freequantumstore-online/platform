@@ -134,6 +134,19 @@ Required logical error rate: &lt; 10&#8315;&#185;&#8304; per gate
       <h2>Classical vs Quantum Error Correction</h2>
       <p>Classical error correction is well-understood and underlies all digital communication (DRAM, SSDs, fiber optics, 5G). Quantum error correction is fundamentally harder due to three constraints unique to quantum mechanics.</p>
 
+      <!-- Diagram: QEC concept flow -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:.5rem;margin:1.5rem 0;flex-wrap:wrap">
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.5rem .8rem;color:#a78bfa;font-size:.78rem;font-weight:600">Encode</div>
+        <span style="color:#404040;font-size:1.2rem">&rarr;</span>
+        <div style="background:#251616;border:1px solid #f87171;border-radius:8px;padding:.5rem .8rem;color:#f87171;font-size:.78rem;font-weight:600">Error occurs</div>
+        <span style="color:#404040;font-size:1.2rem">&rarr;</span>
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.5rem .8rem;color:#a78bfa;font-size:.78rem;font-weight:600">Syndrome measure</div>
+        <span style="color:#404040;font-size:1.2rem">&rarr;</span>
+        <div style="background:#1e1b4b;border:1px solid #7c3aed;border-radius:8px;padding:.5rem .8rem;color:#a78bfa;font-size:.78rem;font-weight:600">Decode</div>
+        <span style="color:#404040;font-size:1.2rem">&rarr;</span>
+        <div style="background:#0f3d0f;border:1px solid #4ade80;border-radius:8px;padding:.5rem .8rem;color:#4ade80;font-size:.78rem;font-weight:600">Correct</div>
+      </div>
+
       <h3>Three quantum obstacles</h3>
       <table>
         <tr><th>Obstacle</th><th>Classical</th><th>Quantum</th></tr>
@@ -422,6 +435,40 @@ To reach p_L = 10&#8315;&#185;&#8304; (needed for Shor's algorithm):
       <h2>Logical Qubits vs Physical Qubits</h2>
       <p>A <strong>physical qubit</strong> is a single hardware qubit (one transmon, one trapped ion, etc.). A <strong>logical qubit</strong> is an error-corrected qubit encoded across many physical qubits. The ratio determines the overhead of quantum error correction.</p>
 
+      <!-- Diagram: Logical vs Physical qubit scaling -->
+      <div style="max-width:400px;margin:1.5rem auto">
+        <div style="display:flex;gap:.4rem;align-items:flex-end;justify-content:center;margin-bottom:.5rem">
+          <div style="text-align:center">
+            <div style="width:40px;height:20px;background:#7c3aed;border-radius:4px 4px 0 0"></div>
+            <div style="width:40px;height:0;background:#3b82f6"></div>
+            <div style="font-size:.6rem;color:#525252;margin-top:.2rem">d=3</div>
+            <div style="font-size:.55rem;color:#737373">17 phys</div>
+          </div>
+          <div style="text-align:center">
+            <div style="width:40px;height:20px;background:#7c3aed;border-radius:4px 4px 0 0"></div>
+            <div style="width:40px;height:40px;background:#3b82f6"></div>
+            <div style="font-size:.6rem;color:#525252;margin-top:.2rem">d=9</div>
+            <div style="font-size:.55rem;color:#737373">160 phys</div>
+          </div>
+          <div style="text-align:center">
+            <div style="width:40px;height:20px;background:#7c3aed;border-radius:4px 4px 0 0"></div>
+            <div style="width:40px;height:80px;background:#3b82f6"></div>
+            <div style="font-size:.6rem;color:#525252;margin-top:.2rem">d=17</div>
+            <div style="font-size:.55rem;color:#737373">580 phys</div>
+          </div>
+          <div style="text-align:center">
+            <div style="width:40px;height:20px;background:#7c3aed;border-radius:4px 4px 0 0"></div>
+            <div style="width:40px;height:140px;background:#3b82f6"></div>
+            <div style="font-size:.6rem;color:#525252;margin-top:.2rem">d=27</div>
+            <div style="font-size:.55rem;color:#737373">1460 phys</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:.5rem;justify-content:center;font-size:.68rem">
+          <div><span style="display:inline-block;width:10px;height:10px;background:#7c3aed;border-radius:2px;vertical-align:middle"></span> Logical qubit</div>
+          <div><span style="display:inline-block;width:10px;height:10px;background:#3b82f6;border-radius:2px;vertical-align:middle"></span> Physical overhead</div>
+        </div>
+      </div>
+
       <h3>Overhead scaling</h3>
       <table>
         <tr><th>Target p_L</th><th>Distance d</th><th>Physical qubits per logical qubit</th><th>Use case</th></tr>
@@ -494,6 +541,30 @@ is a decade-plus engineering challenge.</div>
     <section class="section" id="timeline">
       <h2>Timeline to Fault-Tolerant Quantum Computing</h2>
       <p>The path from today's noisy qubits to a fault-tolerant quantum computer capable of running Shor's algorithm spans multiple stages. Here is a realistic timeline based on published roadmaps and current progress.</p>
+
+      <!-- Diagram: Timeline to fault tolerance -->
+      <div style="border-left:2px solid #262626;margin:1rem 0 1rem 1rem;padding-left:1.5rem">
+        <div style="margin-bottom:1rem;position:relative">
+          <div style="position:absolute;left:-2rem;top:.3rem;width:10px;height:10px;border-radius:50%;background:#f87171"></div>
+          <div style="font-size:.82rem;font-weight:700;color:#fafafa">2019-2025 &mdash; NISQ Era</div>
+          <div style="font-size:.75rem;color:#737373">50-1,000 qubits. Error mitigation, no correction.</div>
+        </div>
+        <div style="margin-bottom:1rem;position:relative">
+          <div style="position:absolute;left:-2rem;top:.3rem;width:10px;height:10px;border-radius:50%;background:#fbbf24"></div>
+          <div style="font-size:.82rem;font-weight:700;color:#fafafa">2026-2029 &mdash; Early Fault-Tolerant</div>
+          <div style="font-size:.75rem;color:#737373">10-50 logical qubits at d=3-5.</div>
+        </div>
+        <div style="margin-bottom:1rem;position:relative">
+          <div style="position:absolute;left:-2rem;top:.3rem;width:10px;height:10px;border-radius:50%;background:#4ade80"></div>
+          <div style="font-size:.82rem;font-weight:700;color:#fafafa">2029-2035 &mdash; Fault-Tolerant</div>
+          <div style="font-size:.75rem;color:#737373">100-1,000 logical qubits. Practical quantum advantage.</div>
+        </div>
+        <div style="position:relative">
+          <div style="position:absolute;left:-2rem;top:.3rem;width:10px;height:10px;border-radius:50%;background:#7c3aed"></div>
+          <div style="font-size:.82rem;font-weight:700;color:#fafafa">2033-2040+ &mdash; Large-Scale</div>
+          <div style="font-size:.75rem;color:#737373">4,000+ logical qubits. Breaking RSA-2048.</div>
+        </div>
+      </div>
 
       <h3>The stages</h3>
       <table>

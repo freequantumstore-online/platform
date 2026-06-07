@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Superdense Coding - FreeQuantumStore</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+h1{color:#7c3aed;margin:18px 0 6px;font-size:1.4rem}
+.desc{color:#999;font-size:.85rem;margin-bottom:12px;max-width:700px;text-align:center}
+canvas{background:#111;border:1px solid #333;border-radius:6px}
+.controls{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap;justify-content:center}
+.controls button{background:#7c3aed;color:#fff;border:none;padding:6px 16px;border-radius:4px;font-size:.85rem;cursor:pointer;font-weight:600}
+.controls button:hover{background:#8b5cf6}
+.controls button.active{background:#22c55e}
+footer{margin-top:auto;padding:12px;font-size:.7rem;color:#555}
+footer a{color:#7c3aed;text-decoration:none}
+</style>
+</head>
+<body>
+<h1>Superdense Coding</h1>
+<p class="desc">Send 2 classical bits using 1 qubit + shared entanglement. Step through the protocol.</p>
+<canvas id="c" width="720" height="400"></canvas>
+<div class="controls">
+<button id="b00">Send 00</button>
+<button id="b01">Send 01</button>
+<button id="b10">Send 10</button>
+<button id="b11">Send 11</button>
+<button id="step">Next Step</button>
+<button id="reset">Reset</button>
+</div>
+<footer><a href="/circuits/">FreeQuantumStore</a></footer>
+<script>
+const C=document.getElementById('c'),ctx=C.getContext('2d');
+const W=720,H=400;
+let bits='00',currentStep=0;
+const steps=[
+  {name:'Initial',desc:'Alice and Bob each receive one qubit of a Bell pair |Phi+> = (|00>+|11>)/sqrt(2)'},
+  {name:'Alice Encodes',desc:'Alice applies gates to her qubit based on her 2 classical bits'},
+  {name:'Qubit Sent',desc:'Alice sends her single qubit to Bob (1 qubit transmitted)'},
+  {name:'Bob Decodes',desc:'Bob applies CNOT then H to both qubits'},
+  {name:'Measurement',desc:'Bob measures both qubits and recovers the 2 classical bits'}
+];
+const gateMap={'00':'I (identity)','01':'X (bit flip)','10':'Z (phase flip)','11':'ZX (both)'};
+const stateMap={'00':'(|00>+|11>)/sqrt(2)','01':'(|01>+|10>)/sqrt(2)','10':'(|00>-|11>)/sqrt(2)','11':'-(|01>-|10>)/sqrt(2)'};
+
+for(const b of['00','01','10','11']){
+  document.getElementById('b'+b).addEventListener('click',()=>{bits=b;currentStep=0;updateButtons();});
+}
+document.getElementById('step').addEventListener('click',()=>{if(currentStep<4)currentStep++;});
+document.getElementById('reset').addEventListener('click',()=>{currentStep=0;});
+
+function updateButtons(){
+  for(const b of['00','01','10','11']){
+    document.getElementById('b'+b).className=bits===b?'active':'';
+  }
+}
+
+function draw(){
+  ctx.fillStyle='#111';ctx.fillRect(0,0,W,H);
+  // title
+  ctx.fillStyle='#7c3aed';ctx.font='bold 14px system-ui';
+  ctx.fillText('Superdense Coding Protocol',20,28);
+  ctx.fillStyle='#888';ctx.font='11px system-ui';
+  ctx.fillText(`Sending: ${bits} | Gate: ${gateMap[bits]}`,20,48);
+  // progress
+  const pw=660,px=30,py=70;
+  for(let i=0;i<5;i++){
+    const x=px+i*(pw/4);
+    const active=i<=currentStep;
+    ctx.fillStyle=active?'#7c3aed':'#333';
+    ctx.beginPath();ctx.arc(x,py,12,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=active?'#fff':'#666';ctx.font='bold 10px system-ui';
+    ctx.fillText(i+1,x-3,py+4);
+    ctx.fillStyle=active?'#ccc':'#555';ctx.font='9px system-ui';
+    ctx.fillText(steps[i].name,x-20,py+28);
+    if(i<4){
+      ctx.strokeStyle=i<currentStep?'#7c3aed':'#333';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(x+14,py);ctx.lineTo(x+pw/4-14,py);ctx.stroke();
+    }
+  }
+  // description
+  ctx.fillStyle='#aaa';ctx.font='12px system-ui';
+  ctx.fillText(steps[currentStep].desc,30,130);
+  // circuit diagram
+  const cy1=170,cy2=230;
+  // Alice's qubit line
+  ctx.strokeStyle='#7c3aed';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(60,cy1);ctx.lineTo(660,cy1);ctx.stroke();
+  ctx.fillStyle='#7c3aed';ctx.font='bold 11px system-ui';ctx.fillText('Alice',10,cy1+4);
+  // Bob's qubit line
+  ctx.strokeStyle='#a78bfa';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(60,cy2);ctx.lineTo(660,cy2);ctx.stroke();
+  ctx.fillStyle='#a78bfa';ctx.fillText('Bob',10,cy2+4);
+  // Bell pair creation
+  const bx=120;
+  ctx.fillStyle=currentStep>=0?'#7c3aed':'#333';
+  ctx.fillRect(bx-12,cy1-12,24,24);ctx.fillRect(bx-12,cy2-12,24,24);
+  ctx.fillStyle='#fff';ctx.font='bold 10px system-ui';
+  ctx.fillText('H',bx-4,cy1+4);ctx.fillText('X',bx-4,cy2+4);
+  // CNOT line
+  ctx.strokeStyle=currentStep>=0?'#7c3aed':'#333';
+  ctx.beginPath();ctx.moveTo(bx,cy1+12);ctx.lineTo(bx,cy2-12);ctx.stroke();
+  // entanglement symbol
+  if(currentStep>=0){
+    ctx.strokeStyle='#7c3aed44';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(bx+30,cy1);ctx.lineTo(bx+30,cy2);ctx.stroke();
+    ctx.setLineDash([]);ctx.fillStyle='#666';ctx.font='9px system-ui';ctx.fillText('entangled',bx+34,(cy1+cy2)/2+3);
+  }
+  // Alice's gate
+  const gx=280;
+  if(currentStep>=1){
+    ctx.fillStyle='#22c55e';ctx.fillRect(gx-15,cy1-15,30,30);
+    ctx.fillStyle='#000';ctx.font='bold 11px system-ui';
+    const g=bits==='00'?'I':bits==='01'?'X':bits==='10'?'Z':'ZX';
+    ctx.fillText(g,gx-8,cy1+4);
+  }
+  // qubit transfer
+  const tx=400;
+  if(currentStep>=2){
+    ctx.strokeStyle='#f97316';ctx.lineWidth=2;ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(tx-30,cy1);ctx.lineTo(tx+30,cy2);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#f97316';ctx.font='9px system-ui';ctx.fillText('1 qubit sent',tx-10,(cy1+cy2)/2-5);
+    // arrow
+    ctx.beginPath();ctx.moveTo(tx+30,cy2);ctx.lineTo(tx+20,cy2-8);ctx.moveTo(tx+30,cy2);ctx.lineTo(tx+20,cy2+4);ctx.stroke();
+  }
+  // Bob decodes
+  const dx=520;
+  if(currentStep>=3){
+    ctx.fillStyle='#a78bfa';ctx.fillRect(dx-12,cy1-12,24,24);ctx.fillRect(dx-12,cy2-12,24,24);
+    ctx.fillStyle='#000';ctx.font='bold 10px system-ui';
+    ctx.fillText('H',dx-4,cy1+4);
+    // CNOT
+    ctx.beginPath();ctx.arc(dx,cy2,6,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#a78bfa';ctx.beginPath();ctx.moveTo(dx,cy1+12);ctx.lineTo(dx,cy2-6);ctx.stroke();
+  }
+  // measurement
+  const mx=620;
+  if(currentStep>=4){
+    ctx.strokeStyle='#22c55e';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(mx,cy1,10,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(mx,cy1);ctx.lineTo(mx+6,cy1-8);ctx.stroke();
+    ctx.beginPath();ctx.arc(mx,cy2,10,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(mx,cy2);ctx.lineTo(mx+6,cy2-8);ctx.stroke();
+    ctx.fillStyle='#22c55e';ctx.font='bold 16px monospace';
+    ctx.fillText(bits[0],mx+18,cy1+5);ctx.fillText(bits[1],mx+18,cy2+5);
+  }
+  // state display
+  ctx.fillStyle='#666';ctx.font='11px monospace';
+  if(currentStep>=1){
+    ctx.fillText('State after encoding: '+stateMap[bits],30,290);
+  }
+  if(currentStep>=4){
+    ctx.fillStyle='#22c55e';ctx.font='bold 13px system-ui';
+    ctx.fillText(`Bob recovered: ${bits} (2 classical bits from 1 qubit!)`,30,320);
+  }
+  // info box
+  ctx.fillStyle='#222';ctx.fillRect(30,340,660,40);
+  ctx.fillStyle='#888';ctx.font='11px system-ui';
+  ctx.fillText('Key insight: Entanglement lets 1 qubit carry 2 classical bits of information.',40,358);
+  ctx.fillText('Without entanglement, 1 qubit can only carry 1 classical bit (Holevo bound).',40,374);
+  requestAnimationFrame(draw);
+}
+updateButtons();draw();
+</script>
+</body>
+</html>

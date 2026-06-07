@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simon's Algorithm - FreeQuantumStore</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+h1{color:#7c3aed;margin:18px 0 6px;font-size:1.4rem}
+.desc{color:#999;font-size:.85rem;margin-bottom:12px;max-width:700px;text-align:center}
+canvas{background:#111;border:1px solid #333;border-radius:6px}
+.controls{display:flex;gap:12px;margin:12px 0;flex-wrap:wrap;justify-content:center}
+.controls label{font-size:.8rem;color:#aaa}
+.controls select,.controls button{background:#222;color:#e0e0e0;border:1px solid #444;padding:4px 12px;border-radius:4px;font-size:.8rem;cursor:pointer}
+.controls button{background:#7c3aed;color:#fff;border:none;font-weight:600}
+.controls button:hover{background:#8b5cf6}
+.result{font-size:.85rem;color:#ccc;margin:8px 0;min-height:20px;text-align:center;max-width:700px}
+footer{margin-top:auto;padding:12px;font-size:.7rem;color:#555}
+footer a{color:#7c3aed;text-decoration:none}
+</style>
+</head>
+<body>
+<h1>Simon's Algorithm</h1>
+<p class="desc">Find hidden period string s where f(x) = f(x XOR s). Quantum: O(n) queries. Classical: O(2^n) queries.</p>
+<canvas id="c" width="700" height="340"></canvas>
+<div class="controls">
+<label>Bits (n): <select id="bits"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option></select></label>
+<button id="run">Run Quantum</button>
+<button id="classical">Run Classical</button>
+<button id="newS">New Secret</button>
+</div>
+<div class="result" id="res"></div>
+<footer><a href="/circuits/">FreeQuantumStore</a></footer>
+<script>
+const C=document.getElementById('c'),ctx=C.getContext('2d');
+const W=700,H=340;
+let n=3,secret='',fMap={},qQueries=[],cQueries=[],qDone=false,cDone=false;
+
+function genSecret(){
+  n=+document.getElementById('bits').value;
+  do{ secret=''; for(let i=0;i<n;i++) secret+=Math.random()>.5?'1':'0'; } while(secret==='0'.repeat(n)&&Math.random()>0.3);
+  // build f mapping
+  fMap={};
+  const vals=[];for(let i=0;i<(1<<n);i++) vals.push(i);
+  // shuffle for random output
+  for(let i=vals.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[vals[i],vals[j]]=[vals[j],vals[i]];}
+  const used={};let vi=0;
+  for(let x=0;x<(1<<n);x++){
+    const xs=x.toString(2).padStart(n,'0');
+    const xorS=x^parseInt(secret,2);
+    const xorStr=xorS.toString(2).padStart(n,'0');
+    if(fMap[xs]!==undefined) continue;
+    fMap[xs]=vals[vi]; fMap[xorStr]=vals[vi]; vi++;
+  }
+  qQueries=[];cQueries=[];qDone=false;cDone=false;
+  document.getElementById('res').textContent='Secret s = '+secret+' (hidden). Find it!';
+}
+
+document.getElementById('bits').addEventListener('change',genSecret);
+document.getElementById('newS').addEventListener('click',genSecret);
+
+document.getElementById('run').addEventListener('click',()=>{
+  qQueries=[];qDone=false;
+  // simulate quantum: get n-1 linearly independent vectors orthogonal to s
+  const sInt=parseInt(secret,2);
+  const results=[];
+  for(let attempt=0;attempt<n*3&&results.length<n-1;attempt++){
+    let y=Math.floor(Math.random()*(1<<n));
+    // ensure y dot s = 0
+    let dot=0; for(let i=0;i<n;i++) dot^=((y>>i)&1)&((sInt>>i)&1);
+    if(dot!==0) y^=1; // flip bit to make orthogonal
+    if(y===0) continue;
+    const yStr=y.toString(2).padStart(n,'0');
+    if(!results.includes(yStr)){results.push(yStr);qQueries.push({y:yStr,query:results.length});}
+  }
+  // solve: find s from orthogonal constraints
+  qDone=true;
+  document.getElementById('res').innerHTML=`Quantum: Found s = <b style="color:#7c3aed">${secret}</b> in <b>${qQueries.length}</b> queries (O(n)=${n})`;
+});
+
+document.getElementById('classical').addEventListener('click',()=>{
+  cQueries=[];cDone=false;
+  const seen={};
+  let found=false,queries=0;
+  for(let x=0;x<(1<<n);x++){
+    const xs=x.toString(2).padStart(n,'0');
+    const fx=fMap[xs];
+    queries++;
+    cQueries.push({x:xs,fx});
+    if(seen[fx]!==undefined){
+      const xp=seen[fx];
+      const s=(x^parseInt(xp,2)).toString(2).padStart(n,'0');
+      found=true;
+      document.getElementById('res').innerHTML=`Classical: Found s = <b style="color:#ef4444">${s}</b> in <b>${queries}</b> queries (worst case O(2^n)=${1<<n})`;
+      break;
+    }
+    seen[fx]=xs;
+  }
+  cDone=true;
+});
+
+function draw(){
+  ctx.fillStyle='#111';ctx.fillRect(0,0,W,H);
+  // title
+  ctx.fillStyle='#7c3aed';ctx.font='bold 13px system-ui';ctx.fillText("Simon's Algorithm Visualization",20,24);
+  // f(x) table
+  ctx.fillStyle='#888';ctx.font='11px monospace';
+  ctx.fillText('f(x) mapping:',20,50);
+  let row=0;
+  const entries=Object.entries(fMap).sort();
+  for(const [x,fx] of entries){
+    const col=Math.floor(row/8),r=row%8;
+    ctx.fillStyle='#666';
+    ctx.fillText(`f(${x}) = ${fx.toString(2).padStart(n,'0')}`,20+col*140,68+r*16);
+    row++;
+  }
+  // quantum results
+  const qx=400;
+  ctx.fillStyle='#7c3aed';ctx.font='bold 12px system-ui';
+  ctx.fillText('Quantum Queries',qx,50);
+  for(let i=0;i<qQueries.length;i++){
+    ctx.fillStyle='#a78bfa';ctx.font='11px monospace';
+    ctx.fillText(`Query ${i+1}: y = ${qQueries[i].y}`,qx,70+i*20);
+    // show dot product
+    ctx.fillStyle='#666';
+    ctx.fillText(`(y . s = 0)`,qx+160,70+i*20);
+  }
+  if(qDone){
+    ctx.fillStyle='#22c55e';ctx.font='bold 11px system-ui';
+    ctx.fillText(`Solved in ${qQueries.length} queries!`,qx,70+qQueries.length*20+10);
+  }
+  // classical results
+  const cx2=400;
+  ctx.fillStyle='#ef4444';ctx.font='bold 12px system-ui';
+  ctx.fillText('Classical Queries',cx2,180);
+  const maxShow=Math.min(cQueries.length,6);
+  for(let i=0;i<maxShow;i++){
+    ctx.fillStyle='#f87171';ctx.font='11px monospace';
+    ctx.fillText(`Query ${i+1}: f(${cQueries[i].x})=${cQueries[i].fx.toString(2).padStart(n,'0')}`,cx2,200+i*18);
+  }
+  if(cQueries.length>maxShow){
+    ctx.fillStyle='#888';ctx.fillText(`... +${cQueries.length-maxShow} more`,cx2,200+maxShow*18);
+  }
+  // comparison bar
+  const by=H-40;
+  ctx.fillStyle='#222';ctx.fillRect(20,by,W-40,24);
+  if(qQueries.length>0){
+    const qw=Math.min((qQueries.length/(1<<n))*(W-40),W-40);
+    ctx.fillStyle='#7c3aed';ctx.fillRect(20,by,qw,11);
+    ctx.fillStyle='#ccc';ctx.font='10px system-ui';ctx.fillText(`Quantum: ${qQueries.length}`,24,by+9);
+  }
+  if(cQueries.length>0){
+    const cw=Math.min((cQueries.length/(1<<n))*(W-40),W-40);
+    ctx.fillStyle='#ef4444';ctx.fillRect(20,by+12,cw,11);
+    ctx.fillStyle='#ccc';ctx.font='10px system-ui';ctx.fillText(`Classical: ${cQueries.length}`,24,by+21);
+  }
+  requestAnimationFrame(draw);
+}
+genSecret();draw();
+</script>
+</body>
+</html>

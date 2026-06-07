@@ -155,6 +155,78 @@
       "creator": "serge-ivo",
       "creatorName": "Serge",
       "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "simon",
+      "name": "Simon Algorithm",
+      "description": "Find hidden period string in O(n) quantum queries vs O(2^n) classical.",
+      "storeType": "behavior",
+      "category": "algorithms",
+      "icon": "\ud83d\udd11",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "qft",
+      "name": "Quantum Fourier Transform",
+      "description": "Apply QFT, see frequency domain. Phase coloring, measurement probabilities.",
+      "storeType": "behavior",
+      "category": "algorithms",
+      "icon": "\ud83d\udcca",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "bernstein",
+      "name": "Bernstein-Vazirani",
+      "description": "Find hidden bit string in 1 query. Classical needs N. Animated comparison.",
+      "storeType": "behavior",
+      "category": "algorithms",
+      "icon": "\ud83d\udd0d",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "phase-est",
+      "name": "Phase Estimation",
+      "description": "Estimate eigenvalue of a unitary. Precision increases with qubits. Foundation for Shor.",
+      "storeType": "behavior",
+      "category": "algorithms",
+      "icon": "\ud83d\udcd0",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "superdense",
+      "name": "Superdense Coding",
+      "description": "Send 2 classical bits using 1 qubit + entanglement. Step-by-step protocol.",
+      "storeType": "behavior",
+      "category": "protocols",
+      "icon": "\ud83d\udce8",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "quantum-walk",
+      "name": "Quantum Walk",
+      "description": "Quantum vs classical random walk. Ballistic vs diffusive spreading.",
+      "storeType": "behavior",
+      "category": "phenomena",
+      "icon": "\ud83d\udeb6",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
     }
   ]
 }

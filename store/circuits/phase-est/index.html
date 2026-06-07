@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Phase Estimation - FreeQuantumStore</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+h1{color:#7c3aed;margin:18px 0 6px;font-size:1.4rem}
+.desc{color:#999;font-size:.85rem;margin-bottom:12px;max-width:700px;text-align:center}
+canvas{background:#111;border:1px solid #333;border-radius:6px}
+.controls{display:flex;gap:12px;margin:12px 0;flex-wrap:wrap;justify-content:center}
+.controls label{font-size:.8rem;color:#aaa}
+.controls input[type=range]{width:100px;accent-color:#7c3aed}
+.controls select,.controls button{background:#222;color:#e0e0e0;border:1px solid #444;padding:4px 10px;border-radius:4px;font-size:.8rem;cursor:pointer}
+.controls button{background:#7c3aed;color:#fff;border:none;font-weight:600}
+footer{margin-top:auto;padding:12px;font-size:.7rem;color:#555}
+footer a{color:#7c3aed;text-decoration:none}
+</style>
+</head>
+<body>
+<h1>Quantum Phase Estimation</h1>
+<p class="desc">Estimate eigenvalue e^(2pi*i*phi) of a unitary. More qubits = higher precision.</p>
+<canvas id="c" width="740" height="400"></canvas>
+<div class="controls">
+<label>True phase phi: <input type="range" id="phi" min="0" max="1" step="0.01" value="0.25"><span id="phiV">0.25</span></label>
+<label>Precision qubits: <select id="qb"><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="8">8</option></select></label>
+<button id="run">Estimate Phase</button>
+</div>
+<footer><a href="/circuits/">FreeQuantumStore</a></footer>
+<script>
+const C=document.getElementById('c'),ctx=C.getContext('2d');
+const W=740,H=400;
+let truePhi=0.25,nPrec=4,probDist=[],estimated=0,hasRun=false;
+
+document.getElementById('phi').addEventListener('input',e=>{truePhi=+e.value;document.getElementById('phiV').textContent=truePhi.toFixed(2);hasRun=false;});
+document.getElementById('qb').addEventListener('change',e=>{nPrec=+e.value;hasRun=false;});
+
+document.getElementById('run').addEventListener('click',()=>{
+  const N=1<<nPrec;
+  probDist=new Array(N).fill(0);
+  // QFT-based phase estimation probability distribution
+  for(let k=0;k<N;k++){
+    let re=0,im=0;
+    for(let j=0;j<N;j++){
+      const angle=2*Math.PI*(truePhi-k/N)*j;
+      re+=Math.cos(angle);im+=Math.sin(angle);
+    }
+    probDist[k]=(re*re+im*im)/(N*N);
+  }
+  // find peak
+  let maxP=0,maxK=0;
+  for(let k=0;k<N;k++) if(probDist[k]>maxP){maxP=probDist[k];maxK=k;}
+  estimated=maxK/N;
+  hasRun=true;
+});
+
+function draw(){
+  ctx.fillStyle='#111';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#7c3aed';ctx.font='bold 13px system-ui';
+  ctx.fillText('Phase Estimation',20,28);
+  // true phase indicator (circle)
+  const cx=120,cy=100,cr=60;
+  ctx.strokeStyle='#333';ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(cx,cy,cr,0,Math.PI*2);ctx.stroke();
+  // phase angle
+  const a=-Math.PI/2+truePhi*2*Math.PI;
+  ctx.strokeStyle='#7c3aed';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+cr*Math.cos(a),cy+cr*Math.sin(a));ctx.stroke();
+  ctx.fillStyle='#7c3aed';ctx.beginPath();ctx.arc(cx+cr*Math.cos(a),cy+cr*Math.sin(a),4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#aaa';ctx.font='11px system-ui';
+  ctx.fillText(`phi = ${truePhi.toFixed(3)}`,cx-30,cy+cr+20);
+  ctx.fillText(`= ${(truePhi*360).toFixed(1)} deg`,cx-30,cy+cr+35);
+  // precision info
+  ctx.fillStyle='#888';ctx.font='11px system-ui';
+  const N=1<<nPrec;
+  ctx.fillText(`Precision: ${nPrec} qubits`,250,40);
+  ctx.fillText(`Resolution: 1/${N} = ${(1/N).toFixed(4)}`,250,58);
+  ctx.fillText(`Binary: 0.${truePhi.toString(2).slice(2,2+nPrec)||'0'.repeat(nPrec)}...`,250,76);
+  // probability distribution
+  if(hasRun){
+    const px=30,py=200,pw=680,ph=160;
+    ctx.fillStyle='#888';ctx.font='bold 11px system-ui';
+    ctx.fillText('Measurement Probability Distribution',px,py-10);
+    const bw=Math.max(3,Math.floor((pw-N*1)/N));
+    const gap=(pw-bw*N)/(N+1);
+    let maxP=0;for(const p of probDist) maxP=Math.max(maxP,p);
+    for(let k=0;k<N;k++){
+      const x=px+gap+(bw+gap)*k;
+      const bh=probDist[k]/maxP*ph*0.9;
+      const isEst=Math.abs(k/N-estimated)<0.001;
+      ctx.fillStyle=isEst?'#22c55e':'#7c3aed';
+      ctx.fillRect(x,py+ph-bh,bw,bh);
+      if(bw>12&&probDist[k]>0.01){
+        ctx.fillStyle='#ccc';ctx.font='8px monospace';
+        ctx.save();ctx.translate(x+bw/2,py+ph+8);ctx.rotate(-Math.PI/4);
+        ctx.fillText((k/N).toFixed(nPrec>4?3:2),0,0);
+        ctx.restore();
+      }
+    }
+    // result
+    ctx.fillStyle='#22c55e';ctx.font='bold 13px system-ui';
+    ctx.fillText(`Estimated: phi = ${estimated.toFixed(4)}`,px,py+ph+40);
+    const err=Math.abs(truePhi-estimated);
+    ctx.fillStyle='#aaa';ctx.font='11px system-ui';
+    ctx.fillText(`Error: ${err.toFixed(5)}  |  True: ${truePhi.toFixed(4)}`,px+250,py+ph+40);
+    // accuracy bar
+    ctx.fillStyle='#222';ctx.fillRect(px,py+ph+50,pw,12);
+    const accuracy=Math.max(0,1-err*N)*pw;
+    ctx.fillStyle='#7c3aed';ctx.fillRect(px,py+ph+50,accuracy,12);
+    ctx.fillStyle='#ccc';ctx.font='10px system-ui';ctx.fillText(`Accuracy: ${(Math.max(0,1-err*N)*100).toFixed(1)}%`,px+4,py+ph+60);
+  } else {
+    ctx.fillStyle='#444';ctx.font='13px system-ui';
+    ctx.fillText('Click "Estimate Phase" to run QPE',W/2-120,300);
+  }
+  // circuit sketch
+  ctx.fillStyle='#555';ctx.font='10px system-ui';
+  ctx.fillText('H -> CU^1 -> CU^2 -> ... -> CU^(2^n) -> QFT^-1 -> Measure',250,100);
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

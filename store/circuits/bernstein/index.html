@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bernstein-Vazirani - FreeQuantumStore</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+h1{color:#7c3aed;margin:18px 0 6px;font-size:1.4rem}
+.desc{color:#999;font-size:.85rem;margin-bottom:12px;max-width:700px;text-align:center}
+canvas{background:#111;border:1px solid #333;border-radius:6px}
+.controls{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap;justify-content:center}
+.controls label{font-size:.8rem;color:#aaa}
+.controls select,.controls button{background:#222;color:#e0e0e0;border:1px solid #444;padding:4px 10px;border-radius:4px;font-size:.8rem;cursor:pointer}
+.controls button{background:#7c3aed;color:#fff;border:none;font-weight:600}
+.result{font-size:.9rem;color:#ccc;margin:6px;min-height:20px}
+footer{margin-top:auto;padding:12px;font-size:.7rem;color:#555}
+footer a{color:#7c3aed;text-decoration:none}
+</style>
+</head>
+<body>
+<h1>Bernstein-Vazirani Algorithm</h1>
+<p class="desc">Find hidden string s where f(x)=s*x (mod 2). Quantum: 1 query. Classical: N queries.</p>
+<canvas id="c" width="720" height="360"></canvas>
+<div class="controls">
+<label>N bits: <select id="bits"><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="8">8</option></select></label>
+<button id="quantum">Quantum (1 query)</button>
+<button id="classical">Classical (N queries)</button>
+<button id="newS">New Secret</button>
+</div>
+<div class="result" id="res">Click "New Secret" to begin</div>
+<footer><a href="/circuits/">FreeQuantumStore</a></footer>
+<script>
+const C=document.getElementById('c'),ctx=C.getContext('2d');
+const W=720,H=360;
+let n=4,secret='',classicalBits=[],classicalStep=0,classicalTimer=null;
+let qResult='',mode='';
+
+function genSecret(){
+  n=+document.getElementById('bits').value;
+  secret='';for(let i=0;i<n;i++) secret+=Math.random()>.5?'1':'0';
+  classicalBits=[];classicalStep=0;qResult='';mode='';
+  if(classicalTimer){clearInterval(classicalTimer);classicalTimer=null;}
+  document.getElementById('res').textContent='Secret generated (hidden). Find it!';
+}
+
+function dotProduct(a,b){
+  let r=0;for(let i=0;i<a.length;i++) r^=(+a[i])&(+b[i]);return r;
+}
+
+document.getElementById('bits').addEventListener('change',genSecret);
+document.getElementById('newS').addEventListener('click',genSecret);
+
+document.getElementById('quantum').addEventListener('click',()=>{
+  if(!secret) genSecret();
+  mode='quantum';qResult=secret;
+  document.getElementById('res').innerHTML=`Quantum found s = <b style="color:#7c3aed">${secret}</b> in <b>1 query</b>!`;
+});
+
+document.getElementById('classical').addEventListener('click',()=>{
+  if(!secret) genSecret();
+  mode='classical';classicalBits=[];classicalStep=0;
+  if(classicalTimer) clearInterval(classicalTimer);
+  classicalTimer=setInterval(()=>{
+    if(classicalStep>=n){clearInterval(classicalTimer);classicalTimer=null;
+      const found=classicalBits.join('');
+      document.getElementById('res').innerHTML=`Classical found s = <b style="color:#ef4444">${found}</b> in <b>${n} queries</b>`;
+      return;
+    }
+    // query with e_i (standard basis vector)
+    const query='0'.repeat(classicalStep)+'1'+'0'.repeat(n-classicalStep-1);
+    const result=dotProduct(secret,query);
+    classicalBits.push(result);
+    classicalStep++;
+  },400);
+});
+
+function draw(){
+  ctx.fillStyle='#111';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#7c3aed';ctx.font='bold 14px system-ui';
+  ctx.fillText('Bernstein-Vazirani Protocol',20,28);
+  // secret display (masked)
+  ctx.fillStyle='#666';ctx.font='13px monospace';
+  ctx.fillText('Hidden s = '+secret.replace(/./g,'?'),20,54);
+  // quantum circuit diagram
+  ctx.fillStyle='#a78bfa';ctx.font='bold 12px system-ui';
+  ctx.fillText('Quantum Circuit',20,84);
+  const cy=120;
+  for(let i=0;i<n;i++){
+    const y=cy+i*24;
+    ctx.strokeStyle='#444';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(60,y);ctx.lineTo(500,y);ctx.stroke();
+    ctx.fillStyle='#888';ctx.font='11px monospace';
+    ctx.fillText(`|0>`,30,y+4);
+    // H gates
+    ctx.fillStyle='#7c3aed';ctx.fillRect(90,y-10,20,20);
+    ctx.fillStyle='#fff';ctx.font='bold 10px system-ui';ctx.fillText('H',94,y+4);
+    // Oracle
+    ctx.fillStyle='#4c1d95';ctx.fillRect(200,y-10,20,20);
+    ctx.fillStyle='#ddd';ctx.font='bold 10px system-ui';ctx.fillText('O',204,y+4);
+    // H gates
+    ctx.fillStyle='#7c3aed';ctx.fillRect(310,y-10,20,20);
+    ctx.fillStyle='#fff';ctx.font='bold 10px system-ui';ctx.fillText('H',314,y+4);
+    // measurement
+    ctx.strokeStyle='#7c3aed';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(420,y,8,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(420,y);ctx.lineTo(426,y-6);ctx.stroke();
+    // result
+    if(mode==='quantum'&&qResult){
+      ctx.fillStyle='#22c55e';ctx.font='bold 12px monospace';
+      ctx.fillText(qResult[i],460,y+4);
+    }
+  }
+  // ancilla qubit
+  const ay=cy+n*24;
+  ctx.strokeStyle='#444';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(60,ay);ctx.lineTo(500,ay);ctx.stroke();
+  ctx.fillStyle='#888';ctx.font='11px monospace';ctx.fillText('|1>',30,ay+4);
+  ctx.fillStyle='#7c3aed';ctx.fillRect(90,ay-10,20,20);
+  ctx.fillStyle='#fff';ctx.font='bold 10px system-ui';ctx.fillText('H',94,ay+4);
+  // Oracle box
+  ctx.strokeStyle='#4c1d95';ctx.lineWidth=2;
+  ctx.strokeRect(195,cy-16,30,n*24+20);
+  ctx.fillStyle='#aaa';ctx.font='10px system-ui';ctx.fillText('Uf',202,cy-20);
+  // classical side
+  const cx2=540;
+  ctx.fillStyle='#ef4444';ctx.font='bold 12px system-ui';
+  ctx.fillText('Classical Queries',cx2,84);
+  for(let i=0;i<n;i++){
+    const y=100+i*26;
+    const query='0'.repeat(i)+'1'+'0'.repeat(n-i-1);
+    ctx.fillStyle=i<classicalStep?'#f87171':'#444';
+    ctx.font='11px monospace';
+    ctx.fillText(`e${i}=${query}`,cx2,y);
+    if(i<classicalStep){
+      ctx.fillStyle='#22c55e';
+      ctx.fillText(` -> ${classicalBits[i]}`,cx2+n*9+30,y);
+    }
+  }
+  // comparison
+  ctx.fillStyle='#888';ctx.font='11px system-ui';
+  ctx.fillText(`Quantum: 1 query | Classical: ${n} queries`,20,H-20);
+  const speedup=n;
+  ctx.fillStyle='#7c3aed';ctx.fillText(`Speedup: ${speedup}x`,400,H-20);
+  requestAnimationFrame(draw);
+}
+genSecret();draw();
+</script>
+</body>
+</html>
