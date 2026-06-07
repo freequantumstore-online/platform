@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bloch Sphere — FreeQuantumStore</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0a0a0a;color:#fafafa;font-family:'Manrope',system-ui,sans-serif;overflow:hidden}
+    #app{width:100vw;height:100vh;position:relative}
+    canvas{display:block}
+    #panel{position:absolute;right:1rem;top:1rem;background:rgba(23,23,23,.95);border:1px solid #262626;border-radius:14px;padding:1.25rem;width:240px;z-index:10;backdrop-filter:blur(8px)}
+    #panel h2{font-size:.95rem;font-weight:700;margin-bottom:.5rem}
+    #panel h3{font-size:.72rem;color:#737373;margin:.6rem 0 .3rem;text-transform:uppercase;letter-spacing:.05em}
+    .gate-row{display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.35rem}
+    .gate{padding:.35rem .6rem;border-radius:6px;border:1px solid #333;background:#171717;color:#fafafa;font-size:.78rem;font-weight:700;cursor:pointer;font-family:'JetBrains Mono',monospace;min-width:2rem;text-align:center}
+    .gate:hover{border-color:#7c3aed;color:#7c3aed}
+    .gate.active{background:#7c3aed;border-color:#7c3aed;color:#fff}
+    .state{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:#a3a3a3;line-height:1.6;margin:.35rem 0}
+    .state b{color:#7c3aed}
+    button{padding:.35rem .7rem;border-radius:6px;border:1px solid #333;background:#171717;color:#fafafa;font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit;width:100%;margin-top:.35rem}
+    button:hover{border-color:#7c3aed;color:#7c3aed}
+    #info{position:absolute;top:1rem;left:1rem;font-size:.78rem;color:#525252;z-index:10;line-height:1.7}
+    #info span{color:#7c3aed;font-weight:600}
+    a{color:#404040;text-decoration:none;position:absolute;bottom:1rem;right:1rem;font-size:.72rem;z-index:10}
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="info">
+    <span>Bloch Sphere</span><br>
+    Drag to orbit | Click gates to transform<br>
+    The arrow shows the qubit state
+  </div>
+  <div id="panel">
+    <h2>Qubit State</h2>
+    <div class="state" id="state-text">|ψ⟩ = <b>1.00</b>|0⟩ + <b>0.00</b>|1⟩</div>
+    <div class="state" id="angles">θ = <b>0.00</b> φ = <b>0.00</b></div>
+    <div class="state" id="probs">P(|0⟩) = <b>100%</b> P(|1⟩) = <b>0%</b></div>
+
+    <h3>Single-Qubit Gates</h3>
+    <div class="gate-row">
+      <span class="gate" data-gate="X">X</span>
+      <span class="gate" data-gate="Y">Y</span>
+      <span class="gate" data-gate="Z">Z</span>
+      <span class="gate" data-gate="H">H</span>
+    </div>
+    <div class="gate-row">
+      <span class="gate" data-gate="S">S</span>
+      <span class="gate" data-gate="T">T</span>
+      <span class="gate" data-gate="Rx">Rx</span>
+      <span class="gate" data-gate="Ry">Ry</span>
+    </div>
+
+    <h3>Quick States</h3>
+    <div class="gate-row">
+      <span class="gate" data-state="0">|0⟩</span>
+      <span class="gate" data-state="1">|1⟩</span>
+      <span class="gate" data-state="+">|+⟩</span>
+      <span class="gate" data-state="-">|-⟩</span>
+      <span class="gate" data-state="i">|i⟩</span>
+    </div>
+
+    <h3>History</h3>
+    <div id="history" style="font-size:.7rem;color:#525252;max-height:80px;overflow-y:auto"></div>
+    <button id="btn-reset">Reset to |0⟩</button>
+    <button id="btn-measure">Measure</button>
+  </div>
+  <a href="https://freequantumstore.pages.dev">FreeQuantumStore</a>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a0a);
+
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 100);
+let camAngle = 0.8, camHeight = 1.5, camDist = 5;
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+document.getElementById('app').prepend(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+dirLight.position.set(3, 5, 4); scene.add(dirLight);
+
+// Bloch sphere wireframe
+const sphereGeo = new THREE.SphereGeometry(1.5, 32, 24);
+const sphereMat = new THREE.MeshBasicMaterial({color: 0x1a1a2e, wireframe: true, transparent: true, opacity: 0.15});
+const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+scene.add(sphere);
+
+// Solid sphere (very transparent)
+const solidSphere = new THREE.Mesh(
+  new THREE.SphereGeometry(1.48, 32, 24),
+  new THREE.MeshStandardMaterial({color: 0x1e1b4b, transparent: true, opacity: 0.05, roughness: 0.8})
+);
+scene.add(solidSphere);
+
+// Axes
+const axisLen = 1.8;
+function addAxis(dir, color, label) {
+  const mat = new THREE.LineBasicMaterial({color});
+  const pts = [new THREE.Vector3(0,0,0), dir.clone().multiplyScalar(axisLen)];
+  const neg = [new THREE.Vector3(0,0,0), dir.clone().multiplyScalar(-axisLen)];
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat));
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(neg), new THREE.LineBasicMaterial({color, transparent:true, opacity:0.2})));
+}
+addAxis(new THREE.Vector3(1,0,0), 0xef4444, 'X');
+addAxis(new THREE.Vector3(0,1,0), 0x10b981, 'Z');
+addAxis(new THREE.Vector3(0,0,1), 0x3b82f6, 'Y');
+
+// Axis labels
+function addLabel(text, pos, color) {
+  const canvas2 = document.createElement('canvas');
+  canvas2.width = 64; canvas2.height = 64;
+  const ctx2 = canvas2.getContext('2d');
+  ctx2.fillStyle = color; ctx2.font = 'bold 40px Manrope'; ctx2.textAlign = 'center';
+  ctx2.fillText(text, 32, 45);
+  const tex = new THREE.CanvasTexture(canvas2);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: tex, transparent: true}));
+  sprite.position.copy(pos); sprite.scale.set(0.3, 0.3, 1);
+  scene.add(sprite);
+}
+addLabel('X', new THREE.Vector3(2, 0, 0), '#ef4444');
+addLabel('Z', new THREE.Vector3(0, 2, 0), '#10b981');
+addLabel('Y', new THREE.Vector3(0, 0, 2), '#3b82f6');
+addLabel('|0⟩', new THREE.Vector3(0, 2.3, 0), '#10b981');
+addLabel('|1⟩', new THREE.Vector3(0, -2.3, 0), '#737373');
+
+// Equator circle
+const eqPts = [];
+for (let i = 0; i <= 64; i++) {
+  const a = (i/64)*Math.PI*2;
+  eqPts.push(new THREE.Vector3(Math.cos(a)*1.5, 0, Math.sin(a)*1.5));
+}
+scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(eqPts), new THREE.LineBasicMaterial({color:0x333333})));
+
+// State vector arrow
+const arrowGroup = new THREE.Group();
+const arrowShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.4, 8), new THREE.MeshStandardMaterial({color:0x7c3aed, emissive:0x7c3aed, emissiveIntensity:0.5}));
+arrowShaft.position.y = 0.7;
+arrowGroup.add(arrowShaft);
+const arrowHead = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.2, 8), new THREE.MeshStandardMaterial({color:0x7c3aed, emissive:0x7c3aed, emissiveIntensity:0.5}));
+arrowHead.position.y = 1.5;
+arrowGroup.add(arrowHead);
+// Tip glow
+const tipLight = new THREE.PointLight(0x7c3aed, 0.5, 2);
+tipLight.position.y = 1.5;
+arrowGroup.add(tipLight);
+scene.add(arrowGroup);
+
+// Projection lines (dashed)
+const projLineMat = new THREE.LineDashedMaterial({color:0x7c3aed, dashSize:0.1, gapSize:0.05, transparent:true, opacity:0.3});
+
+// Qubit state: theta, phi (Bloch sphere angles)
+let theta = 0, phi = 0;
+const history = [];
+
+function setState(t, p) {
+  theta = t; phi = p;
+  updateDisplay();
+}
+
+function applyGate(gate) {
+  // Convert Bloch angles to state vector (alpha, beta)
+  let alpha_r = Math.cos(theta/2);
+  let alpha_i = 0;
+  let beta_r = Math.sin(theta/2) * Math.cos(phi);
+  let beta_i = Math.sin(theta/2) * Math.sin(phi);
+
+  let na_r, na_i, nb_r, nb_i;
+
+  switch(gate) {
+    case 'X': // bit flip
+      na_r = beta_r; na_i = beta_i; nb_r = alpha_r; nb_i = alpha_i;
+      break;
+    case 'Y':
+      na_r = beta_i; na_i = -beta_r; nb_r = -alpha_i; nb_i = alpha_r;
+      break;
+    case 'Z': // phase flip
+      na_r = alpha_r; na_i = alpha_i; nb_r = -beta_r; nb_i = -beta_i;
+      break;
+    case 'H': // Hadamard
+      const s = 1/Math.sqrt(2);
+      na_r = s*(alpha_r + beta_r); na_i = s*(alpha_i + beta_i);
+      nb_r = s*(alpha_r - beta_r); nb_i = s*(alpha_i - beta_i);
+      break;
+    case 'S':
+      na_r = alpha_r; na_i = alpha_i; nb_r = -beta_i; nb_i = beta_r;
+      break;
+    case 'T':
+      const t45 = Math.PI/4;
+      na_r = alpha_r; na_i = alpha_i;
+      nb_r = beta_r*Math.cos(t45) - beta_i*Math.sin(t45);
+      nb_i = beta_r*Math.sin(t45) + beta_i*Math.cos(t45);
+      break;
+    case 'Rx':
+      const a = Math.PI/4; // pi/4 rotation
+      na_r = alpha_r*Math.cos(a); na_i = alpha_i*Math.cos(a) - beta_i*Math.sin(a) - beta_r*Math.sin(a);
+      // Simplified: just rotate theta
+      theta = (theta + Math.PI/4) % (2*Math.PI);
+      updateDisplay();
+      history.push(gate);
+      updateHistory();
+      return;
+    case 'Ry':
+      theta = (theta + Math.PI/4) % (2*Math.PI);
+      updateDisplay();
+      history.push(gate);
+      updateHistory();
+      return;
+    default: return;
+  }
+
+  // Convert back to Bloch angles
+  const norm = Math.sqrt(na_r*na_r + na_i*na_i + nb_r*nb_r + nb_i*nb_i);
+  na_r /= norm; na_i /= norm; nb_r /= norm; nb_i /= norm;
+
+  const beta_mag = Math.sqrt(nb_r*nb_r + nb_i*nb_i);
+  theta = 2 * Math.acos(Math.min(1, Math.max(-1, Math.sqrt(na_r*na_r + na_i*na_i))));
+  phi = Math.atan2(nb_i, nb_r) - Math.atan2(na_i, na_r);
+
+  history.push(gate);
+  updateHistory();
+  updateDisplay();
+}
+
+function updateDisplay() {
+  // Arrow direction
+  const x = Math.sin(theta) * Math.cos(phi);
+  const y = Math.cos(theta);
+  const z = Math.sin(theta) * Math.sin(phi);
+
+  arrowGroup.lookAt(x * 10, y * 10, z * 10);
+  arrowGroup.rotateX(Math.PI/2);
+
+  // State text
+  const alpha = Math.cos(theta/2);
+  const beta = Math.sin(theta/2);
+  document.getElementById('state-text').innerHTML =
+    `|ψ⟩ = <b>${alpha.toFixed(3)}</b>|0⟩ + <b>${beta.toFixed(3)}</b>e<sup>iφ</sup>|1⟩`;
+  document.getElementById('angles').innerHTML =
+    `θ = <b>${(theta * 180 / Math.PI).toFixed(1)}°</b>  φ = <b>${(phi * 180 / Math.PI).toFixed(1)}°</b>`;
+  const p0 = Math.cos(theta/2)**2 * 100;
+  const p1 = Math.sin(theta/2)**2 * 100;
+  document.getElementById('probs').innerHTML =
+    `P(|0⟩) = <b>${p0.toFixed(1)}%</b>  P(|1⟩) = <b>${p1.toFixed(1)}%</b>`;
+}
+
+function updateHistory() {
+  const el = document.getElementById('history');
+  el.textContent = history.slice(-20).join(' → ');
+  el.scrollTop = el.scrollHeight;
+}
+
+// Gate buttons
+document.querySelectorAll('.gate[data-gate]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    btn.classList.add('active');
+    setTimeout(() => btn.classList.remove('active'), 200);
+    applyGate(btn.dataset.gate);
+  });
+});
+
+// Quick states
+document.querySelectorAll('.gate[data-state]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const s = btn.dataset.state;
+    if (s === '0') setState(0, 0);
+    else if (s === '1') setState(Math.PI, 0);
+    else if (s === '+') setState(Math.PI/2, 0);
+    else if (s === '-') setState(Math.PI/2, Math.PI);
+    else if (s === 'i') setState(Math.PI/2, Math.PI/2);
+    history.push(`|${s}⟩`);
+    updateHistory();
+  });
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => { setState(0, 0); history.length = 0; updateHistory(); });
+document.getElementById('btn-measure').addEventListener('click', () => {
+  const p0 = Math.cos(theta/2)**2;
+  const result = Math.random() < p0 ? 0 : 1;
+  setState(result === 0 ? 0 : Math.PI, 0);
+  history.push(`M→|${result}⟩`);
+  updateHistory();
+});
+
+// Camera orbit
+let drag = false, px = 0, py = 0;
+renderer.domElement.addEventListener('mousedown', e => { drag = true; px = e.clientX; py = e.clientY; });
+addEventListener('mousemove', e => {
+  if (!drag) return;
+  camAngle += (e.clientX - px) * 0.005;
+  camHeight = Math.max(-3, Math.min(3, camHeight - (e.clientY - py) * 0.02));
+  px = e.clientX; py = e.clientY;
+});
+addEventListener('mouseup', () => drag = false);
+renderer.domElement.addEventListener('wheel', e => {
+  e.preventDefault();
+  camDist = Math.max(2.5, Math.min(10, camDist + e.deltaY * 0.005));
+}, {passive:false});
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// Keyboard shortcuts
+addEventListener('keydown', e => {
+  const gate = e.key.toUpperCase();
+  if (['X','Y','Z','H','S','T'].includes(gate)) applyGate(gate);
+  if (e.key === 'r') { setState(0, 0); history.length = 0; updateHistory(); }
+  if (e.key === 'm') document.getElementById('btn-measure').click();
+});
+
+updateDisplay();
+
+function animate() {
+  requestAnimationFrame(animate);
+  camera.position.set(Math.sin(camAngle)*camDist, camHeight, Math.cos(camAngle)*camDist);
+  camera.lookAt(0, 0, 0);
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>

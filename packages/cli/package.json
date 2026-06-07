@@ -1,0 +1,42 @@
+{
+  "name": "@freequantumstore/cli",
+  "version": "0.1.0",
+  "description": "fqs — CLI for publishing AI tools to freequantumstore.online",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "fqs": "./dist/index.js"
+  },
+  "homepage": "https://github.com/FreeQuantumStore/platform#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FreeQuantumStore/platform.git",
+    "directory": "packages/cli"
+  },
+  "keywords": [
+    "freequantumstore",
+    "cli",
+    "ai",
+    "agents",
+    "publish"
+  ],
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@freequantumstore/compliance": "workspace:*",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}

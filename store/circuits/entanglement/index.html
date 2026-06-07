@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Entanglement — FreeQuantumStore</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0a0a0a;color:#fafafa;font-family:'Manrope',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+    h1{font-size:1.3rem;font-weight:700;margin:1.25rem 0 .25rem} h1 span{color:#7c3aed}
+    .sub{color:#737373;font-size:.85rem;margin-bottom:.5rem;text-align:center;max-width:560px}
+    .tutorial{background:#171717;border:1px solid #262626;border-radius:10px;padding:.6rem 1rem;margin-bottom:.5rem;font-size:.82rem;color:#a3a3a3;max-width:650px;line-height:1.6;text-align:center}
+    .tutorial b{color:#7c3aed}
+    canvas{border:1px solid #262626;border-radius:12px}
+    .controls{display:flex;gap:.5rem;margin:.75rem 0;flex-wrap:wrap;justify-content:center}
+    button{padding:.5rem 1.25rem;border-radius:8px;border:1px solid #333;background:#171717;color:#fafafa;font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit}
+    button:hover{border-color:#7c3aed;color:#7c3aed}
+    button.primary{background:#7c3aed;border-color:#7c3aed;color:#fff}
+    .stats{font-size:.78rem;color:#525252;margin:.35rem;display:flex;gap:1.25rem;flex-wrap:wrap;justify-content:center}
+    .stats span{color:#a3a3a3}
+    a{color:#525252;text-decoration:none}
+  </style>
+</head>
+<body>
+  <h1>Quantum <span>Entanglement</span></h1>
+  <p class="sub">Two qubits become entangled. Measure one, and the other instantly collapses — no matter the distance. Run the experiment and see the statistics.</p>
+
+  <div class="tutorial">
+    <b>The experiment:</b> Click <b>Entangle</b> to create a Bell pair (|00⟩ + |11⟩)/√2.
+    Then <b>Measure Alice</b> — her qubit collapses to |0⟩ or |1⟩.
+    Bob's qubit instantly becomes the same. Run 100+ times to see: always perfectly correlated.
+  </div>
+
+  <canvas id="sim" width="800" height="400"></canvas>
+
+  <div class="controls">
+    <button class="primary" id="btn-entangle">1. Entangle</button>
+    <button id="btn-measure-a">2. Measure Alice</button>
+    <button id="btn-measure-b">3. Measure Bob</button>
+    <button id="btn-run100">Run 100x</button>
+    <button id="btn-reset">Reset Stats</button>
+  </div>
+  <div class="stats">
+    <div>Experiments: <span id="exps">0</span></div>
+    <div>Both |0⟩: <span id="both0">0</span></div>
+    <div>Both |1⟩: <span id="both1">0</span></div>
+    <div>Disagree: <span id="disagree">0</span></div>
+    <div>Correlation: <span id="corr">-</span></div>
+    <div><a href="https://freequantumstore.pages.dev">FreeQuantumStore</a></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('sim');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    let state = 'separate'; // separate, entangled, alice_measured, both_measured
+    let aliceResult = null, bobResult = null;
+    let stats = { total: 0, both0: 0, both1: 0, disagree: 0 };
+    let entangleAnim = 0, measureAnim = 0, particleEffects = [];
+
+    const sl = id => document.getElementById(id);
+
+    function reset() {
+      state = 'separate'; aliceResult = null; bobResult = null;
+      entangleAnim = 0; measureAnim = 0;
+    }
+
+    sl('btn-entangle').addEventListener('click', () => {
+      reset();
+      state = 'entangled';
+      entangleAnim = 0;
+      // Particle burst
+      for (let i = 0; i < 20; i++) {
+        particleEffects.push({
+          x: W/2, y: H/2, vx: (Math.random()-.5)*8, vy: (Math.random()-.5)*5,
+          life: 40 + Math.random() * 30, maxLife: 70,
+        });
+      }
+    });
+
+    sl('btn-measure-a').addEventListener('click', () => {
+      if (state !== 'entangled') return;
+      aliceResult = Math.random() < 0.5 ? 0 : 1;
+      bobResult = aliceResult; // perfect correlation in Bell state
+      state = 'alice_measured';
+      measureAnim = 0;
+      // Update stats
+      stats.total++;
+      if (aliceResult === 0) stats.both0++; else stats.both1++;
+      updateStats();
+    });
+
+    sl('btn-measure-b').addEventListener('click', () => {
+      if (state !== 'alice_measured') return;
+      state = 'both_measured';
+    });
+
+    sl('btn-run100').addEventListener('click', () => {
+      for (let i = 0; i < 100; i++) {
+        const result = Math.random() < 0.5 ? 0 : 1;
+        stats.total++;
+        if (result === 0) stats.both0++; else stats.both1++;
+      }
+      updateStats();
+      state = 'both_measured';
+      aliceResult = Math.random() < 0.5 ? 0 : 1;
+      bobResult = aliceResult;
+    });
+
+    sl('btn-reset').addEventListener('click', () => {
+      stats = { total: 0, both0: 0, both1: 0, disagree: 0 };
+      updateStats();
+      reset();
+    });
+
+    function updateStats() {
+      sl('exps').textContent = stats.total;
+      sl('both0').textContent = stats.both0;
+      sl('both1').textContent = stats.both1;
+      sl('disagree').textContent = stats.disagree;
+      sl('corr').textContent = stats.total > 0 ?
+        ((stats.both0 + stats.both1) / stats.total * 100).toFixed(1) + '%' : '-';
+    }
+
+    function draw() {
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, W, H);
+
+      const aliceX = W * 0.25, bobX = W * 0.75, cy = H * 0.45;
+      const qubitR = 40;
+
+      // Connection line (entanglement)
+      if (state === 'entangled' || state === 'alice_measured') {
+        entangleAnim = Math.min(1, entangleAnim + 0.02);
+        const wave = Math.sin(performance.now() * 0.003) * 5;
+
+        ctx.strokeStyle = `rgba(124, 58, 237, ${0.3 + Math.sin(performance.now()*.005)*.15})`;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.moveTo(aliceX + qubitR, cy);
+        // Wavy line
+        for (let t = 0; t <= 1; t += 0.02) {
+          const x = aliceX + qubitR + t * (bobX - aliceX - qubitR * 2);
+          const y = cy + Math.sin(t * Math.PI * 4 + performance.now() * 0.005) * wave * entangleAnim;
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // "Entangled" label
+        ctx.fillStyle = '#7c3aed'; ctx.font = '600 11px Manrope'; ctx.textAlign = 'center';
+        ctx.fillText('ENTANGLED', W/2, cy - 50);
+
+        // State label
+        ctx.fillStyle = '#a3a3a3'; ctx.font = '13px JetBrains Mono, monospace';
+        ctx.fillText('|ψ⟩ = (|00⟩ + |11⟩) / √2', W/2, cy + 70);
+        ctx.textAlign = 'start';
+      }
+
+      // Measurement flash
+      if (state === 'alice_measured') {
+        measureAnim = Math.min(1, measureAnim + 0.03);
+        if (measureAnim < 0.5) {
+          ctx.fillStyle = `rgba(124, 58, 237, ${(0.5 - measureAnim) * 0.4})`;
+          ctx.fillRect(0, 0, W, H);
+        }
+      }
+
+      // Alice's qubit
+      ctx.save();
+      ctx.translate(aliceX, cy);
+
+      // Glow
+      if (state === 'entangled') {
+        ctx.fillStyle = 'rgba(124, 58, 237, 0.1)';
+        ctx.beginPath(); ctx.arc(0, 0, qubitR + 15 + Math.sin(performance.now()*.003)*5, 0, Math.PI*2); ctx.fill();
+      }
+
+      // Qubit circle
+      ctx.fillStyle = aliceResult !== null ? (aliceResult === 0 ? '#10b981' : '#ef4444') :
+                       state === 'entangled' ? '#7c3aed' : '#262626';
+      ctx.beginPath(); ctx.arc(0, 0, qubitR, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#404040'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0, 0, qubitR, 0, Math.PI*2); ctx.stroke();
+
+      // Superposition waves (before measurement)
+      if (state === 'entangled') {
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let i = -qubitR+5; i < qubitR-5; i++) {
+          const x = i, y = Math.sin(i*0.15 + performance.now()*0.008) * 8;
+          if (i === -qubitR+5) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      // State text
+      ctx.fillStyle = '#fafafa'; ctx.font = '700 18px JetBrains Mono'; ctx.textAlign = 'center';
+      if (aliceResult !== null) ctx.fillText(`|${aliceResult}⟩`, 0, 6);
+      else if (state === 'entangled') ctx.fillText('?', 0, 6);
+      else ctx.fillText('|ψ⟩', 0, 6);
+
+      ctx.restore();
+
+      // Label
+      ctx.fillStyle = '#a3a3a3'; ctx.font = '600 13px Manrope'; ctx.textAlign = 'center';
+      ctx.fillText('Alice', aliceX, cy + qubitR + 25);
+
+      // Bob's qubit
+      ctx.save();
+      ctx.translate(bobX, cy);
+
+      if (state === 'entangled') {
+        ctx.fillStyle = 'rgba(124, 58, 237, 0.1)';
+        ctx.beginPath(); ctx.arc(0, 0, qubitR + 15 + Math.sin(performance.now()*.003+1)*5, 0, Math.PI*2); ctx.fill();
+      }
+
+      ctx.fillStyle = bobResult !== null && state === 'both_measured' ? (bobResult === 0 ? '#10b981' : '#ef4444') :
+                       bobResult !== null && state === 'alice_measured' ? '#7c3aed' :
+                       state === 'entangled' ? '#7c3aed' : '#262626';
+      ctx.beginPath(); ctx.arc(0, 0, qubitR, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#404040'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0, 0, qubitR, 0, Math.PI*2); ctx.stroke();
+
+      if (state === 'entangled') {
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let i = -qubitR+5; i < qubitR-5; i++) {
+          ctx.lineTo(i, Math.sin(i*0.15 + performance.now()*0.008 + 2) * 8);
+        }
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#fafafa'; ctx.font = '700 18px JetBrains Mono'; ctx.textAlign = 'center';
+      if (state === 'both_measured' && bobResult !== null) ctx.fillText(`|${bobResult}⟩`, 0, 6);
+      else if (state === 'alice_measured') ctx.fillText('⚡', 0, 8);
+      else if (state === 'entangled') ctx.fillText('?', 0, 6);
+      else ctx.fillText('|ψ⟩', 0, 6);
+
+      ctx.restore();
+
+      ctx.fillStyle = '#a3a3a3'; ctx.font = '600 13px Manrope'; ctx.textAlign = 'center';
+      ctx.fillText('Bob', bobX, cy + qubitR + 25);
+
+      // Result explanation
+      if (state === 'alice_measured') {
+        ctx.fillStyle = '#fafafa'; ctx.font = '600 14px Manrope';
+        ctx.fillText(`Alice measured |${aliceResult}⟩ → Bob's qubit collapsed to |${bobResult}⟩!`, W/2, H - 60);
+        ctx.fillStyle = '#737373'; ctx.font = '12px Manrope';
+        ctx.fillText('Click "Measure Bob" to reveal', W/2, H - 40);
+      }
+      if (state === 'both_measured') {
+        ctx.fillStyle = aliceResult === bobResult ? '#10b981' : '#ef4444';
+        ctx.font = '700 16px Manrope';
+        ctx.fillText(aliceResult === bobResult ? 'CORRELATED!' : 'Error (should not happen in Bell state)', W/2, H - 50);
+        ctx.fillStyle = '#737373'; ctx.font = '12px Manrope';
+        ctx.fillText(`Alice: |${aliceResult}⟩  Bob: |${bobResult}⟩  — always the same`, W/2, H - 30);
+      }
+      ctx.textAlign = 'start';
+
+      // Statistics histogram (bottom right)
+      if (stats.total > 0) {
+        const bx = W - 180, by = H - 140, bw = 160, bh = 100;
+        ctx.fillStyle = '#141414'; ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = '#262626'; ctx.lineWidth = 1; ctx.strokeRect(bx, by, bw, bh);
+        ctx.fillStyle = '#525252'; ctx.font = '10px Manrope';
+        ctx.fillText(`${stats.total} experiments`, bx + 5, by + 12);
+
+        const maxBar = Math.max(stats.both0, stats.both1, 1);
+        // |00⟩ bar
+        const h0 = (stats.both0 / maxBar) * 60;
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(bx + 30, by + 85 - h0, 40, h0);
+        ctx.fillStyle = '#a3a3a3'; ctx.font = '9px JetBrains Mono';
+        ctx.fillText('|00⟩', bx + 35, by + 98);
+        ctx.fillText(`${stats.both0}`, bx + 40, by + 80 - h0);
+
+        // |11⟩ bar
+        const h1 = (stats.both1 / maxBar) * 60;
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(bx + 90, by + 85 - h1, 40, h1);
+        ctx.fillText('|11⟩', bx + 95, by + 98);
+        ctx.fillText(`${stats.both1}`, bx + 100, by + 80 - h1);
+      }
+
+      // Particle effects
+      for (let i = particleEffects.length - 1; i >= 0; i--) {
+        const p = particleEffects[i];
+        p.x += p.vx; p.y += p.vy; p.life--;
+        p.vx *= 0.98; p.vy *= 0.98;
+        if (p.life <= 0) { particleEffects.splice(i, 1); continue; }
+        const alpha = p.life / p.maxLife;
+        ctx.fillStyle = `rgba(124, 58, 237, ${alpha * 0.6})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    function loop() { requestAnimationFrame(loop); draw(); }
+    loop();
+  </script>
+</body>
+</html>
