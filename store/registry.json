@@ -275,6 +275,30 @@
       "creator": "serge-ivo",
       "creatorName": "Serge",
       "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "quantum-key",
+      "name": "Quantum Key Distribution",
+      "description": "BB84 protocol: Alice prepares qubits, Bob measures, Eve eavesdrops. Basis comparison, error rate detection, full protocol animation with qubit states.",
+      "storeType": "behavior",
+      "category": "protocols",
+      "icon": "🔑",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "quantum-annealing",
+      "name": "Quantum Annealing",
+      "description": "Side-by-side classical vs quantum optimization. Draw energy landscapes, watch tunneling escape local minima. 50-trial success rate comparison.",
+      "storeType": "behavior",
+      "category": "optimization",
+      "icon": "🏔️",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
     }
   ]
 }

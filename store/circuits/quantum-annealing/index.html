@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Annealing Visualizer - FreeQuantumStore</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--text:#fafafa;--muted:#888;--accent:#7c3aed;--panel:#141414;--line:#1e1e1e;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--yellow:#f59e0b}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',system-ui,sans-serif;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+.back{position:fixed;top:12px;left:14px;color:var(--muted);font-size:.82rem;text-decoration:none;z-index:100;font-weight:600}
+.back:hover{color:var(--accent)}
+header{text-align:center;padding:2rem 1rem 1rem}
+header h1{font-size:1.5rem;font-weight:700;color:var(--accent)}
+header p{color:var(--muted);font-size:.85rem;max-width:620px;margin:.4rem auto 0}
+.layout{max-width:1200px;margin:0 auto;padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.full{grid-column:1/-1}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.panel h2{font-size:.8rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+canvas{display:block;width:100%;border-radius:8px;background:#0d0d0d;border:1px solid var(--line)}
+button{background:var(--accent);color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:600;font-family:inherit;transition:background .15s}
+button:hover{background:#6d28d9}
+button.secondary{background:transparent;border:1px solid var(--line);color:var(--muted)}
+button.secondary:hover{border-color:var(--accent);color:var(--text)}
+button.active{background:#6d28d9;box-shadow:0 0 6px #7c3aed55}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.ctrl{margin-bottom:10px}
+.ctrl label{display:block;font-size:.7rem;color:var(--muted);font-weight:600;margin-bottom:3px}
+.ctrl .row{display:flex;align-items:center;gap:8px}
+.ctrl input[type=range]{flex:1;accent-color:var(--accent);height:4px}
+.ctrl .val{font-size:.72rem;font-weight:700;color:var(--accent);min-width:36px;text-align:right}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:8px 0}
+.stat{background:#0d0d0d;border:1px solid var(--line);border-radius:6px;padding:8px;text-align:center}
+.stat .val{font-size:1rem;font-weight:700;color:var(--accent)}
+.stat .lbl{font-size:.6rem;color:var(--muted);text-transform:uppercase}
+.stat.classical .val{color:var(--red)}.stat.quantum .val{color:var(--accent)}
+.info{font-size:.68rem;color:var(--muted);line-height:1.6;margin-top:8px;background:#0d0d0d;padding:10px;border-radius:6px;border:1px solid var(--line)}
+.info strong{color:var(--text)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.68rem;color:var(--muted);margin-top:6px}
+.legend span{display:flex;align-items:center;gap:4px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.draw-hint{font-size:.65rem;color:var(--muted);text-align:center;margin-top:4px}
+</style>
+</head>
+<body>
+<a href="/" class="back">FreeQuantumStore</a>
+<header>
+<h1>Quantum Annealing Visualizer</h1>
+<p>Compare classical simulated annealing vs quantum annealing. Quantum tunneling allows escaping local minima that trap classical approaches.</p>
+</header>
+
+<div class="layout">
+<div class="panel">
+  <h2>Classical Simulated Annealing</h2>
+  <canvas id="classicalCanvas" width="520" height="280"></canvas>
+  <div class="legend">
+    <span><span class="dot" style="background:var(--red)"></span> Particle</span>
+    <span><span class="dot" style="background:var(--yellow)"></span> Energy landscape</span>
+    <span><span class="dot" style="background:#555"></span> Local minimum (trap)</span>
+  </div>
+  <div class="stats">
+    <div class="stat classical"><div class="val" id="classicalEnergy">-</div><div class="lbl">Current Energy</div></div>
+    <div class="stat classical"><div class="val" id="classicalBest">-</div><div class="lbl">Best Found</div></div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Quantum Annealing</h2>
+  <canvas id="quantumCanvas" width="520" height="280"></canvas>
+  <div class="legend">
+    <span><span class="dot" style="background:var(--accent)"></span> Particle (tunneling)</span>
+    <span><span class="dot" style="background:var(--yellow)"></span> Energy landscape</span>
+    <span><span class="dot" style="background:rgba(124,58,237,0.3)"></span> Wavefunction spread</span>
+  </div>
+  <div class="stats">
+    <div class="stat quantum"><div class="val" id="quantumEnergy">-</div><div class="lbl">Current Energy</div></div>
+    <div class="stat quantum"><div class="val" id="quantumBest">-</div><div class="lbl">Best Found</div></div>
+  </div>
+</div>
+
+<div class="panel full">
+  <h2>Energy Landscape Designer</h2>
+  <canvas id="designCanvas" width="1100" height="180"></canvas>
+  <div class="draw-hint">Click and drag to draw the energy landscape. The lowest point is the global minimum.</div>
+  <div class="btn-row">
+    <button onclick="setLandscape('double-well')">Double Well</button>
+    <button onclick="setLandscape('multi-well')">Multi Well</button>
+    <button onclick="setLandscape('rugged')">Rugged</button>
+    <button onclick="setLandscape('deceptive')">Deceptive</button>
+    <button class="secondary" onclick="clearLandscape()">Clear (Draw)</button>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Controls</h2>
+  <div class="btn-row">
+    <button id="runBtn" onclick="startRun()">Run</button>
+    <button onclick="runMany()">Run 50 Trials</button>
+    <button class="secondary" onclick="resetParticles()">Reset</button>
+  </div>
+  <div class="ctrl">
+    <label>Initial Temperature</label>
+    <div class="row"><input type="range" id="initTemp" min="10" max="200" value="100"><span class="val" id="initTempV">100</span></div>
+  </div>
+  <div class="ctrl">
+    <label>Cooling Rate</label>
+    <div class="row"><input type="range" id="cooling" min="90" max="99" value="95"><span class="val" id="coolingV">0.95</span></div>
+  </div>
+  <div class="ctrl">
+    <label>Tunneling Strength</label>
+    <div class="row"><input type="range" id="tunneling" min="5" max="80" value="40"><span class="val" id="tunnelingV">40</span></div>
+  </div>
+  <div class="ctrl">
+    <label>Speed</label>
+    <div class="row"><input type="range" id="speed" min="1" max="10" value="4"><span class="val" id="speedV">4</span></div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Comparison (50 Trials)</h2>
+  <canvas id="compCanvas" width="520" height="160"></canvas>
+  <div class="stats">
+    <div class="stat classical"><div class="val" id="classicalWins">0</div><div class="lbl">Classical Wins</div></div>
+    <div class="stat quantum"><div class="val" id="quantumWins">0</div><div class="lbl">Quantum Wins</div></div>
+  </div>
+  <div class="info">
+    <strong>Why quantum wins on rugged landscapes:</strong><br><br>
+    Classical SA can only move uphill with probability e^(-dE/T). As temperature decreases, it gets trapped in local minima.<br><br>
+    Quantum annealing exploits <strong>quantum tunneling</strong> to pass through energy barriers without climbing over them. The tunneling probability depends on barrier width and height, not temperature alone.
+  </div>
+</div>
+</div>
+
+<script>
+const classicalCanvas = document.getElementById('classicalCanvas');
+const classicalCtx = classicalCanvas.getContext('2d');
+const quantumCanvas = document.getElementById('quantumCanvas');
+const quantumCtx = quantumCanvas.getContext('2d');
+const designCanvas = document.getElementById('designCanvas');
+const designCtx = designCanvas.getContext('2d');
+const compCanvas = document.getElementById('compCanvas');
+const compCtx = compCanvas.getContext('2d');
+
+const CW = 520, CH = 280, DW = 1100, DH = 180, COMP_W = 520, COMP_H = 160;
+const LANDSCAPE_RES = 200;
+
+let landscape = new Float32Array(LANDSCAPE_RES);
+let running = false;
+let classicalParticle = { x: 0, energy: 0, best: Infinity, temp: 100, history: [] };
+let quantumParticle = { x: 0, energy: 0, best: Infinity, gamma: 40, spread: 20, history: [] };
+let stepCount = 0;
+let classicalWins = 0, quantumWins = 0;
+let trialResults = [];
+
+// Parameters
+let params = { initTemp: 100, cooling: 0.95, tunneling: 40, speed: 4 };
+
+function setLandscape(type) {
+  if (type === 'double-well') {
+    for (let i = 0; i < LANDSCAPE_RES; i++) {
+      const x = (i / LANDSCAPE_RES) * 4 - 2;
+      landscape[i] = (x * x - 1) * (x * x - 1) - 0.3 * x + 0.2 * Math.sin(x * 5);
+    }
+  } else if (type === 'multi-well') {
+    for (let i = 0; i < LANDSCAPE_RES; i++) {
+      const x = (i / LANDSCAPE_RES) * 6 - 3;
+      landscape[i] = Math.sin(x * 2) * 0.5 + Math.sin(x * 5) * 0.3 + x * x * 0.05 - Math.cos(x * 0.8) * 0.4;
+    }
+  } else if (type === 'rugged') {
+    for (let i = 0; i < LANDSCAPE_RES; i++) {
+      const x = (i / LANDSCAPE_RES) * 8 - 4;
+      landscape[i] = Math.sin(x * 3) * 0.4 + Math.sin(x * 7) * 0.2 + Math.sin(x * 13) * 0.1 + x * x * 0.03;
+    }
+    // Deep global minimum
+    const gMin = Math.floor(LANDSCAPE_RES * 0.72);
+    for (let i = gMin - 5; i <= gMin + 5; i++) {
+      if (i >= 0 && i < LANDSCAPE_RES) landscape[i] -= 0.8 * (1 - Math.abs(i - gMin) / 5);
+    }
+  } else if (type === 'deceptive') {
+    for (let i = 0; i < LANDSCAPE_RES; i++) {
+      const x = i / LANDSCAPE_RES;
+      landscape[i] = -0.5 * Math.exp(-((x - 0.3) * (x - 0.3)) / 0.01) - 1.0 * Math.exp(-((x - 0.8) * (x - 0.8)) / 0.002) + Math.sin(x * 20) * 0.05 + 0.3;
+    }
+  }
+  normalizeLandscape();
+  resetParticles();
+  drawDesign();
+}
+
+function clearLandscape() {
+  landscape.fill(0.5);
+  resetParticles();
+  drawDesign();
+}
+
+function normalizeLandscape() {
+  let min = Infinity, max = -Infinity;
+  for (let i = 0; i < LANDSCAPE_RES; i++) {
+    if (landscape[i] < min) min = landscape[i];
+    if (landscape[i] > max) max = landscape[i];
+  }
+  const range = max - min || 1;
+  for (let i = 0; i < LANDSCAPE_RES; i++) {
+    landscape[i] = (landscape[i] - min) / range;
+  }
+}
+
+function getEnergy(x) {
+  const idx = Math.max(0, Math.min(LANDSCAPE_RES - 1, Math.floor(x * LANDSCAPE_RES)));
+  return landscape[idx];
+}
+
+function getGlobalMin() {
+  let minE = Infinity, minIdx = 0;
+  for (let i = 0; i < LANDSCAPE_RES; i++) {
+    if (landscape[i] < minE) { minE = landscape[i]; minIdx = i; }
+  }
+  return { x: minIdx / LANDSCAPE_RES, energy: minE };
+}
+
+function resetParticles() {
+  const startX = 0.2 + Math.random() * 0.1;
+  classicalParticle = { x: startX, energy: getEnergy(startX), best: getEnergy(startX), temp: params.initTemp, history: [] };
+  quantumParticle = { x: startX, energy: getEnergy(startX), best: getEnergy(startX), gamma: params.tunneling, spread: 20, history: [] };
+  stepCount = 0;
+  running = false;
+}
+
+function startRun() {
+  resetParticles();
+  running = true;
+}
+
+function runMany() {
+  classicalWins = 0;
+  quantumWins = 0;
+  trialResults = [];
+  const globalMin = getGlobalMin();
+  const threshold = globalMin.energy + 0.05;
+
+  for (let trial = 0; trial < 50; trial++) {
+    const startX = 0.1 + Math.random() * 0.3;
+    let cx = startX, cBest = getEnergy(startX), cTemp = params.initTemp;
+    let qx = startX, qBest = getEnergy(startX), qGamma = params.tunneling;
+
+    for (let step = 0; step < 500; step++) {
+      // Classical step
+      const cDelta = (Math.random() - 0.5) * 0.1 * (cTemp / params.initTemp);
+      const cNew = Math.max(0, Math.min(1, cx + cDelta));
+      const cNewE = getEnergy(cNew);
+      const dE = cNewE - getEnergy(cx);
+      if (dE < 0 || Math.random() < Math.exp(-dE * 50 / cTemp)) {
+        cx = cNew;
+      }
+      cBest = Math.min(cBest, getEnergy(cx));
+      cTemp *= params.cooling;
+
+      // Quantum step
+      const qDelta = (Math.random() - 0.5) * 0.1;
+      const qNew = Math.max(0, Math.min(1, qx + qDelta));
+      const qNewE = getEnergy(qNew);
+      const qdE = qNewE - getEnergy(qx);
+      // Tunneling: can pass through barriers
+      const barrierWidth = estimateBarrierWidth(qx, qNew);
+      const tunnelProb = Math.exp(-barrierWidth * 10 / qGamma);
+      if (qdE < 0 || Math.random() < tunnelProb) {
+        qx = qNew;
+      }
+      qBest = Math.min(qBest, getEnergy(qx));
+      qGamma *= 0.995;
+    }
+
+    trialResults.push({ classical: cBest, quantum: qBest });
+    if (cBest <= threshold && qBest > threshold) classicalWins++;
+    else if (qBest <= threshold && cBest > threshold) quantumWins++;
+    else if (qBest < cBest - 0.01) quantumWins++;
+    else if (cBest < qBest - 0.01) classicalWins++;
+  }
+
+  document.getElementById('classicalWins').textContent = classicalWins;
+  document.getElementById('quantumWins').textContent = quantumWins;
+  drawComparison();
+}
+
+function estimateBarrierWidth(from, to) {
+  const steps = 10;
+  const dx = (to - from) / steps;
+  let barrier = 0;
+  const startE = getEnergy(from);
+  for (let i = 1; i < steps; i++) {
+    const e = getEnergy(from + dx * i);
+    if (e > startE) barrier++;
+  }
+  return barrier / steps;
+}
+
+function step() {
+  if (!running) return;
+  const stepsPerFrame = params.speed;
+
+  for (let s = 0; s < stepsPerFrame; s++) {
+    stepCount++;
+
+    // Classical SA step
+    const cDelta = (Math.random() - 0.5) * 0.1 * (classicalParticle.temp / params.initTemp);
+    const cNew = Math.max(0, Math.min(1, classicalParticle.x + cDelta));
+    const cNewE = getEnergy(cNew);
+    const dE = cNewE - classicalParticle.energy;
+    if (dE < 0 || Math.random() < Math.exp(-dE * 50 / classicalParticle.temp)) {
+      classicalParticle.x = cNew;
+      classicalParticle.energy = cNewE;
+    }
+    classicalParticle.best = Math.min(classicalParticle.best, classicalParticle.energy);
+    classicalParticle.temp *= params.cooling;
+    classicalParticle.history.push(classicalParticle.energy);
+    if (classicalParticle.history.length > 200) classicalParticle.history.shift();
+
+    // Quantum annealing step
+    const qDelta = (Math.random() - 0.5) * 0.12;
+    const qNew = Math.max(0, Math.min(1, quantumParticle.x + qDelta));
+    const qNewE = getEnergy(qNew);
+    const qdE = qNewE - quantumParticle.energy;
+    const barrierWidth = estimateBarrierWidth(quantumParticle.x, qNew);
+    const tunnelProb = Math.exp(-barrierWidth * 10 / quantumParticle.gamma);
+    if (qdE < 0 || Math.random() < tunnelProb) {
+      quantumParticle.x = qNew;
+      quantumParticle.energy = qNewE;
+    }
+    quantumParticle.best = Math.min(quantumParticle.best, quantumParticle.energy);
+    quantumParticle.gamma *= 0.998;
+    quantumParticle.spread = quantumParticle.gamma * 0.5;
+    quantumParticle.history.push(quantumParticle.energy);
+    if (quantumParticle.history.length > 200) quantumParticle.history.shift();
+  }
+
+  // Update displays
+  document.getElementById('classicalEnergy').textContent = classicalParticle.energy.toFixed(3);
+  document.getElementById('classicalBest').textContent = classicalParticle.best.toFixed(3);
+  document.getElementById('quantumEnergy').textContent = quantumParticle.energy.toFixed(3);
+  document.getElementById('quantumBest').textContent = quantumParticle.best.toFixed(3);
+
+  if (stepCount > 600) running = false;
+}
+
+function drawLandscapeOn(ctx, w, h, particle, isQuantum) {
+  ctx.fillStyle = '#0d0d0d';
+  ctx.fillRect(0, 0, w, h);
+
+  const pad = { l: 10, r: 10, t: 20, b: 30 };
+  const plotW = w - pad.l - pad.r;
+  const plotH = h - pad.t - pad.b;
+
+  // Draw landscape
+  ctx.fillStyle = '#f59e0b15';
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t + plotH);
+  for (let i = 0; i < LANDSCAPE_RES; i++) {
+    const x = pad.l + (i / LANDSCAPE_RES) * plotW;
+    const y = pad.t + landscape[i] * plotH;
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(pad.l + plotW, pad.t + plotH);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  for (let i = 0; i < LANDSCAPE_RES; i++) {
+    const x = pad.l + (i / LANDSCAPE_RES) * plotW;
+    const y = pad.t + landscape[i] * plotH;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Global minimum marker
+  const gMin = getGlobalMin();
+  const gmX = pad.l + gMin.x * plotW;
+  const gmY = pad.t + gMin.energy * plotH;
+  ctx.fillStyle = '#22c55e';
+  ctx.beginPath();
+  ctx.arc(gmX, gmY, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = '8px Manrope';
+  ctx.fillText('Global Min', gmX - 22, gmY + 14);
+
+  // Quantum wavefunction spread
+  if (isQuantum && quantumParticle.spread > 0) {
+    const pxX = pad.l + particle.x * plotW;
+    const spreadPx = quantumParticle.spread * plotW * 0.01;
+    const grad = ctx.createRadialGradient(pxX, pad.t + particle.energy * plotH, 0, pxX, pad.t + particle.energy * plotH, spreadPx);
+    grad.addColorStop(0, 'rgba(124,58,237,0.3)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(pxX, pad.t + particle.energy * plotH, spreadPx, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Particle
+  const px = pad.l + particle.x * plotW;
+  const py = pad.t + particle.energy * plotH;
+  const color = isQuantum ? '#7c3aed' : '#ef4444';
+
+  // Glow
+  const glow = ctx.createRadialGradient(px, py, 0, px, py, 15);
+  glow.addColorStop(0, color + '55');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(px, py, 15, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ball
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(px, py, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Temperature / Gamma indicator
+  ctx.fillStyle = '#555';
+  ctx.font = '9px Manrope';
+  ctx.textAlign = 'left';
+  if (isQuantum) {
+    ctx.fillText(`Gamma: ${quantumParticle.gamma.toFixed(1)}`, 10, 14);
+  } else {
+    ctx.fillText(`Temp: ${classicalParticle.temp.toFixed(1)}`, 10, 14);
+  }
+  ctx.fillText(`Step: ${stepCount}`, w - 70, 14);
+
+  // Energy history trail
+  if (particle.history.length > 1) {
+    ctx.strokeStyle = color + '44';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    const hLen = particle.history.length;
+    for (let i = 0; i < hLen; i++) {
+      const hx = pad.l + plotW - (hLen - i) * 2;
+      const hy = pad.t + particle.history[i] * plotH * 0.3 + plotH * 0.75;
+      i === 0 ? ctx.moveTo(hx, hy) : ctx.lineTo(hx, hy);
+    }
+    ctx.stroke();
+  }
+}
+
+function drawDesign() {
+  designCtx.fillStyle = '#0d0d0d';
+  designCtx.fillRect(0, 0, DW, DH);
+
+  const pad = { l: 10, r: 10, t: 10, b: 20 };
+  const plotW = DW - pad.l - pad.r;
+  const plotH = DH - pad.t - pad.b;
+
+  // Fill
+  designCtx.fillStyle = '#7c3aed10';
+  designCtx.beginPath();
+  designCtx.moveTo(pad.l, pad.t + plotH);
+  for (let i = 0; i < LANDSCAPE_RES; i++) {
+    const x = pad.l + (i / LANDSCAPE_RES) * plotW;
+    const y = pad.t + landscape[i] * plotH;
+    designCtx.lineTo(x, y);
+  }
+  designCtx.lineTo(pad.l + plotW, pad.t + plotH);
+  designCtx.closePath();
+  designCtx.fill();
+
+  // Line
+  designCtx.strokeStyle = '#7c3aed';
+  designCtx.lineWidth = 2;
+  designCtx.beginPath();
+  for (let i = 0; i < LANDSCAPE_RES; i++) {
+    const x = pad.l + (i / LANDSCAPE_RES) * plotW;
+    const y = pad.t + landscape[i] * plotH;
+    i === 0 ? designCtx.moveTo(x, y) : designCtx.lineTo(x, y);
+  }
+  designCtx.stroke();
+
+  // Global min
+  const gMin = getGlobalMin();
+  const gmX = pad.l + gMin.x * plotW;
+  const gmY = pad.t + gMin.energy * plotH;
+  designCtx.fillStyle = '#22c55e';
+  designCtx.beginPath();
+  designCtx.arc(gmX, gmY, 5, 0, Math.PI * 2);
+  designCtx.fill();
+  designCtx.font = '9px Manrope';
+  designCtx.fillText('Global Min', gmX + 8, gmY + 4);
+}
+
+function drawComparison() {
+  compCtx.fillStyle = '#0d0d0d';
+  compCtx.fillRect(0, 0, COMP_W, COMP_H);
+
+  if (trialResults.length === 0) return;
+
+  const pad = { l: 35, r: 10, t: 15, b: 25 };
+  const plotW = COMP_W - pad.l - pad.r;
+  const plotH = COMP_H - pad.t - pad.b;
+
+  // Axes
+  compCtx.strokeStyle = '#333';
+  compCtx.lineWidth = 1;
+  compCtx.beginPath();
+  compCtx.moveTo(pad.l, pad.t);
+  compCtx.lineTo(pad.l, pad.t + plotH);
+  compCtx.lineTo(pad.l + plotW, pad.t + plotH);
+  compCtx.stroke();
+
+  compCtx.fillStyle = '#555';
+  compCtx.font = '8px Manrope';
+  compCtx.textAlign = 'right';
+  compCtx.fillText('0', pad.l - 4, pad.t + plotH + 4);
+  compCtx.fillText('1', pad.l - 4, pad.t + 8);
+  compCtx.textAlign = 'center';
+  compCtx.fillText('Trial', pad.l + plotW / 2, pad.t + plotH + 18);
+
+  const n = trialResults.length;
+  const barW = plotW / n * 0.4;
+
+  for (let i = 0; i < n; i++) {
+    const x = pad.l + (i / n) * plotW;
+    const ch = trialResults[i].classical * plotH;
+    const qh = trialResults[i].quantum * plotH;
+
+    // Classical bar
+    compCtx.fillStyle = '#ef444488';
+    compCtx.fillRect(x, pad.t + plotH - ch, barW, ch);
+
+    // Quantum bar
+    compCtx.fillStyle = '#7c3aed88';
+    compCtx.fillRect(x + barW, pad.t + plotH - qh, barW, qh);
+  }
+
+  // Legend
+  compCtx.font = '9px Manrope';
+  compCtx.textAlign = 'left';
+  compCtx.fillStyle = '#ef4444';
+  compCtx.fillText('Classical', COMP_W - 140, 14);
+  compCtx.fillStyle = '#7c3aed';
+  compCtx.fillText('Quantum', COMP_W - 70, 14);
+}
+
+// Drawing on design canvas
+let isDrawing = false;
+designCanvas.addEventListener('mousedown', (e) => { isDrawing = true; drawOnLandscape(e); });
+designCanvas.addEventListener('mousemove', (e) => { if (isDrawing) drawOnLandscape(e); });
+designCanvas.addEventListener('mouseup', () => { isDrawing = false; normalizeLandscape(); drawDesign(); });
+designCanvas.addEventListener('mouseleave', () => { isDrawing = false; });
+
+function drawOnLandscape(e) {
+  const rect = designCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = (e.clientY - rect.top) / rect.height;
+  const idx = Math.floor(x * LANDSCAPE_RES);
+  const radius = 5;
+  for (let i = idx - radius; i <= idx + radius; i++) {
+    if (i >= 0 && i < LANDSCAPE_RES) {
+      const weight = 1 - Math.abs(i - idx) / radius;
+      landscape[i] = landscape[i] * (1 - weight * 0.5) + y * weight * 0.5;
+    }
+  }
+  drawDesign();
+}
+
+// Controls
+['initTemp','cooling','tunneling','speed'].forEach(key => {
+  const el = document.getElementById(key);
+  el.addEventListener('input', () => {
+    if (key === 'cooling') {
+      params[key] = parseInt(el.value) / 100;
+      document.getElementById(key + 'V').textContent = params[key].toFixed(2);
+    } else {
+      params[key] = parseInt(el.value);
+      document.getElementById(key + 'V').textContent = el.value;
+    }
+  });
+});
+
+// Animation loop
+function loop() {
+  step();
+  drawLandscapeOn(classicalCtx, CW, CH, classicalParticle, false);
+  drawLandscapeOn(quantumCtx, CW, CH, quantumParticle, true);
+  requestAnimationFrame(loop);
+}
+
+// Initialize
+setLandscape('deceptive');
+loop();
+</script>
+<script src="/related.js"></script>
+</body>
+</html>
