@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Tic-Tac-Toe - FreeQuantumStore</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--text:#fafafa;--muted:#888;--accent:#7c3aed;--panel:#111;--border:#1a1a1a}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+a{color:var(--accent);text-decoration:none}
+.back{position:absolute;top:16px;left:20px;font-size:13px;font-weight:600;opacity:.7}
+.back:hover{opacity:1}
+header{text-align:center;padding:20px 20px 10px}
+header h1{font-size:1.4rem;font-weight:700;color:var(--accent)}
+header p{font-size:.82rem;color:var(--muted);margin-top:4px;max-width:500px}
+.status{font-size:.9rem;margin:8px 0;min-height:1.4em;color:var(--accent);font-weight:600}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:360px;height:360px;margin:10px 0}
+.cell{background:var(--panel);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:border-color .15s}
+.cell:hover{border-color:var(--accent)}
+.cell.collapsed{cursor:default;opacity:1}
+.cell.collapsed-x{background:#1e1b4b;border-color:#4c1d95}
+.cell.collapsed-o{background:#1a2e05;border-color:#365314}
+.mark{font-size:.7rem;color:var(--muted);margin:1px 0}
+.mark.x-mark{color:#a78bfa}
+.mark.o-mark{color:#86efac}
+.classical{font-size:2rem;font-weight:700}
+.classical.x-cls{color:#a78bfa}
+.classical.o-cls{color:#86efac}
+.highlight{border-color:#ef4444!important;animation:pulse .6s ease infinite alternate}
+@keyframes pulse{from{box-shadow:0 0 0 rgba(239,68,68,0)}to{box-shadow:0 0 12px rgba(239,68,68,.4)}}
+.controls{display:flex;gap:8px;margin:12px 0}
+.btn{background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn:hover{background:#6d28d9}
+.btn-sec{background:var(--border);color:var(--accent);border:1px solid #333}
+.info-panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 18px;max-width:500px;margin:10px 0;font-size:.78rem;color:var(--muted);line-height:1.7}
+.info-panel strong{color:var(--accent)}
+.score{font-size:.85rem;margin:6px 0;color:var(--muted)}
+.score span{font-weight:700;color:var(--text)}
+footer{margin-top:auto;padding:12px;font-size:.7rem;color:#555}
+footer a{color:var(--accent)}
+</style>
+<meta name="description" content="Quantum Tic-Tac-Toe: moves create superpositions, cycles cause collapse. Learn measurement, entanglement, and collapse by playing.">
+<meta property="og:title" content="Quantum Tic-Tac-Toe - FreeQuantumStore">
+<meta property="og:description" content="Quantum Tic-Tac-Toe: moves create superpositions, cycles cause collapse. Learn measurement, entanglement, and collapse by playing.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://freequantumstore.pages.dev/circuits/quantum-game/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Quantum Tic-Tac-Toe">
+<meta name="twitter:description" content="Quantum Tic-Tac-Toe: moves create superpositions, cycles cause collapse.">
+<link rel="canonical" href="https://freequantumstore.pages.dev/circuits/quantum-game/">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body>
+<a class="back" href="/circuits/">&larr; All Circuits</a>
+<header>
+  <h1>Quantum Tic-Tac-Toe</h1>
+  <p>Each move places a superposition in two cells. When a cycle forms (entanglement), collapse happens — choose which state wins.</p>
+</header>
+<div class="score">X wins: <span id="sx">0</span> | O wins: <span id="so">0</span> | Draws: <span id="sd">0</span></div>
+<div class="status" id="status">Player X: pick two cells for your quantum move</div>
+<div class="board" id="board"></div>
+<div class="controls">
+  <button class="btn" id="reset">New Game</button>
+  <button class="btn btn-sec" id="help-btn">How to Play</button>
+</div>
+<div class="info-panel" id="info" style="display:none">
+  <strong>Superposition:</strong> Each move occupies two cells at once (subscript = move number).<br>
+  <strong>Entanglement:</strong> When marks form a cycle (A in cells with B, B in cells with C, C back in cells with A), they're entangled.<br>
+  <strong>Collapse:</strong> A cycle triggers measurement. The last player to move in the cycle chooses which cell their mark collapses into. Then all entangled marks collapse accordingly.<br>
+  <strong>Winning:</strong> After collapse, if a player has 3 classical marks in a row, they win. Lower subscript wins ties.
+</div>
+<script>
+const board = document.getElementById('board');
+const statusEl = document.getElementById('status');
+const infoEl = document.getElementById('info');
+let cells = []; // each cell: { marks: [{player, moveNum}], classical: null }
+let currentPlayer = 'X';
+let moveNum = 1;
+let firstPick = -1;
+let gameOver = false;
+let collapseMode = false;
+let cycleCells = [];
+let scores = {X:0, O:0, D:0};
+
+function init() {
+  cells = Array.from({length:9}, () => ({marks:[], classical:null}));
+  currentPlayer = 'X';
+  moveNum = 1;
+  firstPick = -1;
+  gameOver = false;
+  collapseMode = false;
+  cycleCells = [];
+  render();
+  statusEl.textContent = "Player X: pick two cells for your quantum move";
+}
+
+function render() {
+  board.innerHTML = '';
+  for (let i = 0; i < 9; i++) {
+    const div = document.createElement('div');
+    div.className = 'cell';
+    if (cells[i].classical) {
+      div.classList.add('collapsed', cells[i].classical === 'X' ? 'collapsed-x' : 'collapsed-o');
+      const span = document.createElement('span');
+      span.className = 'classical ' + (cells[i].classical === 'X' ? 'x-cls' : 'o-cls');
+      span.textContent = cells[i].classical;
+      div.appendChild(span);
+    } else {
+      for (const m of cells[i].marks) {
+        const span = document.createElement('span');
+        span.className = 'mark ' + (m.player === 'X' ? 'x-mark' : 'o-mark');
+        span.textContent = `${m.player}${subscript(m.moveNum)}`;
+        div.appendChild(span);
+      }
+    }
+    if (collapseMode && cycleCells.includes(i) && !cells[i].classical) {
+      div.classList.add('highlight');
+    }
+    div.addEventListener('click', () => onCellClick(i));
+    board.appendChild(div);
+  }
+}
+
+function subscript(n) {
+  const subs = '₀₁₂₃₄₅₆₇₈₉';
+  return String(n).split('').map(d => subs[+d]).join('');
+}
+
+function onCellClick(i) {
+  if (gameOver) return;
+  if (collapseMode) {
+    handleCollapse(i);
+    return;
+  }
+  if (cells[i].classical) return;
+  if (firstPick === -1) {
+    firstPick = i;
+    statusEl.textContent = `Player ${currentPlayer}: pick second cell (move ${moveNum})`;
+    render();
+  } else {
+    if (i === firstPick) return;
+    if (cells[i].classical) return;
+    // Place quantum marks
+    cells[firstPick].marks.push({player: currentPlayer, moveNum});
+    cells[i].marks.push({player: currentPlayer, moveNum});
+    // Check for cycle
+    const cycle = findCycle();
+    if (cycle) {
+      collapseMode = true;
+      cycleCells = cycle;
+      statusEl.textContent = `Entanglement cycle detected! Player ${currentPlayer}: choose where your mark collapses`;
+      render();
+    } else {
+      moveNum++;
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+      firstPick = -1;
+      statusEl.textContent = `Player ${currentPlayer}: pick two cells for your quantum move`;
+      render();
+    }
+    firstPick = -1;
+  }
+}
+
+function findCycle() {
+  // Build adjacency: for each move, the two cells it's in form an edge
+  const adj = Array.from({length:9}, () => []);
+  for (let i = 0; i < 9; i++) {
+    if (cells[i].classical) continue;
+    for (const m of cells[i].marks) {
+      // Find the other cell with same move
+      for (let j = i+1; j < 9; j++) {
+        if (cells[j].classical) continue;
+        if (cells[j].marks.some(m2 => m2.moveNum === m.moveNum)) {
+          adj[i].push(j);
+          adj[j].push(i);
+        }
+      }
+    }
+  }
+  // BFS/DFS for cycle
+  const visited = new Array(9).fill(false);
+  for (let start = 0; start < 9; start++) {
+    if (visited[start] || cells[start].classical) continue;
+    const parent = new Array(9).fill(-1);
+    const queue = [start];
+    visited[start] = true;
+    while (queue.length) {
+      const u = queue.shift();
+      for (const v of adj[u]) {
+        if (cells[v].classical) continue;
+        if (!visited[v]) {
+          visited[v] = true;
+          parent[v] = u;
+          queue.push(v);
+        } else if (v !== parent[u]) {
+          // Cycle found — trace it
+          const cyclePath = traceCycle(adj, start);
+          if (cyclePath.length >= 2) return cyclePath;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function traceCycle(adj, start) {
+  // Simple DFS to find all connected non-classical cells from start
+  const connected = [];
+  const stack = [start];
+  const seen = new Set();
+  while (stack.length) {
+    const u = stack.pop();
+    if (seen.has(u)) continue;
+    seen.add(u);
+    if (!cells[u].classical) connected.push(u);
+    for (const v of adj[u]) {
+      if (!seen.has(v) && !cells[v].classical) stack.push(v);
+    }
+  }
+  return connected;
+}
+
+function handleCollapse(i) {
+  if (!cycleCells.includes(i) || cells[i].classical) return;
+  // Find the current player's mark in this cell (from the last move)
+  const lastMark = cells[i].marks.find(m => m.moveNum === moveNum && m.player === currentPlayer);
+  if (!lastMark) return;
+  // Collapse: current player's last mark collapses here
+  collapseCell(i, lastMark);
+  collapseMode = false;
+  cycleCells = [];
+  moveNum++;
+  currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+  // Check winner
+  const winner = checkWinner();
+  if (winner) {
+    gameOver = true;
+    statusEl.textContent = `${winner} wins!`;
+    scores[winner]++;
+    updateScores();
+  } else if (cells.every(c => c.classical)) {
+    gameOver = true;
+    statusEl.textContent = "Draw!";
+    scores.D++;
+    updateScores();
+  } else {
+    statusEl.textContent = `Player ${currentPlayer}: pick two cells for your quantum move`;
+  }
+  render();
+}
+
+function collapseCell(cellIdx, mark) {
+  cells[cellIdx].classical = mark.player;
+  cells[cellIdx].marks = [];
+  // Propagate: find other cell with same moveNum and collapse the OTHER marks there
+  propagateCollapse(cellIdx, mark.moveNum);
+}
+
+function propagateCollapse(fromCell, moveNum) {
+  // Find the partner cell of this move
+  for (let i = 0; i < 9; i++) {
+    if (i === fromCell || cells[i].classical) continue;
+    const idx = cells[i].marks.findIndex(m => m.moveNum === moveNum);
+    if (idx !== -1) {
+      // Remove this mark from partner cell
+      cells[i].marks.splice(idx, 1);
+      // If this cell now has only marks from one move, or check if we need to force collapse
+      if (cells[i].marks.length === 1) {
+        const remaining = cells[i].marks[0];
+        cells[i].classical = remaining.player;
+        cells[i].marks = [];
+        propagateCollapse(i, remaining.moveNum);
+      } else if (cells[i].marks.length === 0) {
+        // Empty cell, leave it
+      }
+    }
+  }
+}
+
+function checkWinner() {
+  const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  for (const [a,b,c] of lines) {
+    if (cells[a].classical && cells[a].classical === cells[b].classical && cells[b].classical === cells[c].classical) {
+      return cells[a].classical;
+    }
+  }
+  return null;
+}
+
+function updateScores() {
+  document.getElementById('sx').textContent = scores.X;
+  document.getElementById('so').textContent = scores.O;
+  document.getElementById('sd').textContent = scores.D;
+}
+
+document.getElementById('reset').addEventListener('click', init);
+document.getElementById('help-btn').addEventListener('click', () => {
+  infoEl.style.display = infoEl.style.display === 'none' ? 'block' : 'none';
+});
+
+init();
+</script>
+<script src="/related.js"></script>
+</body>
+</html>

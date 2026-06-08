@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Fourier Transform - FreeQuantumStore</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--text:#fafafa;--muted:#888;--accent:#7c3aed;--panel:#111;--border:#1a1a1a}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+a{color:var(--accent);text-decoration:none}
+.back{position:absolute;top:16px;left:20px;font-size:13px;font-weight:600;opacity:.7}
+.back:hover{opacity:1}
+header{text-align:center;padding:20px 20px 10px}
+header h1{font-size:1.4rem;font-weight:700;color:var(--accent)}
+header p{font-size:.82rem;color:var(--muted);margin-top:4px;max-width:560px}
+.controls{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap;align-items:center;justify-content:center}
+.controls label{font-size:.8rem;color:var(--muted)}
+.controls select,.controls input{background:#1a1a1a;border:1px solid #333;color:var(--text);padding:5px 10px;border-radius:6px;font-size:.8rem;font-family:inherit}
+.btn{background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn:hover{background:#6d28d9}
+.btn-sec{background:var(--border);color:var(--accent);border:1px solid #333}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:900px;width:100%;padding:0 16px;margin:10px 0}
+@media(max-width:700px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px}
+.panel h2{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+canvas{display:block;width:100%;border-radius:6px;background:#080808}
+.circuit-area{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;max-width:900px;width:100%;margin:10px 16px;overflow-x:auto}
+.circuit-area h2{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.step-info{font-size:.78rem;color:var(--muted);margin:8px 0;min-height:1.4em}
+.applications{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;max-width:900px;width:100%;margin:10px 16px}
+.applications h2{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.applications p{font-size:.78rem;color:var(--muted);line-height:1.7}
+.applications strong{color:var(--text)}
+footer{margin-top:auto;padding:12px;font-size:.7rem;color:#555}
+</style>
+<meta name="description" content="QFT circuit for 2-5 qubits. Animated gate execution, phasor visualization, classical DFT comparison.">
+<meta property="og:title" content="Quantum Fourier Transform - FreeQuantumStore">
+<meta property="og:description" content="QFT circuit for 2-5 qubits. Animated gate execution, phasor visualization, classical DFT comparison.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://freequantumstore.pages.dev/circuits/quantum-fourier/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Quantum Fourier Transform Visualizer">
+<meta name="twitter:description" content="QFT circuit for 2-5 qubits. Animated gate execution, phasor visualization, classical DFT comparison.">
+<link rel="canonical" href="https://freequantumstore.pages.dev/circuits/quantum-fourier/">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body>
+<a class="back" href="/circuits/">&larr; All Circuits</a>
+<header>
+  <h1>Quantum Fourier Transform</h1>
+  <p>The QFT maps computational basis states to frequency domain — the quantum analog of the discrete Fourier transform, exponentially faster.</p>
+</header>
+<div class="controls">
+  <label>Qubits: <select id="nq"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></label>
+  <label>Input: <input type="number" id="input-val" min="0" max="7" value="3" style="width:60px"></label>
+  <button class="btn" id="run-btn">Run QFT</button>
+  <button class="btn btn-sec" id="step-btn">Step</button>
+  <button class="btn btn-sec" id="reset-btn">Reset</button>
+</div>
+
+<div class="circuit-area">
+  <h2>Circuit</h2>
+  <canvas id="circuit-canvas" width="860" height="160"></canvas>
+  <div class="step-info" id="step-info">Set input state and press Run or Step.</div>
+</div>
+
+<div class="layout">
+  <div class="panel">
+    <h2>Quantum Output (Amplitudes & Phases)</h2>
+    <canvas id="qft-canvas" width="400" height="220"></canvas>
+  </div>
+  <div class="panel">
+    <h2>Classical DFT Comparison</h2>
+    <canvas id="dft-canvas" width="400" height="220"></canvas>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="panel">
+    <h2>Phasor Diagram (per qubit)</h2>
+    <canvas id="phasor-canvas" width="400" height="180"></canvas>
+  </div>
+  <div class="panel">
+    <h2>Probability Distribution</h2>
+    <canvas id="prob-canvas" width="400" height="180"></canvas>
+  </div>
+</div>
+
+<div class="applications">
+  <h2>Applications</h2>
+  <p><strong>Period Finding:</strong> QFT extracts periodicities from quantum states — key subroutine in Shor's algorithm for factoring integers.<br>
+  <strong>Phase Estimation:</strong> Determines eigenvalues of unitary operators with exponential precision — foundation for quantum chemistry simulations.<br>
+  <strong>Hidden Subgroup:</strong> Generalizes Deutsch-Jozsa, Simon, and Shor into a unified framework using QFT over groups.</p>
+</div>
+
+<script>
+const circuitCanvas = document.getElementById('circuit-canvas');
+const cCtx = circuitCanvas.getContext('2d');
+const qftCanvas = document.getElementById('qft-canvas');
+const qCtx = qftCanvas.getContext('2d');
+const dftCanvas = document.getElementById('dft-canvas');
+const dCtx = dftCanvas.getContext('2d');
+const phasorCanvas = document.getElementById('phasor-canvas');
+const pCtx = phasorCanvas.getContext('2d');
+const probCanvas = document.getElementById('prob-canvas');
+const prCtx = probCanvas.getContext('2d');
+
+let N, n, inputVal, stateReal, stateImag;
+let gates = [], currentGate = 0, animating = false, animFrame = null;
+
+function getN() { return parseInt(document.getElementById('nq').value); }
+function getInput() {
+  const max = (1 << getN()) - 1;
+  let v = parseInt(document.getElementById('input-val').value) || 0;
+  v = Math.max(0, Math.min(max, v));
+  document.getElementById('input-val').value = v;
+  document.getElementById('input-val').max = max;
+  return v;
+}
+
+function initState() {
+  n = getN();
+  N = 1 << n;
+  inputVal = getInput();
+  stateReal = new Float64Array(N);
+  stateImag = new Float64Array(N);
+  stateReal[inputVal] = 1;
+  buildGates();
+  currentGate = 0;
+  animating = false;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  drawAll();
+  document.getElementById('step-info').textContent = `Input |${inputVal.toString(2).padStart(n,'0')}⟩ = |${inputVal}⟩. Press Run or Step.`;
+}
+
+function buildGates() {
+  gates = [];
+  for (let i = 0; i < n; i++) {
+    gates.push({type:'H', qubit:i, label:`H${i}`});
+    for (let j = i+1; j < n; j++) {
+      const k = j - i + 1;
+      gates.push({type:'CR', qubit:i, control:j, k, label:`R${k}`});
+    }
+  }
+  // Swap gates at end
+  for (let i = 0; i < Math.floor(n/2); i++) {
+    gates.push({type:'SWAP', qubit:i, target:n-1-i, label:'SWAP'});
+  }
+}
+
+function applyGate(gateIdx) {
+  const g = gates[gateIdx];
+  if (g.type === 'H') {
+    const bit = g.qubit;
+    const newR = new Float64Array(N);
+    const newI = new Float64Array(N);
+    for (let i = 0; i < N; i++) {
+      const partner = i ^ (1 << (n-1-bit));
+      if (i < partner) {
+        const s = 1/Math.SQRT2;
+        newR[i] = s*(stateReal[i]+stateReal[partner]);
+        newI[i] = s*(stateImag[i]+stateImag[partner]);
+        newR[partner] = s*(stateReal[i]-stateReal[partner]);
+        newI[partner] = s*(stateImag[i]-stateImag[partner]);
+      }
+    }
+    stateReal = newR; stateImag = newI;
+  } else if (g.type === 'CR') {
+    const target = g.qubit;
+    const control = g.control;
+    const angle = 2*Math.PI / (1 << g.k);
+    for (let i = 0; i < N; i++) {
+      const cBit = (i >> (n-1-control)) & 1;
+      const tBit = (i >> (n-1-target)) & 1;
+      if (cBit === 1 && tBit === 1) {
+        const cosA = Math.cos(angle), sinA = Math.sin(angle);
+        const re = stateReal[i]*cosA - stateImag[i]*sinA;
+        const im = stateReal[i]*sinA + stateImag[i]*cosA;
+        stateReal[i] = re;
+        stateImag[i] = im;
+      }
+    }
+  } else if (g.type === 'SWAP') {
+    const b1 = n-1-g.qubit, b2 = n-1-g.target;
+    const newR = new Float64Array(stateReal);
+    const newI = new Float64Array(stateImag);
+    for (let i = 0; i < N; i++) {
+      const bit1 = (i >> b1) & 1;
+      const bit2 = (i >> b2) & 1;
+      if (bit1 !== bit2) {
+        const j = i ^ (1<<b1) ^ (1<<b2);
+        if (i < j) {
+          const tr = newR[i]; newR[i] = newR[j]; newR[j] = tr;
+          const ti = newI[i]; newI[i] = newI[j]; newI[j] = ti;
+        }
+      }
+    }
+    stateReal = newR; stateImag = newI;
+  }
+}
+
+function classicalDFT() {
+  const inR = new Float64Array(N);
+  inR[inputVal] = 1;
+  const outR = new Float64Array(N);
+  const outI = new Float64Array(N);
+  for (let k = 0; k < N; k++) {
+    for (let j = 0; j < N; j++) {
+      const angle = 2*Math.PI*j*k/N;
+      outR[k] += inR[j]*Math.cos(angle);
+      outI[k] -= inR[j]*Math.sin(angle);
+    }
+    outR[k] /= Math.sqrt(N);
+    outI[k] /= Math.sqrt(N);
+  }
+  return {real:outR, imag:outI};
+}
+
+function drawCircuit() {
+  const W = circuitCanvas.width, H = circuitCanvas.height;
+  cCtx.clearRect(0,0,W,H);
+  const lineY = i => 30 + i*(H-50)/Math.max(n-1,1);
+  const startX = 60, endX = W-20;
+  const gateW = Math.min(40, (endX-startX)/(gates.length+1));
+
+  // Wire lines
+  cCtx.strokeStyle = '#333'; cCtx.lineWidth = 1;
+  for (let i = 0; i < n; i++) {
+    const y = lineY(i);
+    cCtx.beginPath(); cCtx.moveTo(startX-30,y); cCtx.lineTo(endX,y); cCtx.stroke();
+    cCtx.fillStyle = '#666'; cCtx.font = '11px Manrope'; cCtx.textAlign = 'right';
+    cCtx.fillText(`q${i}`, startX-35, y+4);
+  }
+
+  // Gates
+  for (let gi = 0; gi < gates.length; gi++) {
+    const g = gates[gi];
+    const x = startX + (gi+0.5)*gateW;
+    const done = gi < currentGate;
+    const active = gi === currentGate && animating;
+
+    if (g.type === 'H') {
+      const y = lineY(g.qubit);
+      cCtx.fillStyle = done ? '#7c3aed' : active ? '#a78bfa' : '#222';
+      cCtx.strokeStyle = done ? '#7c3aed' : '#444';
+      cCtx.lineWidth = 1;
+      cCtx.fillRect(x-12, y-12, 24, 24);
+      cCtx.strokeRect(x-12, y-12, 24, 24);
+      cCtx.fillStyle = done ? '#fff' : '#aaa';
+      cCtx.font = 'bold 11px monospace'; cCtx.textAlign = 'center';
+      cCtx.fillText('H', x, y+4);
+    } else if (g.type === 'CR') {
+      const y1 = lineY(g.qubit);
+      const y2 = lineY(g.control);
+      cCtx.strokeStyle = done ? '#7c3aed' : '#444'; cCtx.lineWidth = 1;
+      cCtx.beginPath(); cCtx.moveTo(x,y1); cCtx.lineTo(x,y2); cCtx.stroke();
+      cCtx.fillStyle = done ? '#7c3aed' : '#333';
+      cCtx.beginPath(); cCtx.arc(x,y1,8,0,Math.PI*2); cCtx.fill();
+      cCtx.fillStyle = done ? '#fff' : '#888';
+      cCtx.font = '9px monospace'; cCtx.textAlign = 'center';
+      cCtx.fillText(`R${g.k}`, x, y1+3);
+      cCtx.fillStyle = done ? '#7c3aed' : '#555';
+      cCtx.beginPath(); cCtx.arc(x,y2,4,0,Math.PI*2); cCtx.fill();
+    } else if (g.type === 'SWAP') {
+      const y1 = lineY(g.qubit);
+      const y2 = lineY(g.target);
+      cCtx.strokeStyle = done ? '#7c3aed' : '#444'; cCtx.lineWidth = 1.5;
+      cCtx.beginPath(); cCtx.moveTo(x,y1); cCtx.lineTo(x,y2); cCtx.stroke();
+      [y1,y2].forEach(y => {
+        cCtx.beginPath(); cCtx.moveTo(x-5,y-5); cCtx.lineTo(x+5,y+5); cCtx.stroke();
+        cCtx.beginPath(); cCtx.moveTo(x+5,y-5); cCtx.lineTo(x-5,y+5); cCtx.stroke();
+      });
+    }
+  }
+}
+
+function drawAmplitudes(ctx, canvas, real, imag, title) {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const barW = Math.max(8, (W-60)/N - 2);
+  const maxAmp = 1/Math.sqrt(N) * 1.2 || 1;
+  const baseY = H - 30;
+
+  ctx.fillStyle = '#444'; ctx.font = '10px Manrope'; ctx.textAlign = 'center';
+  for (let i = 0; i < N; i++) {
+    const x = 30 + i*(barW+2);
+    const amp = Math.sqrt(real[i]*real[i]+imag[i]*imag[i]);
+    const phase = Math.atan2(imag[i], real[i]);
+    const h = (amp/maxAmp)*(baseY-20);
+
+    // Color by phase
+    const hue = ((phase+Math.PI)/(2*Math.PI))*300;
+    ctx.fillStyle = `hsl(${hue},70%,55%)`;
+    ctx.fillRect(x, baseY-h, barW, h);
+
+    // Phase arrow on top
+    if (amp > 0.01) {
+      const arrowLen = 8;
+      ctx.strokeStyle = '#fafafa'; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x+barW/2, baseY-h-12);
+      ctx.lineTo(x+barW/2+arrowLen*Math.cos(phase-Math.PI/2), baseY-h-12+arrowLen*Math.sin(phase-Math.PI/2));
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#555'; ctx.font = '9px monospace';
+    ctx.fillText(`|${i}⟩`, x+barW/2, baseY+12);
+  }
+  // Axis
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(25,baseY); ctx.lineTo(W-5,baseY); ctx.stroke();
+}
+
+function drawPhasors() {
+  const W = phasorCanvas.width, H = phasorCanvas.height;
+  pCtx.clearRect(0,0,W,H);
+  const r = Math.min(30, (H-20)/2 - 5);
+  const spacing = W / (n+1);
+
+  for (let q = 0; q < n; q++) {
+    const cx = spacing*(q+1);
+    const cy = H/2;
+
+    // Circle
+    pCtx.strokeStyle = '#333'; pCtx.lineWidth = 1;
+    pCtx.beginPath(); pCtx.arc(cx,cy,r,0,Math.PI*2); pCtx.stroke();
+
+    // Compute effective phase for this qubit from state vector
+    let phaseSum = 0, ampSum = 0;
+    for (let i = 0; i < N; i++) {
+      const amp = Math.sqrt(stateReal[i]*stateReal[i]+stateImag[i]*stateImag[i]);
+      if (amp > 0.001 && ((i >> (n-1-q)) & 1) === 1) {
+        phaseSum += Math.atan2(stateImag[i], stateReal[i]);
+        ampSum += amp;
+      }
+    }
+    const avgPhase = ampSum > 0 ? phaseSum / (ampSum * N) * N : 0;
+
+    // Arrow
+    pCtx.strokeStyle = '#7c3aed'; pCtx.lineWidth = 2;
+    pCtx.beginPath();
+    pCtx.moveTo(cx, cy);
+    pCtx.lineTo(cx + r*Math.cos(avgPhase - Math.PI/2), cy + r*Math.sin(avgPhase - Math.PI/2));
+    pCtx.stroke();
+
+    // Dot at tip
+    pCtx.fillStyle = '#7c3aed';
+    pCtx.beginPath();
+    pCtx.arc(cx + r*Math.cos(avgPhase-Math.PI/2), cy + r*Math.sin(avgPhase-Math.PI/2), 3, 0, Math.PI*2);
+    pCtx.fill();
+
+    // Label
+    pCtx.fillStyle = '#888'; pCtx.font = '10px Manrope'; pCtx.textAlign = 'center';
+    pCtx.fillText(`q${q}`, cx, cy+r+16);
+  }
+}
+
+function drawProbabilities() {
+  const W = probCanvas.width, H = probCanvas.height;
+  prCtx.clearRect(0,0,W,H);
+  const barW = Math.max(8, (W-60)/N - 2);
+  const baseY = H - 30;
+
+  for (let i = 0; i < N; i++) {
+    const x = 30 + i*(barW+2);
+    const prob = stateReal[i]*stateReal[i] + stateImag[i]*stateImag[i];
+    const h = prob*(baseY-10);
+
+    prCtx.fillStyle = '#7c3aed';
+    prCtx.fillRect(x, baseY-h, barW, h);
+
+    prCtx.fillStyle = '#555'; prCtx.font = '9px monospace'; prCtx.textAlign = 'center';
+    prCtx.fillText(`|${i}⟩`, x+barW/2, baseY+12);
+    if (prob > 0.01) {
+      prCtx.fillStyle = '#aaa'; prCtx.font = '8px Manrope';
+      prCtx.fillText((prob*100).toFixed(0)+'%', x+barW/2, baseY-h-4);
+    }
+  }
+  prCtx.strokeStyle = '#333'; prCtx.lineWidth = 1;
+  prCtx.beginPath(); prCtx.moveTo(25,baseY); prCtx.lineTo(W-5,baseY); prCtx.stroke();
+}
+
+function drawAll() {
+  drawCircuit();
+  drawAmplitudes(qCtx, qftCanvas, stateReal, stateImag);
+  const dft = classicalDFT();
+  drawAmplitudes(dCtx, dftCanvas, dft.real, dft.imag);
+  drawPhasors();
+  drawProbabilities();
+}
+
+function stepOnce() {
+  if (currentGate >= gates.length) {
+    document.getElementById('step-info').textContent = 'QFT complete! All gates applied.';
+    return;
+  }
+  applyGate(currentGate);
+  const g = gates[currentGate];
+  let desc = '';
+  if (g.type === 'H') desc = `Hadamard on qubit ${g.qubit} — creates superposition`;
+  else if (g.type === 'CR') desc = `Controlled-R${g.k} (control: q${g.control}, target: q${g.qubit}) — phase rotation of 2pi/${1<<g.k}`;
+  else desc = `SWAP qubits ${g.qubit} and ${g.target} — bit reversal`;
+  currentGate++;
+  document.getElementById('step-info').textContent = `Step ${currentGate}/${gates.length}: ${desc}`;
+  drawAll();
+}
+
+function runAll() {
+  if (animating) return;
+  initState();
+  animating = true;
+  let step = 0;
+  function tick() {
+    if (step >= gates.length) {
+      animating = false;
+      document.getElementById('step-info').textContent = 'QFT complete! Compare quantum output with classical DFT — identical results.';
+      drawAll();
+      return;
+    }
+    applyGate(step);
+    currentGate = step+1;
+    step++;
+    drawAll();
+    animFrame = setTimeout(tick, 300);
+  }
+  tick();
+}
+
+document.getElementById('run-btn').addEventListener('click', runAll);
+document.getElementById('step-btn').addEventListener('click', stepOnce);
+document.getElementById('reset-btn').addEventListener('click', initState);
+document.getElementById('nq').addEventListener('change', initState);
+document.getElementById('input-val').addEventListener('change', initState);
+
+initState();
+</script>
+<script src="/related.js"></script>
+</body>
+</html>

@@ -299,6 +299,30 @@
       "creator": "serge-ivo",
       "creatorName": "Serge",
       "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "quantum-game",
+      "name": "Quantum Tic-Tac-Toe",
+      "description": "Modified tic-tac-toe where moves create superpositions. Cycles cause entanglement collapse. Learn measurement, entanglement, and collapse by playing.",
+      "storeType": "behavior",
+      "category": "fundamentals",
+      "icon": "🎮",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
+    },
+    {
+      "id": "quantum-fourier",
+      "name": "QFT Visualizer",
+      "description": "Quantum Fourier Transform for 2-5 qubits. Animated gate-by-gate execution, phasor diagrams, classical DFT comparison. Applications: period finding, phase estimation.",
+      "storeType": "behavior",
+      "category": "algorithms",
+      "icon": "🌊",
+      "iconBg": "#7c3aed",
+      "creator": "serge-ivo",
+      "creatorName": "Serge",
+      "creatorAvatar": "https://github.com/serge-ivo.png?size=96"
     }
   ]
 }
