@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Key Distribution (BB84) - FreeQuantumStore</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--text:#fafafa;--muted:#888;--accent:#7c3aed;--panel:#141414;--line:#1e1e1e;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--yellow:#f59e0b}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',system-ui,sans-serif;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+.back{position:fixed;top:12px;left:14px;color:var(--muted);font-size:.82rem;text-decoration:none;z-index:100;font-weight:600}
+.back:hover{color:var(--accent)}
+header{text-align:center;padding:2rem 1rem 1rem}
+header h1{font-size:1.5rem;font-weight:700;color:var(--accent)}
+header p{color:var(--muted);font-size:.85rem;max-width:620px;margin:.4rem auto 0}
+.layout{max-width:1200px;margin:0 auto;padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.full{grid-column:1/-1}
+@media(max-width:860px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.panel h2{font-size:.8rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+canvas{display:block;width:100%;border-radius:8px;background:#0d0d0d;border:1px solid var(--line)}
+button{background:var(--accent);color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:600;font-family:inherit;transition:background .15s}
+button:hover{background:#6d28d9}
+button.secondary{background:transparent;border:1px solid var(--line);color:var(--muted)}
+button.secondary:hover{border-color:var(--accent);color:var(--text)}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.bit-table{width:100%;border-collapse:collapse;font-size:.7rem;margin:8px 0}
+.bit-table th{color:var(--muted);font-weight:600;text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+.bit-table td{padding:4px 6px;border-bottom:1px solid #111;font-family:'Courier New',monospace}
+.bit-table .match{color:var(--green)}.bit-table .mismatch{color:var(--red)}
+.bit-table .key-bit{color:var(--accent);font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
+.stat{background:#0d0d0d;border:1px solid var(--line);border-radius:6px;padding:8px;text-align:center}
+.stat .val{font-size:1.1rem;font-weight:700;color:var(--accent)}
+.stat .lbl{font-size:.6rem;color:var(--muted);text-transform:uppercase}
+.stat.good .val{color:var(--green)}.stat.bad .val{color:var(--red)}
+.info{font-size:.68rem;color:var(--muted);line-height:1.6;margin-top:8px;background:#0d0d0d;padding:10px;border-radius:6px;border:1px solid var(--line)}
+.info strong{color:var(--text)}
+.eve-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:600;margin-left:8px}
+.eve-badge.active{background:#ef444422;color:#ef4444;border:1px solid #ef444444}
+.eve-badge.inactive{background:#22222;color:#555;border:1px solid var(--line)}
+label{font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:6px;cursor:pointer}
+input[type=checkbox]{accent-color:var(--accent)}
+.ctrl{margin-bottom:8px}
+.ctrl .row{display:flex;align-items:center;gap:8px}
+.ctrl input[type=range]{flex:1;accent-color:var(--accent)}
+.ctrl .val{font-size:.72rem;font-weight:700;color:var(--accent);min-width:30px;text-align:right}
+.key-display{font-family:'Courier New',monospace;font-size:.9rem;letter-spacing:2px;color:var(--accent);text-align:center;padding:8px;background:#0d0d0d;border-radius:6px;margin:8px 0;word-break:break-all;min-height:28px;border:1px solid var(--line)}
+.party-label{font-size:.75rem;font-weight:700;margin-bottom:4px}
+.alice{color:var(--accent)}.bob{color:var(--blue)}.eve{color:var(--red)}
+</style>
+</head>
+<body>
+<a href="/" class="back">FreeQuantumStore</a>
+<header>
+<h1>Quantum Key Distribution (BB84)</h1>
+<p>Alice and Bob establish a secure shared key using quantum mechanics. Eve's eavesdropping is always detectable.</p>
+</header>
+
+<div class="layout">
+<div class="panel full">
+  <h2>Protocol Animation</h2>
+  <canvas id="protoCanvas" width="1100" height="200"></canvas>
+  <div class="btn-row">
+    <button onclick="runStep()">Step</button>
+    <button onclick="runAll()">Run Full Protocol</button>
+    <button onclick="runMany(100)">100 Bits</button>
+    <button class="secondary" onclick="resetProtocol()">Reset</button>
+    <label style="margin-left:auto"><input type="checkbox" id="eveToggle" onchange="toggleEve()"> Enable Eve</label>
+    <span class="eve-badge inactive" id="eveBadge">Eve OFF</span>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Protocol Table (last 16 bits)</h2>
+  <div style="overflow-x:auto">
+    <table class="bit-table" id="bitTable">
+      <thead><tr><th>Alice Bit</th><th>Alice Basis</th><th>Bob Basis</th><th>Bob Result</th><th>Match?</th><th>Key</th></tr></thead>
+      <tbody id="bitBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Shared Key</h2>
+  <p class="party-label alice">Alice's Key:</p>
+  <div class="key-display" id="aliceKey">-</div>
+  <p class="party-label bob">Bob's Key:</p>
+  <div class="key-display" id="bobKey">-</div>
+  <div class="stats">
+    <div class="stat"><div class="val" id="keyLen">0</div><div class="lbl">Key Bits</div></div>
+    <div class="stat" id="errorStat"><div class="val" id="errorRate">0%</div><div class="lbl">Error Rate</div></div>
+    <div class="stat"><div class="val" id="discarded">0</div><div class="lbl">Discarded</div></div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Error Rate Chart</h2>
+  <canvas id="errorCanvas" width="500" height="160"></canvas>
+  <div style="display:flex;gap:12px;margin-top:6px;font-size:.68rem;color:var(--muted)">
+    <span style="color:var(--green)">--- No Eve (~0%)</span>
+    <span style="color:var(--red)">--- With Eve (~25%)</span>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Controls</h2>
+  <div class="ctrl">
+    <label>Bits per run</label>
+    <div class="row"><input type="range" id="bitsPerRun" min="8" max="64" value="16"><span class="val" id="bitsPerRunV">16</span></div>
+  </div>
+  <div class="ctrl">
+    <label>Eve intercept probability</label>
+    <div class="row"><input type="range" id="eveProb" min="10" max="100" value="100"><span class="val" id="eveProbV">100%</span></div>
+  </div>
+  <div class="info">
+    <strong>BB84 Protocol:</strong><br>
+    1. Alice encodes random bits in random bases (+/x)<br>
+    2. Bob measures in random bases<br>
+    3. They publicly compare bases (not values!)<br>
+    4. Matching bases = shared key bits<br>
+    5. Sample key bits to check error rate<br><br>
+    <strong>Security:</strong> If Eve measures a qubit, she disturbs it (no-cloning theorem). This introduces ~25% errors in matched bits, detectable by Alice and Bob.
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Qubit States</h2>
+  <canvas id="qubitCanvas" width="500" height="160"></canvas>
+  <div style="font-size:.65rem;color:var(--muted);margin-top:6px">
+    <strong>+ basis:</strong> |0> = vertical, |1> = horizontal<br>
+    <strong>x basis:</strong> |0> = diagonal /, |1> = diagonal \
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Detection</h2>
+  <div class="stats">
+    <div class="stat"><div class="val" id="totalBits">0</div><div class="lbl">Total Sent</div></div>
+    <div class="stat"><div class="val" id="matchedBases">0</div><div class="lbl">Bases Match</div></div>
+    <div class="stat"><div class="val" id="eveDetected">-</div><div class="lbl">Eve Detected?</div></div>
+  </div>
+  <div class="info" id="detectionMsg" style="margin-top:8px">
+    Run the protocol to see if eavesdropping is detected...
+  </div>
+</div>
+</div>
+
+<script>
+const protoCanvas = document.getElementById('protoCanvas');
+const protoCtx = protoCanvas.getContext('2d');
+const errorCanvas = document.getElementById('errorCanvas');
+const errorCtx = errorCanvas.getContext('2d');
+const qubitCanvas = document.getElementById('qubitCanvas');
+const qubitCtx = qubitCanvas.getContext('2d');
+const PW = 1100, PH = 200, EW = 500, EH = 160, QW = 500, QH = 160;
+
+let eveEnabled = false;
+let eveProb = 1.0;
+let protocol = { bits: [], aliceKey: [], bobKey: [], step: 0 };
+let errorHistory = [];
+let animQubits = [];
+let animTime = 0;
+
+function toggleEve() {
+  eveEnabled = document.getElementById('eveToggle').checked;
+  const badge = document.getElementById('eveBadge');
+  badge.textContent = eveEnabled ? 'Eve ON' : 'Eve OFF';
+  badge.className = 'eve-badge ' + (eveEnabled ? 'active' : 'inactive');
+}
+
+function generateBit() {
+  const aliceBit = Math.random() < 0.5 ? 0 : 1;
+  const aliceBasis = Math.random() < 0.5 ? '+' : 'x';
+  const bobBasis = Math.random() < 0.5 ? '+' : 'x';
+
+  let bobResult;
+  let eveIntercepted = false;
+  let eveBasis = null;
+
+  if (eveEnabled && Math.random() < eveProb) {
+    // Eve measures in random basis
+    eveIntercepted = true;
+    eveBasis = Math.random() < 0.5 ? '+' : 'x';
+    let eveResult;
+    if (eveBasis === aliceBasis) {
+      eveResult = aliceBit;
+    } else {
+      eveResult = Math.random() < 0.5 ? 0 : 1;
+    }
+    // Eve resends in her basis (which may be wrong)
+    if (bobBasis === eveBasis) {
+      bobResult = eveResult;
+    } else {
+      bobResult = Math.random() < 0.5 ? 0 : 1;
+    }
+  } else {
+    // No Eve: standard measurement
+    if (bobBasis === aliceBasis) {
+      bobResult = aliceBit;
+    } else {
+      bobResult = Math.random() < 0.5 ? 0 : 1;
+    }
+  }
+
+  const basesMatch = aliceBasis === bobBasis;
+  const isError = basesMatch && (bobResult !== aliceBit);
+
+  return { aliceBit, aliceBasis, bobBasis, bobResult, basesMatch, isError, eveIntercepted, eveBasis };
+}
+
+function runStep() {
+  const bit = generateBit();
+  protocol.bits.push(bit);
+  if (bit.basesMatch) {
+    protocol.aliceKey.push(bit.aliceBit);
+    protocol.bobKey.push(bit.bobResult);
+  }
+  updateDisplay();
+  animQubits.push({ bit, t: 0 });
+}
+
+function runAll() {
+  const n = parseInt(document.getElementById('bitsPerRun').value);
+  for (let i = 0; i < n; i++) runStep();
+}
+
+function runMany(n) {
+  for (let i = 0; i < n; i++) {
+    const bit = generateBit();
+    protocol.bits.push(bit);
+    if (bit.basesMatch) {
+      protocol.aliceKey.push(bit.aliceBit);
+      protocol.bobKey.push(bit.bobResult);
+    }
+  }
+  updateDisplay();
+}
+
+function resetProtocol() {
+  protocol = { bits: [], aliceKey: [], bobKey: [], step: 0 };
+  errorHistory = [];
+  animQubits = [];
+  updateDisplay();
+  drawError();
+  drawQubits();
+}
+
+function updateDisplay() {
+  // Table
+  const tbody = document.getElementById('bitBody');
+  const last16 = protocol.bits.slice(-16);
+  tbody.innerHTML = last16.map(b => {
+    const matchClass = b.basesMatch ? 'match' : 'mismatch';
+    const keyBit = b.basesMatch ? `<span class="key-bit">${b.aliceBit}</span>` : '-';
+    return `<tr>
+      <td>${b.aliceBit}</td>
+      <td>${b.aliceBasis}</td>
+      <td>${b.bobBasis}</td>
+      <td>${b.bobResult}</td>
+      <td class="${matchClass}">${b.basesMatch ? 'Yes' : 'No'}</td>
+      <td>${keyBit}</td>
+    </tr>`;
+  }).join('');
+
+  // Keys
+  document.getElementById('aliceKey').textContent = protocol.aliceKey.length > 0 ? protocol.aliceKey.slice(-32).join('') : '-';
+  document.getElementById('bobKey').textContent = protocol.bobKey.length > 0 ? protocol.bobKey.slice(-32).join('') : '-';
+  document.getElementById('keyLen').textContent = protocol.aliceKey.length;
+
+  // Error rate
+  const matched = protocol.bits.filter(b => b.basesMatch);
+  const errors = matched.filter(b => b.isError);
+  const rate = matched.length > 0 ? (errors.length / matched.length * 100).toFixed(1) : '0';
+  document.getElementById('errorRate').textContent = rate + '%';
+  document.getElementById('errorStat').className = 'stat ' + (parseFloat(rate) > 10 ? 'bad' : 'good');
+
+  document.getElementById('discarded').textContent = protocol.bits.length - matched.length;
+  document.getElementById('totalBits').textContent = protocol.bits.length;
+  document.getElementById('matchedBases').textContent = matched.length;
+
+  // Detection
+  const detected = parseFloat(rate) > 10;
+  document.getElementById('eveDetected').textContent = matched.length < 4 ? '-' : (detected ? 'YES' : 'NO');
+  document.getElementById('eveDetected').style.color = detected ? '#ef4444' : '#22c55e';
+  const msg = document.getElementById('detectionMsg');
+  if (matched.length >= 4) {
+    if (detected) {
+      msg.innerHTML = '<strong style="color:#ef4444">EAVESDROPPER DETECTED!</strong> Error rate exceeds threshold (>10%). The channel is compromised. Alice and Bob discard this key and try again.';
+    } else {
+      msg.innerHTML = '<strong style="color:#22c55e">Channel secure.</strong> Error rate within acceptable bounds. The key can be used safely.';
+    }
+  }
+
+  // Error history for chart
+  if (matched.length > 0) {
+    errorHistory.push(parseFloat(rate));
+    if (errorHistory.length > 50) errorHistory.shift();
+  }
+  drawError();
+  drawQubits();
+}
+
+function drawError() {
+  errorCtx.fillStyle = '#0d0d0d';
+  errorCtx.fillRect(0, 0, EW, EH);
+
+  if (errorHistory.length < 2) return;
+
+  const pad = { l: 35, r: 10, t: 15, b: 20 };
+  const plotW = EW - pad.l - pad.r;
+  const plotH = EH - pad.t - pad.b;
+
+  // Axes
+  errorCtx.strokeStyle = '#333';
+  errorCtx.lineWidth = 1;
+  errorCtx.beginPath();
+  errorCtx.moveTo(pad.l, pad.t);
+  errorCtx.lineTo(pad.l, pad.t + plotH);
+  errorCtx.lineTo(pad.l + plotW, pad.t + plotH);
+  errorCtx.stroke();
+
+  // 25% threshold line
+  const threshY = pad.t + plotH * (1 - 25 / 50);
+  errorCtx.strokeStyle = '#ef444444';
+  errorCtx.setLineDash([4, 4]);
+  errorCtx.beginPath();
+  errorCtx.moveTo(pad.l, threshY);
+  errorCtx.lineTo(pad.l + plotW, threshY);
+  errorCtx.stroke();
+  errorCtx.setLineDash([]);
+  errorCtx.fillStyle = '#ef4444';
+  errorCtx.font = '8px Manrope';
+  errorCtx.fillText('25% (Eve)', pad.l + plotW - 55, threshY - 3);
+
+  // 10% detection line
+  const detY = pad.t + plotH * (1 - 10 / 50);
+  errorCtx.strokeStyle = '#f59e0b44';
+  errorCtx.setLineDash([4, 4]);
+  errorCtx.beginPath();
+  errorCtx.moveTo(pad.l, detY);
+  errorCtx.lineTo(pad.l + plotW, detY);
+  errorCtx.stroke();
+  errorCtx.setLineDash([]);
+  errorCtx.fillStyle = '#f59e0b';
+  errorCtx.fillText('10% detect', pad.l + plotW - 60, detY - 3);
+
+  // Y labels
+  errorCtx.fillStyle = '#555';
+  errorCtx.font = '8px Manrope';
+  errorCtx.textAlign = 'right';
+  errorCtx.fillText('50%', pad.l - 4, pad.t + 6);
+  errorCtx.fillText('0%', pad.l - 4, pad.t + plotH + 4);
+
+  // Error curve
+  const n = errorHistory.length;
+  errorCtx.strokeStyle = errorHistory[n-1] > 10 ? '#ef4444' : '#22c55e';
+  errorCtx.lineWidth = 2;
+  errorCtx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const x = pad.l + (i / (Math.max(n - 1, 1))) * plotW;
+    const y = pad.t + plotH * (1 - Math.min(errorHistory[i], 50) / 50);
+    i === 0 ? errorCtx.moveTo(x, y) : errorCtx.lineTo(x, y);
+  }
+  errorCtx.stroke();
+}
+
+function drawQubits() {
+  qubitCtx.fillStyle = '#0d0d0d';
+  qubitCtx.fillRect(0, 0, QW, QH);
+
+  const last8 = protocol.bits.slice(-8);
+  const cellW = QW / 8;
+  const midY = QH / 2;
+
+  for (let i = 0; i < last8.length; i++) {
+    const b = last8[i];
+    const cx = cellW * i + cellW / 2;
+
+    // Circle
+    qubitCtx.strokeStyle = '#333';
+    qubitCtx.lineWidth = 1;
+    qubitCtx.beginPath();
+    qubitCtx.arc(cx, midY, 25, 0, Math.PI * 2);
+    qubitCtx.stroke();
+
+    // Polarization arrow based on Alice's encoding
+    const angle = getAngle(b.aliceBit, b.aliceBasis);
+    qubitCtx.strokeStyle = '#7c3aed';
+    qubitCtx.lineWidth = 2;
+    qubitCtx.beginPath();
+    qubitCtx.moveTo(cx - Math.cos(angle) * 20, midY - Math.sin(angle) * 20);
+    qubitCtx.lineTo(cx + Math.cos(angle) * 20, midY + Math.sin(angle) * 20);
+    qubitCtx.stroke();
+
+    // Arrow head
+    const ax = cx + Math.cos(angle) * 20, ay = midY + Math.sin(angle) * 20;
+    qubitCtx.fillStyle = '#7c3aed';
+    qubitCtx.beginPath();
+    qubitCtx.arc(ax, ay, 3, 0, Math.PI * 2);
+    qubitCtx.fill();
+
+    // Basis label
+    qubitCtx.fillStyle = b.aliceBasis === '+' ? '#22c55e' : '#f59e0b';
+    qubitCtx.font = 'bold 10px Manrope';
+    qubitCtx.textAlign = 'center';
+    qubitCtx.fillText(b.aliceBasis, cx, midY + 42);
+
+    // Bit label
+    qubitCtx.fillStyle = '#888';
+    qubitCtx.font = '9px Manrope';
+    qubitCtx.fillText(b.aliceBit, cx, midY - 32);
+
+    // Eve indicator
+    if (b.eveIntercepted) {
+      qubitCtx.fillStyle = '#ef4444';
+      qubitCtx.font = '7px Manrope';
+      qubitCtx.fillText('EVE', cx, midY + 55);
+    }
+  }
+}
+
+function getAngle(bit, basis) {
+  if (basis === '+') return bit === 0 ? Math.PI / 2 : 0; // vertical or horizontal
+  return bit === 0 ? Math.PI / 4 : -Math.PI / 4; // diagonals
+}
+
+// Protocol animation
+function drawProtocol() {
+  protoCtx.fillStyle = '#0d0d0d';
+  protoCtx.fillRect(0, 0, PW, PH);
+  animTime += 0.02;
+
+  // Alice
+  protoCtx.fillStyle = '#7c3aed';
+  protoCtx.beginPath();
+  protoCtx.arc(100, PH / 2, 35, 0, Math.PI * 2);
+  protoCtx.fill();
+  protoCtx.fillStyle = '#fff';
+  protoCtx.font = 'bold 12px Manrope';
+  protoCtx.textAlign = 'center';
+  protoCtx.fillText('Alice', 100, PH / 2 + 4);
+
+  // Bob
+  protoCtx.fillStyle = '#3b82f6';
+  protoCtx.beginPath();
+  protoCtx.arc(PW - 100, PH / 2, 35, 0, Math.PI * 2);
+  protoCtx.fill();
+  protoCtx.fillStyle = '#fff';
+  protoCtx.fillText('Bob', PW - 100, PH / 2 + 4);
+
+  // Eve (if enabled)
+  if (eveEnabled) {
+    protoCtx.fillStyle = '#ef4444';
+    protoCtx.beginPath();
+    protoCtx.arc(PW / 2, 40, 25, 0, Math.PI * 2);
+    protoCtx.fill();
+    protoCtx.fillStyle = '#fff';
+    protoCtx.font = 'bold 10px Manrope';
+    protoCtx.fillText('Eve', PW / 2, 44);
+    // Intercept lines
+    protoCtx.strokeStyle = '#ef444444';
+    protoCtx.setLineDash([4, 4]);
+    protoCtx.lineWidth = 1;
+    protoCtx.beginPath();
+    protoCtx.moveTo(PW / 2, 65);
+    protoCtx.lineTo(PW / 2, PH / 2 - 10);
+    protoCtx.stroke();
+    protoCtx.setLineDash([]);
+  }
+
+  // Quantum channel
+  protoCtx.strokeStyle = '#333';
+  protoCtx.lineWidth = 2;
+  protoCtx.beginPath();
+  protoCtx.moveTo(140, PH / 2);
+  protoCtx.lineTo(PW - 140, PH / 2);
+  protoCtx.stroke();
+
+  // Channel label
+  protoCtx.fillStyle = '#555';
+  protoCtx.font = '9px Manrope';
+  protoCtx.fillText('Quantum Channel', PW / 2, PH / 2 + 50);
+
+  // Animated qubits in transit
+  for (let i = animQubits.length - 1; i >= 0; i--) {
+    const q = animQubits[i];
+    q.t += 0.015;
+    if (q.t >= 1) { animQubits.splice(i, 1); continue; }
+    const x = 140 + (PW - 280) * q.t;
+    const y = PH / 2;
+
+    // Qubit
+    protoCtx.fillStyle = '#7c3aed';
+    protoCtx.globalAlpha = 1 - q.t * 0.3;
+    protoCtx.beginPath();
+    protoCtx.arc(x, y, 8, 0, Math.PI * 2);
+    protoCtx.fill();
+
+    // Polarization
+    const angle = getAngle(q.bit.aliceBit, q.bit.aliceBasis);
+    protoCtx.strokeStyle = '#fff';
+    protoCtx.lineWidth = 2;
+    protoCtx.beginPath();
+    protoCtx.moveTo(x - Math.cos(angle) * 6, y - Math.sin(angle) * 6);
+    protoCtx.lineTo(x + Math.cos(angle) * 6, y + Math.sin(angle) * 6);
+    protoCtx.stroke();
+    protoCtx.globalAlpha = 1;
+  }
+
+  // Stats at bottom
+  const matched = protocol.bits.filter(b => b.basesMatch).length;
+  protoCtx.fillStyle = '#555';
+  protoCtx.font = '10px Manrope';
+  protoCtx.textAlign = 'left';
+  protoCtx.fillText(`Sent: ${protocol.bits.length}  |  Key bits: ${protocol.aliceKey.length}  |  Efficiency: ${protocol.bits.length > 0 ? Math.round(matched / protocol.bits.length * 100) : 0}%`, 20, PH - 12);
+
+  requestAnimationFrame(drawProtocol);
+}
+
+// Controls
+document.getElementById('bitsPerRun').addEventListener('input', e => {
+  document.getElementById('bitsPerRunV').textContent = e.target.value;
+});
+document.getElementById('eveProb').addEventListener('input', e => {
+  eveProb = parseInt(e.target.value) / 100;
+  document.getElementById('eveProbV').textContent = e.target.value + '%';
+});
+
+drawProtocol();
+drawError();
+drawQubits();
+</script>
+<script src="/related.js"></script>
+</body>
+</html>
