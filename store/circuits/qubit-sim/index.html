@@ -509,45 +509,31 @@ addEventListener('keydown', e => {
 
 // Export to Qiskit
 document.getElementById('btn-export').addEventListener('click', () => {
-  let code = 'from qiskit import QuantumCircuit
-
-';
-  code += 'qc = QuantumCircuit(' + nQubits + ')
-
-';
+  let code = 'from qiskit import QuantumCircuit\n\n';
+  code += 'qc = QuantumCircuit(' + nQubits + ')\n\n';
   
   for (let c = 0; c < COLS; c++) {
     for (let q = 0; q < nQubits; q++) {
       const g = circuit[c][q];
       if (!g) continue;
-      if (g === 'H') code += 'qc.h(' + q + ')
-';
-      else if (g === 'X') code += 'qc.x(' + q + ')
-';
-      else if (g === 'Y') code += 'qc.y(' + q + ')
-';
-      else if (g === 'Z') code += 'qc.z(' + q + ')
-';
-      else if (g === 'S') code += 'qc.s(' + q + ')
-';
-      else if (g === 'T') code += 'qc.t(' + q + ')
-';
-      else if (g === 'M') code += 'qc.measure(' + q + ', ' + q + ')
-';
+      if (g === 'H') code += 'qc.h(' + q + ')\n';
+      else if (g === 'X') code += 'qc.x(' + q + ')\n';
+      else if (g === 'Y') code += 'qc.y(' + q + ')\n';
+      else if (g === 'Z') code += 'qc.z(' + q + ')\n';
+      else if (g === 'S') code += 'qc.s(' + q + ')\n';
+      else if (g === 'T') code += 'qc.t(' + q + ')\n';
+      else if (g === 'M') code += 'qc.measure(' + q + ', ' + q + ')\n';
       else if (g === 'CNOT-ctrl') {
         for (let qq = 0; qq < nQubits; qq++) {
           if (circuit[c][qq] === 'CNOT-tgt-' + q) {
-            code += 'qc.cx(' + q + ', ' + qq + ')
-';
+            code += 'qc.cx(' + q + ', ' + qq + ')\n';
           }
         }
       }
     }
   }
   
-  code += '
-print(qc.draw())
-';
+  code += '\nprint(qc.draw())\n';
   
   // Copy to clipboard
   navigator.clipboard.writeText(code).then(() => {
