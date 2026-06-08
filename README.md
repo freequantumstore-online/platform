@@ -24,7 +24,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for design rules and examples.
 
 ## Community
 
-- **Discord:** [discord.gg/openfrontier](https://discord.gg/openfrontier) (#quantum channel)
+- **Discord:** [discord.gg/HT8ukjwR](https://discord.gg/HT8ukjwR) (#quantum channel)
 - **Issues:** [GitHub Issues](https://github.com/freequantumstore-online/platform/issues) for bugs & ideas
 - **Showcase:** Share what you built in #showcase on Discord
 
